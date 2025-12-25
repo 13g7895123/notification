@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Docker-Compose-blue?logo=docker" alt="Docker" />
 </p>
 
-NotifyHub 是一個現代化的多渠道通知管理系統，支援 LINE 和 Telegram 通知推送。
+NotifyHub 是一個現代化的多渠道通知管理系統，採用 React 前端與 CodeIgniter 4 後端 API，並 implementing 完整的藍綠部署架構。
 
 ---
 
@@ -16,15 +16,12 @@ NotifyHub 是一個現代化的多渠道通知管理系統，支援 LINE 和 Tel
 ```
 notification/
 ├── frontend/               # React 前端應用
-│   ├── src/
-│   ├── docs/               # API 需求文件
-│   └── Dockerfile
 ├── backend/                # CodeIgniter 4 後端 API
-│   ├── app/
-│   └── Dockerfile
-├── docker/
-│   └── mariadb/init/       # 資料庫初始化腳本
-├── docker-compose.yml      # Docker Compose 配置
+├── docker/                 # Docker 配置與腳本
+│   ├── mariadb/init/       # 資料庫初始化
+│   ├── backend/            # 後端 Entrypoint 與權限設定
+│   └── frontend-proxy/     # Nginx 藍綠切換配置
+├── docker-compose.yml      # 服務編排
 ├── deploy.sh               # 藍綠部署腳本
 ├── .env.example            # 環境變數範例
 └── README.md
@@ -34,142 +31,88 @@ notification/
 
 ## 🚀 快速開始
 
-### 1. 複製環境變數
+### 1. 初始化設定
 
 ```bash
+# 複製設定檔
 cp .env.example .env
 ```
 
 ### 2. 啟動服務
 
 ```bash
-# 啟動所有服務（前端 Blue + 後端 + MariaDB + phpMyAdmin）
-docker compose up -d
-
-# 啟動包含 Green 版本
+# 啟動所有服務
 docker compose --profile green up -d
 ```
 
+系統會自動執行初始化流程：
+- ✅ 初始化 MariaDB 資料庫
+- ✅ 安裝後端 PHP 依賴 (Composer)
+- ✅ 設定 `writable` 目錄權限
+- ✅ 啟動 CI4 `spark serve` 服務 (CLI Mode)
+
 ### 3. 存取服務
 
-| 服務 | 位址 | 說明 |
-|------|------|------|
-| 前端 (Blue) | http://localhost:3001 | 活躍版本 |
-| 前端 (Green) | http://localhost:3002 | 待命版本 |
-| 後端 API | http://localhost:8080 | CodeIgniter 4 |
-| phpMyAdmin | http://localhost:8081 | 資料庫管理 |
+| 服務 | URL | 說明 |
+|------|-----|------|
+| **前端入口** | http://localhost:3000 | 自動導向至活躍版本 (Blue/Green) |
+| **Blue 版本** | http://localhost:3000/blue/ | 測試用直接連結 |
+| **Green 版本** | http://localhost:3000/green/ | 測試用直接連結 |
+| **後端 API** | http://localhost:8080 | CI4 Spark Serve |
+| **phpMyAdmin** | http://localhost:8081 | 資料庫管理 |
 
 ---
 
-## 🔄 藍綠部署
+## 🔄 藍綠部署 (Blue/Green Deployment)
+
+本專案使用 Nginx 反向代理實現無縫切換。對外僅暴露 Port 3000。
 
 ### 部署流程
 
 ```bash
-# 1. 建構新版本到 Green
+# 1. 檢查目前狀態
+./deploy.sh status
+
+# 2. 建構新版本 (假設目前是 blue，建立 green)
 ./deploy.sh build green
 
-# 2. 測試 Green 版本 (http://localhost:3002)
+# 3. 測試新版本
+# 瀏覽器開啟 http://localhost:3000/green/
 
-# 3. 切換到 Green 版本
+# 4. 切換流量到新版本
 ./deploy.sh switch green
 
-# 4. 如需回滾
+# 5. 如有問題，立即回滾
 ./deploy.sh rollback
 ```
 
-### 部署指令
-
-| 指令 | 說明 |
-|------|------|
-| `./deploy.sh build [blue\|green]` | 建構指定版本 |
-| `./deploy.sh switch [blue\|green]` | 切換活躍版本 |
-| `./deploy.sh status` | 顯示服務狀態 |
-| `./deploy.sh rollback` | 回滾到前一版本 |
-
 ---
 
-## ⚙️ Port 配置
+## 🛠️ 開發指南
 
-所有對外 Port 統一在 `.env` 管理：
+### 後端開發 (CodeIgniter 4)
 
-```env
-# 前端 (藍綠部署)
-FRONTEND_BLUE_PORT=3001
-FRONTEND_GREEN_PORT=3002
+後端目錄 (`./backend`) 已掛載至容器內，修改程式碼會即時生效。
 
-# 後端 API
-BACKEND_PORT=8080
+- **CLI 模式**: 容器使用 `php spark serve` 運行，日誌會直接輸出到 Docker logs。
+- **權限管理**: `entrypoint.sh` 每次啟動會自動修正 `writable/` 目錄權限，避免 Permission Denied。
+- **依賴安裝**: 容器啟動時會自動檢查並安裝 composer 依賴。
 
-# phpMyAdmin
-PHPMYADMIN_PORT=8081
-```
-
----
-
-## 🗄️ 資料庫
-
-### 預設帳號
-
-| 使用者 | 密碼 |
-|--------|------|
-| root | notifyhub_root_2024 |
-| notifyhub | notifyhub_db_2024 |
-
-### 連線資訊
-
-```
-Host: localhost (容器內使用 mariadb)
-Port: 3306 (僅內部)
-Database: notifyhub
-```
-
----
-
-## 🔐 測試帳號
-
-| 角色 | Email | 密碼 |
-|------|-------|------|
-| 管理員 | admin@notifyhub.com | password |
-| 使用者 | user@notifyhub.com | password |
-
-> ⚠️ 生產環境請務必更改密碼！
-
----
-
-## 📚 文件
-
-- [前端 README](./frontend/README.md)
-- [API 需求文件](./frontend/docs/API_REQUIREMENTS.md)
-
----
-
-## 🛠️ 開發模式
-
-### 前端開發
-
+查看後端日誌：
 ```bash
-cd frontend
-npm install
-npm run dev
+docker compose logs -f backend
 ```
 
-### 後端開發
+### 資料庫
 
-後端需要在 Docker 環境運行，或本機安裝 PHP 8.3 + Composer：
-
-```bash
-cd backend
-composer install
-php spark serve
-```
+- **Host**: `mariadb` (容器內) / `localhost` (本機)
+- **Port**: `3306`
+- **User**: `notifyhub`
+- **Pass**: `notifyhub_db_2024`
+- **DB**: `notifyhub`
 
 ---
 
 ## 📄 授權
 
 MIT License
-
----
-
-<p align="center">Made with ❤️ by NotifyHub Team</p>
