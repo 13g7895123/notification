@@ -1,0 +1,43 @@
+{
+    "name": "notifyhub/backend",
+    "description": "NotifyHub API Backend - CodeIgniter 4",
+    "type": "project",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.1",
+        "codeigniter4/framework": "^4.4",
+        "firebase/php-jwt": "^6.10",
+        "linecorp/line-bot-sdk": "^9.0",
+        "longman/telegram-bot": "^0.83"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.23",
+        "mikey179/vfsstream": "^1.6",
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Config\\": "app/Config/"
+        },
+        "exclude-from-classmap": [
+            "**/Database/Migrations/**"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "migrate": "php spark migrate",
+        "seed": "php spark db:seed"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    }
+}

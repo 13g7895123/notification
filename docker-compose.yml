@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # MariaDB 資料庫
+  # ===========================================
+  mariadb:
+    image: mariadb:10.11
+    container_name: ${APP_NAME:-notifyhub}_mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./docker/mariadb/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - notifyhub_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ===========================================
+  # phpMyAdmin
+  # ===========================================
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: ${APP_NAME:-notifyhub}_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${PHPMYADMIN_PORT:-8081}:80"
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 50M
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - notifyhub_network
+
+  # ===========================================
+  # 後端 API (CodeIgniter 4)
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${APP_NAME:-notifyhub}_backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:80"
+    environment:
+      CI_ENVIRONMENT: ${CI_ENVIRONMENT:-development}
+      DATABASE_HOST: mariadb
+      DATABASE_NAME: ${MARIADB_DATABASE}
+      DATABASE_USER: ${MARIADB_USER}
+      DATABASE_PASSWORD: ${MARIADB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/writable:/var/www/html/writable
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - notifyhub_network
+
+  # ===========================================
+  # 前端 - Blue 版本
+  # ===========================================
+  frontend-blue:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:${BACKEND_PORT:-8080}/api
+    container_name: ${APP_NAME:-notifyhub}_frontend_blue
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_BLUE_PORT:-3001}:80"
+    depends_on:
+      - backend
+    networks:
+      - notifyhub_network
+    labels:
+      - "deployment.version=blue"
+
+  # ===========================================
+  # 前端 - Green 版本
+  # ===========================================
+  frontend-green:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:${BACKEND_PORT:-8080}/api
+    container_name: ${APP_NAME:-notifyhub}_frontend_green
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_GREEN_PORT:-3002}:80"
+    depends_on:
+      - backend
+    networks:
+      - notifyhub_network
+    labels:
+      - "deployment.version=green"
+    profiles:
+      - green
+
+# ===========================================
+# 網路
+# ===========================================
+networks:
+  notifyhub_network:
+    driver: bridge
+    name: ${APP_NAME:-notifyhub}_network
+
+# ===========================================
+# 資料卷
+# ===========================================
+volumes:
+  mariadb_data:
+    name: ${APP_NAME:-notifyhub}_mariadb_data
