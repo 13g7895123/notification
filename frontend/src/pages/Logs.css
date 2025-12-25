@@ -1,0 +1,240 @@
+.logs-page {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Stats */
+.logs-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.stat-mini-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+}
+
+.stat-mini-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-glow);
+}
+
+.stat-mini-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    color: white;
+}
+
+.stat-mini-icon.total {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+}
+
+.stat-mini-icon.success {
+    background: linear-gradient(135deg, var(--color-success), #059669);
+}
+
+.stat-mini-icon.failed {
+    background: linear-gradient(135deg, var(--color-error), #dc2626);
+}
+
+.stat-mini-icon.rate {
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+}
+
+.stat-mini-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-mini-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-mini-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Filters */
+.logs-filters {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    max-width: 300px;
+}
+
+.search-icon {
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.search-input {
+    padding-left: 44px;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-muted);
+}
+
+.filter-stats {
+    margin-left: auto;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Table */
+.logs-table {
+    width: 100%;
+}
+
+.logs-table th {
+    white-space: nowrap;
+}
+
+.logs-table td {
+    vertical-align: middle;
+}
+
+.channel-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.channel-type-tag {
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.05em;
+}
+
+.channel-type-tag.line {
+    background: rgba(0, 185, 0, 0.2);
+    color: var(--color-line);
+}
+
+.channel-type-tag.telegram {
+    background: rgba(0, 136, 204, 0.2);
+    color: var(--color-telegram);
+}
+
+.channel-name-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.title-cell {
+    max-width: 200px;
+}
+
+.log-title-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--color-success);
+}
+
+.status-badge.failed {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--color-error);
+}
+
+.response-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.error-cell {
+    max-width: 200px;
+}
+
+.error-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: var(--color-error);
+    cursor: help;
+}
+
+.no-error {
+    color: var(--text-muted);
+}
+
+/* 響應式 */
+@media (max-width: 1200px) {
+    .logs-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .logs-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .logs-filters {
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        width: 100%;
+        max-width: none;
+    }
+
+    .filter-stats {
+        width: 100%;
+        text-align: right;
+    }
+
+    .logs-table {
+        font-size: 0.8rem;
+    }
+
+    .logs-table th,
+    .logs-table td {
+        padding: var(--spacing-sm);
+    }
+}
