@@ -66,6 +66,14 @@ ssh-copy-id -i ~/.ssh/github_deploy.pub user@your-server
 cat ~/.ssh/github_deploy
 ```
 
+### 環境變數處理方式
+
+部署時會自動：
+1. 如果伺服器上沒有 `.env`，則複製 `.env.example` 作為 `.env`
+2. **自動生成 `JWT_SECRET`**（使用 `openssl rand` 產生 48 位隨機字串）
+
+> ⚠️ **注意**：首次部署前請確保 `.env.example` 中的 MariaDB 密碼、Port 等設定適合正式環境
+
 ## 🚀 使用方式
 
 ### 自動觸發

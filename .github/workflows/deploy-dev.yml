@@ -44,34 +44,46 @@ jobs:
             
             # 顯示當前狀態
             echo ""
-            echo "[1/5] 當前 Git 狀態:"
+            echo "[1/6] 當前 Git 狀態:"
             echo "  分支: $(git rev-parse --abbrev-ref HEAD)"
             echo "  Commit: $(git rev-parse --short HEAD)"
             
             # 拉取最新代碼
             echo ""
-            echo "[2/5] 拉取最新代碼..."
+            echo "[2/6] 拉取最新代碼..."
             git fetch origin
             git pull origin develop
             
             echo ""
-            echo "[3/5] 更新後 Git 狀態:"
+            echo "[3/6] 更新後 Git 狀態:"
             echo "  Commit: $(git rev-parse --short HEAD)"
+            
+            # 建立/更新 .env 檔案
+            echo ""
+            echo "[4/6] 設定環境變數..."
+            
+            # 複製 .env.example 作為 .env（如果 .env 不存在）
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "  已從 .env.example 建立 .env"
+              
+              # 自動生成 JWT_SECRET
+              NEW_JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 48)
+              sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${NEW_JWT_SECRET}|" .env
+              echo "  JWT_SECRET 已自動生成"
+            fi
+            
+            echo "  .env 設定完成"
             
             # 執行部署腳本
             echo ""
-            echo "[4/5] 執行部署..."
-            if [ -f "./cicd.sh" ]; then
-              ./cicd.sh deploy
-            else
-              # 如果沒有 cicd.sh，直接使用 deploy.sh
-              ./deploy.sh build blue
-              ./deploy.sh switch blue
-            fi
+            echo "[5/6] 執行部署..."
+            ./deploy.sh build blue
+            ./deploy.sh switch blue
             
             # 顯示服務狀態
             echo ""
-            echo "[5/5] 服務狀態:"
+            echo "[6/6] 服務狀態:"
             docker compose ps
             
             echo ""

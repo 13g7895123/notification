@@ -56,48 +56,62 @@ jobs:
             
             # 拉取最新代碼
             echo ""
-            echo "[2/6] 拉取最新代碼..."
+            echo "[2/7] 拉取最新代碼..."
             git fetch origin
             git pull origin main || git pull origin master
             
             AFTER_COMMIT=$(git rev-parse --short HEAD)
             echo ""
-            echo "[3/6] 更新後 Git 狀態:"
+            echo "[3/7] 更新後 Git 狀態:"
             echo "  Commit: $AFTER_COMMIT"
+            
+            # 建立/更新 .env 檔案
+            echo ""
+            echo "[4/7] 設定環境變數..."
+            
+            # 複製 .env.example 作為 .env（如果 .env 不存在）
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "  已從 .env.example 建立 .env"
+              
+              # 自動生成 JWT_SECRET
+              NEW_JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 48)
+              sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${NEW_JWT_SECRET}|" .env
+              echo "  JWT_SECRET 已自動生成"
+            fi
+            
+            echo "  .env 設定完成"
             
             # 顯示變更
             echo ""
-            echo "[4/6] 變更摘要:"
+            echo "[5/7] 變更摘要:"
             git log --oneline $BEFORE_COMMIT..$AFTER_COMMIT | head -10
             
             # 執行部署腳本（藍綠部署）
             echo ""
-            echo "[5/6] 執行藍綠部署..."
-            if [ -f "./cicd.sh" ]; then
-              ./cicd.sh deploy
+            echo "[6/7] 執行藍綠部署..."
+            
+            # 取得當前活躍版本
+            PROXY_CONF="./docker/frontend-proxy/conf.d/default.conf"
+            if grep -q "server frontend-green:80;" "$PROXY_CONF" 2>/dev/null; then
+              IDLE_VERSION="blue"
             else
-              # 取得當前活躍版本
-              PROXY_CONF="./docker/frontend-proxy/conf.d/default.conf"
-              if grep -q "server frontend-green:80;" "$PROXY_CONF" 2>/dev/null; then
-                IDLE_VERSION="blue"
-              else
-                IDLE_VERSION="green"
-              fi
-              
-              echo "正在部署到 $IDLE_VERSION 版本..."
-              ./deploy.sh build "$IDLE_VERSION"
-              
-              # 健康檢查
-              echo "執行健康檢查..."
-              sleep 15
-              
-              # 切換流量
-              ./deploy.sh switch "$IDLE_VERSION"
+              IDLE_VERSION="green"
             fi
+            
+            echo "正在部署到 $IDLE_VERSION 版本..."
+            ./deploy.sh build "$IDLE_VERSION"
+            
+            # 健康檢查
+            echo "執行健康檢查..."
+            sleep 15
+            
+            # 切換流量
+            ./deploy.sh switch "$IDLE_VERSION"
             
             # 顯示服務狀態
             echo ""
-            echo "[6/6] 服務狀態:"
+            echo "[7/7] 服務狀態:"
             docker compose ps
             
             echo ""
