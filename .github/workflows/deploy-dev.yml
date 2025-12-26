@@ -1,0 +1,92 @@
+# ===========================================
+# NotifyHub - 開發環境自動部署
+# 透過 SSH 連線到伺服器執行 git pull + shell script
+# ===========================================
+
+name: Deploy to Development
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:  # 支援手動觸發
+
+env:
+  DEPLOY_PATH: ${{ secrets.DEV_DEPLOY_PATH }}
+
+jobs:
+  deploy:
+    name: Deploy to Dev Server
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 顯示部署資訊
+        run: |
+          echo "🚀 開始部署到開發環境"
+          echo "分支: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "觸發者: ${{ github.actor }}"
+
+      - name: SSH 連線並部署
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          port: ${{ secrets.DEV_SSH_PORT || 22 }}
+          script: |
+            echo "=========================================="
+            echo "  NotifyHub 開發環境部署"
+            echo "=========================================="
+            
+            # 切換到專案目錄
+            cd ${{ secrets.DEV_DEPLOY_PATH }}
+            
+            # 顯示當前狀態
+            echo ""
+            echo "[1/5] 當前 Git 狀態:"
+            echo "  分支: $(git rev-parse --abbrev-ref HEAD)"
+            echo "  Commit: $(git rev-parse --short HEAD)"
+            
+            # 拉取最新代碼
+            echo ""
+            echo "[2/5] 拉取最新代碼..."
+            git fetch origin
+            git pull origin develop
+            
+            echo ""
+            echo "[3/5] 更新後 Git 狀態:"
+            echo "  Commit: $(git rev-parse --short HEAD)"
+            
+            # 執行部署腳本
+            echo ""
+            echo "[4/5] 執行部署..."
+            if [ -f "./cicd.sh" ]; then
+              ./cicd.sh deploy
+            else
+              # 如果沒有 cicd.sh，直接使用 deploy.sh
+              ./deploy.sh build blue
+              ./deploy.sh switch blue
+            fi
+            
+            # 顯示服務狀態
+            echo ""
+            echo "[5/5] 服務狀態:"
+            docker compose ps
+            
+            echo ""
+            echo "=========================================="
+            echo "  ✅ 部署完成！"
+            echo "=========================================="
+
+      - name: 部署成功通知
+        if: success()
+        run: |
+          echo "✅ 開發環境部署成功"
+          echo "Commit: ${{ github.sha }}"
+
+      - name: 部署失敗通知
+        if: failure()
+        run: |
+          echo "❌ 開發環境部署失敗"
+          echo "請檢查日誌"

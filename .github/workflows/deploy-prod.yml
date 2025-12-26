@@ -1,0 +1,119 @@
+# ===========================================
+# NotifyHub - 生產環境自動部署
+# 透過 SSH 連線到伺服器執行 git pull + shell script
+# ===========================================
+
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:  # 支援手動觸發
+
+env:
+  DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH }}
+
+jobs:
+  deploy:
+    name: Deploy to Production Server
+    runs-on: ubuntu-latest
+    environment: production  # 需要手動核准（可選）
+    
+    steps:
+      - name: 顯示部署資訊
+        run: |
+          echo "🚀 開始部署到生產環境"
+          echo "分支: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "觸發者: ${{ github.actor }}"
+
+      - name: SSH 連線並部署
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT || 22 }}
+          script: |
+            echo "=========================================="
+            echo "  NotifyHub 生產環境部署"
+            echo "=========================================="
+            
+            # 切換到專案目錄
+            cd ${{ secrets.PROD_DEPLOY_PATH }}
+            
+            # 備份當前版本資訊
+            BEFORE_COMMIT=$(git rev-parse --short HEAD)
+            echo "$BEFORE_COMMIT" > /tmp/notifyhub_last_commit.txt
+            
+            # 顯示當前狀態
+            echo ""
+            echo "[1/6] 當前 Git 狀態:"
+            echo "  分支: $(git rev-parse --abbrev-ref HEAD)"
+            echo "  Commit: $BEFORE_COMMIT"
+            
+            # 拉取最新代碼
+            echo ""
+            echo "[2/6] 拉取最新代碼..."
+            git fetch origin
+            git pull origin main || git pull origin master
+            
+            AFTER_COMMIT=$(git rev-parse --short HEAD)
+            echo ""
+            echo "[3/6] 更新後 Git 狀態:"
+            echo "  Commit: $AFTER_COMMIT"
+            
+            # 顯示變更
+            echo ""
+            echo "[4/6] 變更摘要:"
+            git log --oneline $BEFORE_COMMIT..$AFTER_COMMIT | head -10
+            
+            # 執行部署腳本（藍綠部署）
+            echo ""
+            echo "[5/6] 執行藍綠部署..."
+            if [ -f "./cicd.sh" ]; then
+              ./cicd.sh deploy
+            else
+              # 取得當前活躍版本
+              PROXY_CONF="./docker/frontend-proxy/conf.d/default.conf"
+              if grep -q "server frontend-green:80;" "$PROXY_CONF" 2>/dev/null; then
+                IDLE_VERSION="blue"
+              else
+                IDLE_VERSION="green"
+              fi
+              
+              echo "正在部署到 $IDLE_VERSION 版本..."
+              ./deploy.sh build "$IDLE_VERSION"
+              
+              # 健康檢查
+              echo "執行健康檢查..."
+              sleep 15
+              
+              # 切換流量
+              ./deploy.sh switch "$IDLE_VERSION"
+            fi
+            
+            # 顯示服務狀態
+            echo ""
+            echo "[6/6] 服務狀態:"
+            docker compose ps
+            
+            echo ""
+            echo "=========================================="
+            echo "  ✅ 生產環境部署完成！"
+            echo "  版本: $BEFORE_COMMIT -> $AFTER_COMMIT"
+            echo "=========================================="
+
+      - name: 部署成功通知
+        if: success()
+        run: |
+          echo "✅ 生產環境部署成功"
+          echo "Commit: ${{ github.sha }}"
+
+      - name: 部署失敗通知
+        if: failure()
+        run: |
+          echo "❌ 生產環境部署失敗"
+          echo "請檢查日誌並考慮回滾"
