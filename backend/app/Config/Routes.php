@@ -5,4 +5,100 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Home::index');
+
+// ===========================================
+// 健康檢查
+// ===========================================
+$routes->get('/', static function () {
+    return service('response')->setJSON([
+        'success' => true,
+        'message' => 'NotifyHub API is running',
+        'version' => '1.0.0',
+    ]);
+});
+
+$routes->get('/health', static function () {
+    return service('response')->setJSON([
+        'status' => 'healthy',
+        'timestamp' => date('c'),
+    ]);
+});
+
+// ===========================================
+// API 路由
+// ===========================================
+$routes->group('api', ['namespace' => 'App\Controllers'], static function ($routes) {
+
+    // CORS preflight
+    $routes->options('(:any)', static function () {
+        return service('response')
+            ->setHeader('Access-Control-Allow-Origin', '*')
+            ->setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+            ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->setStatusCode(200);
+    });
+
+    // =========================================
+    // 認證 API（無需登入）
+    // =========================================
+    $routes->post('auth/login', 'AuthController::login');
+
+    // =========================================
+    // 需要認證的 API
+    // =========================================
+    $routes->group('', ['filter' => 'auth'], static function ($routes) {
+
+        // 認證相關
+        $routes->post('auth/logout', 'AuthController::logout');
+        $routes->get('auth/me', 'AuthController::me');
+        $routes->put('auth/profile', 'AuthController::updateProfile');
+        $routes->put('auth/password', 'AuthController::changePassword');
+
+        // 統計數據
+        $routes->get('stats/dashboard', 'StatsController::dashboard');
+
+        // 通知渠道
+        $routes->get('channels', 'ChannelController::index');
+        $routes->post('channels', 'ChannelController::create');
+        $routes->put('channels/(:segment)', 'ChannelController::update/$1');
+        $routes->delete('channels/(:segment)', 'ChannelController::delete/$1');
+        $routes->put('channels/(:segment)/toggle', 'ChannelController::toggle/$1');
+        $routes->post('channels/(:segment)/test', 'ChannelController::test/$1');
+
+        // 通知訊息
+        $routes->get('messages', 'MessageController::index');
+        $routes->post('messages/send', 'MessageController::send');
+        $routes->delete('messages/(:segment)', 'MessageController::delete/$1');
+
+        // 訊息模板
+        $routes->get('templates', 'TemplateController::index');
+        $routes->post('templates', 'TemplateController::create');
+        $routes->put('templates/(:segment)', 'TemplateController::update/$1');
+        $routes->delete('templates/(:segment)', 'TemplateController::delete/$1');
+
+        // API 金鑰
+        $routes->get('api-keys', 'ApiKeyController::index');
+        $routes->post('api-keys', 'ApiKeyController::create');
+        $routes->put('api-keys/(:segment)', 'ApiKeyController::update/$1');
+        $routes->delete('api-keys/(:segment)', 'ApiKeyController::delete/$1');
+        $routes->put('api-keys/(:segment)/toggle', 'ApiKeyController::toggle/$1');
+        $routes->post('api-keys/(:segment)/regenerate', 'ApiKeyController::regenerate/$1');
+
+        // API 使用紀錄
+        $routes->get('api-usage/logs', 'ApiUsageController::logs');
+        $routes->get('api-usage/stats', 'ApiUsageController::stats');
+
+        // =========================================
+        // 僅限管理員的 API
+        // =========================================
+        $routes->group('', ['filter' => 'admin'], static function ($routes) {
+            // 使用者管理
+            $routes->get('users', 'UserController::index');
+            $routes->post('users', 'UserController::create');
+            $routes->put('users/(:segment)', 'UserController::update/$1');
+            $routes->delete('users/(:segment)', 'UserController::delete/$1');
+            $routes->put('users/(:segment)/status', 'UserController::updateStatus/$1');
+            $routes->put('users/(:segment)/password', 'UserController::resetPassword/$1');
+        });
+    });
+});

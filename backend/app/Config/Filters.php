@@ -34,6 +34,11 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+
+        // 自訂過濾器
+        'auth'          => \App\Filters\AuthFilter::class,
+        'admin'         => \App\Filters\AdminFilter::class,
+        'apicors'       => \App\Filters\CorsFilter::class,
     ];
 
     /**
@@ -51,13 +56,13 @@ class Filters extends BaseFilters
      */
     public array $required = [
         'before' => [
-            'forcehttps', // Force Global Secure Requests
+            // 'forcehttps', // Force Global Secure Requests (disabled for dev)
             'pagecache',  // Web Page Caching
         ],
         'after' => [
             'pagecache',   // Web Page Caching
             'performance', // Performance Metrics
-            'toolbar',     // Debug Toolbar
+            // 'toolbar',     // Debug Toolbar (disabled for API)
         ],
     ];
 
@@ -72,11 +77,13 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'apicors', // CORS for API
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
         ],
         'after' => [
+            'apicors', // CORS for API
             // 'honeypot',
             // 'secureheaders',
         ],
