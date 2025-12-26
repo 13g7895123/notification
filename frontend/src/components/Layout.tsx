@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { useNotification } from '../contexts/NotificationContext';
 import './Layout.css';

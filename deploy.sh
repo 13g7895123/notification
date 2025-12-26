@@ -59,6 +59,11 @@ build_version() {
 
     echo -e "${YELLOW}正在建構 ${VERSION} 版本...${NC}"
     
+    echo -e "${YELLOW}正在確保基礎服務運行 (Database, Backend, Proxy)...${NC}"
+    docker compose up -d mariadb backend frontend-proxy
+
+    echo -e "${YELLOW}正在建構並啟動 ${VERSION} 版本...${NC}"
+    
     # 建構並啟動容器
     if [ "$VERSION" == "green" ]; then
         docker compose --profile green up -d --build frontend-green

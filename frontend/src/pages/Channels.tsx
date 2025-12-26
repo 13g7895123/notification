@@ -19,7 +19,7 @@ import { toast, confirm } from '../utils/alert';
 import './Channels.css';
 
 export function Channels() {
-    const { channels, addChannel, updateChannel, deleteChannel, toggleChannel, testChannel, isLoading } = useNotification();
+    const { channels, addChannel, updateChannel, deleteChannel, toggleChannel, testChannel } = useNotification();
     const [showModal, setShowModal] = useState(false);
     const [editingChannel, setEditingChannel] = useState<NotificationChannel | null>(null);
     const [testingId, setTestingId] = useState<string | null>(null);

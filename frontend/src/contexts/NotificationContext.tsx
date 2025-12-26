@@ -10,8 +10,7 @@ import type {
     MessageStatus,
     ApiKey,
     ApiUsageLog,
-    ApiStats,
-    ApiPermission
+    ApiStats
 } from '../types';
 
 // 生成 API Key
@@ -424,7 +423,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const [templates, setTemplates] = useState<NotificationTemplate[]>(mockTemplates);
     const [stats] = useState<NotificationStats>(mockStats);
     const [apiKeys, setApiKeys] = useState<ApiKey[]>(mockApiKeys);
-    const [apiUsageLogs, setApiUsageLogs] = useState<ApiUsageLog[]>(mockApiUsageLogs);
+    const [apiUsageLogs] = useState<ApiUsageLog[]>(mockApiUsageLogs);
     const [apiStats] = useState<ApiStats>(mockApiStats);
     const [isLoading, setIsLoading] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -456,7 +455,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         ));
     }, []);
 
-    const testChannel = useCallback(async (id: string): Promise<boolean> => {
+    const testChannel = useCallback(async (): Promise<boolean> => {
         setIsLoading(true);
         await new Promise(resolve => setTimeout(resolve, 1500));
         setIsLoading(false);

@@ -141,7 +141,6 @@ export function Dashboard() {
                     <div className="activity-chart">
                         {stats.recentActivity.map((day, index) => {
                             const maxSent = Math.max(...stats.recentActivity.map(d => d.sent));
-                            const height = (day.sent / maxSent) * 100;
                             return (
                                 <div
                                     key={day.date}
