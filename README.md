@@ -61,6 +61,23 @@ docker compose --profile green up -d
 | **後端 API** | http://localhost:8080 | CI4 Spark Serve |
 | **phpMyAdmin** | http://localhost:8081 | 資料庫管理 |
 
+### 4. 預設帳號
+
+| 角色 | Email | 密碼 |
+|------|-------|------|
+| **Admin** | `admin@notifyhub.com` | `admin123` |
+| **User** | `user@notifyhub.com` | `admin123` |
+
+> ⚠️ **警告**：生產環境請務必更改預設密碼！
+
+### 5. 重置 Admin 帳號
+
+如果需要重置 admin 帳號密碼：
+
+```bash
+docker compose exec backend php spark db:seed AdminSeeder
+```
+
 ---
 
 ## 🔄 藍綠部署 (Blue/Green Deployment)
