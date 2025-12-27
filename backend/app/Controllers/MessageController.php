@@ -38,11 +38,13 @@ class MessageController extends BaseController
      */
     public function send()
     {
-        $json = $this->request->getJSON(true);
         $user = $this->getCurrentUser();
-        $userId = $user['id'] ?? '550e8400-e29b-41d4-a716-446655440001';
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
 
-        $result = $this->messageService->sendMessage($json, $userId);
+        $json = $this->request->getJSON(true);
+        $result = $this->messageService->sendMessage($json, (int) $user['id']);
 
         if (!$result['success']) {
             return $this->errorResponse($result['error'], $result['message'], 400);

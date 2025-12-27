@@ -45,7 +45,7 @@ class MessageService
     /**
      * 發送訊息
      */
-    public function sendMessage(array $data, string $userId): array
+    public function sendMessage(array $data, int $userId): array
     {
         // 驗證必要欄位
         if (empty($data['title']) || empty($data['content']) || empty($data['channelIds'])) {
@@ -56,11 +56,15 @@ class MessageService
             ];
         }
 
+        // 驗證使用者擁有這些渠道
+        $validChannels = $this->channelRepository->findByIdsAndUserId($data['channelIds'], $userId);
+        $validChannelIds = array_map(fn($c) => $c->id, $validChannels);
+
         // 建立訊息記錄
         $message = $this->messageRepository->create([
             'title' => $data['title'],
             'content' => $data['content'],
-            'channelIds' => $data['channelIds'],
+            'channelIds' => $validChannelIds,
             'scheduledAt' => $data['scheduledAt'] ?? null,
             'userId' => $userId,
             'status' => MessageEntity::STATUS_SENDING,
@@ -69,7 +73,7 @@ class MessageService
         // 發送到各渠道
         $results = [];
         foreach ($data['channelIds'] as $channelId) {
-            $channel = $this->channelRepository->find($channelId);
+            $channel = $this->channelRepository->find($channelId, $userId);
 
             if (!$channel || !$channel->enabled) {
                 $this->messageRepository->addResult($message->id, $channelId, false, '渠道不存在或已停用');

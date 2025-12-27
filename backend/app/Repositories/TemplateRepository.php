@@ -12,15 +12,32 @@ class TemplateRepository extends BaseRepository
     protected string $table = 'templates';
 
     /**
-     * 根據 ID 查找模板
+     * 根據 ID 和使用者 ID 查找模板
      */
-    public function find(int $id): ?TemplateEntity
+    public function find(int $id, ?int $userId = null): ?TemplateEntity
+    {
+        $builder = $this->db->table($this->table)->where('id', $id);
+
+        if ($userId !== null) {
+            $builder->where('user_id', $userId);
+        }
+
+        $data = $builder->get()->getRowArray();
+        return $data ? new TemplateEntity($data) : null;
+    }
+
+    /**
+     * 根據使用者 ID 取得所有模板
+     */
+    public function findByUserId(int $userId): array
     {
         $data = $this->db->table($this->table)
-            ->where('id', $id)
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'DESC')
             ->get()
-            ->getRowArray();
-        return $data ? new TemplateEntity($data) : null;
+            ->getResultArray();
+
+        return array_map(fn($row) => new TemplateEntity($row), $data);
     }
 
     /**
@@ -44,6 +61,7 @@ class TemplateRepository extends BaseRepository
         $now = date('Y-m-d H:i:s');
 
         $templateData = [
+            'user_id' => $data['userId'],
             'name' => $data['name'],
             'title' => $data['title'],
             'content' => $data['content'],
@@ -62,7 +80,7 @@ class TemplateRepository extends BaseRepository
     /**
      * 更新模板
      */
-    public function update(int $id, array $data): ?TemplateEntity
+    public function update(int $id, array $data, ?int $userId = null): ?TemplateEntity
     {
         $updateData = ['updated_at' => date('Y-m-d H:i:s')];
 
@@ -82,10 +100,39 @@ class TemplateRepository extends BaseRepository
             $updateData['variables'] = json_encode($data['variables']);
         }
 
-        $this->db->table($this->table)
-            ->where('id', $id)
-            ->update($updateData);
+        $builder = $this->db->table($this->table)->where('id', $id);
 
-        return $this->find($id);
+        if ($userId !== null) {
+            $builder->where('user_id', $userId);
+        }
+
+        $builder->update($updateData);
+
+        return $this->find($id, $userId);
+    }
+
+    /**
+     * 刪除模板
+     */
+    public function deleteByUserId(int $id, int $userId): bool
+    {
+        return $this->db->table($this->table)
+            ->where('id', $id)
+            ->where('user_id', $userId)
+            ->delete();
+    }
+
+    /**
+     * 根據使用者 ID 取得統計
+     */
+    public function getStatsByUserId(int $userId): array
+    {
+        $total = $this->db->table($this->table)
+            ->where('user_id', $userId)
+            ->countAllResults();
+
+        return [
+            'total' => $total,
+        ];
     }
 }

@@ -5,11 +5,11 @@
 | 資料表名稱 | 說明 | 主要欄位 |
 |------------|------|----------|
 | `users` | 使用者帳號 | id (AUTO_INCREMENT), username, email, password, role |
-| `channels` | 通知渠道 | id (AUTO_INCREMENT), type, name, enabled, config |
-| `messages` | 通知訊息 | id (AUTO_INCREMENT), title, content, status, channel_ids |
+| `channels` | 通知渠道 | id (AUTO_INCREMENT), **user_id**, type, name, enabled, config |
+| `messages` | 通知訊息 | id (AUTO_INCREMENT), user_id, title, content, status, channel_ids |
 | `message_results` | 訊息發送結果 | id (AUTO_INCREMENT), message_id, channel_id, success |
-| `templates` | 訊息模板 | id (AUTO_INCREMENT), name, title, content, variables |
-| `api_keys` | API 金鑰 | id (AUTO_INCREMENT), name, key, permissions, rate_limit |
+| `templates` | 訊息模板 | id (AUTO_INCREMENT), **user_id**, name, title, content, variables |
+| `api_keys` | API 金鑰 | id (AUTO_INCREMENT), user_id, name, key, permissions, rate_limit |
 | `api_usage_logs` | API 使用紀錄 | id (AUTO_INCREMENT), api_key_id, endpoint, method, status_code |
 
 ---
@@ -38,9 +38,12 @@ CREATE TABLE `users` (
 
 ### channels 通知渠道
 
+> ℹ️ 每個使用者擁有自己的渠道配置
+
 ```sql
 CREATE TABLE `channels` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
   `type` ENUM('line', 'telegram') NOT NULL,
   `name` VARCHAR(100) NOT NULL,
   `enabled` TINYINT(1) DEFAULT 1,
@@ -48,8 +51,10 @@ CREATE TABLE `channels` (
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  KEY `idx_channels_user_id` (`user_id`),
   KEY `idx_channels_type` (`type`),
-  KEY `idx_channels_enabled` (`enabled`)
+  KEY `idx_channels_enabled` (`enabled`),
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 );
 ```
 
@@ -127,9 +132,12 @@ CREATE TABLE `message_results` (
 
 ### templates 訊息模板
 
+> ℹ️ 每個使用者擁有自己的模板
+
 ```sql
 CREATE TABLE `templates` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
   `name` VARCHAR(100) NOT NULL,
   `title` VARCHAR(255) NOT NULL,
   `content` TEXT NOT NULL,
@@ -137,7 +145,9 @@ CREATE TABLE `templates` (
   `variables` JSON DEFAULT NULL,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_templates_user_id` (`user_id`),
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 );
 ```
 
@@ -232,72 +242,91 @@ CREATE TABLE `api_usage_logs` (
 ## ER 圖
 
 ```
-┌──────────────┐         ┌──────────────┐
-│    users     │         │   channels   │
-├──────────────┤         ├──────────────┤
-│ id (PK, AI)  │         │ id (PK, AI)  │
-│ username     │         │ type         │
-│ email (UK)   │         │ name         │
-│ password     │         │ enabled      │
-│ role         │         │ config (JSON)│
-│ status       │         │ created_at   │
-│ avatar       │         │ updated_at   │
-│ created_at   │         └──────┬───────┘
-│ updated_at   │                │
-│ last_login_at│                │
-└──────┬───────┘                │
-       │                        │
-       │                        │
-       ▼                        ▼
+┌──────────────────┐
+│      users       │
+├──────────────────┤
+│ id (PK, AI)      │
+│ username         │
+│ email (UK)       │
+│ password         │
+│ role             │
+│ status           │
+│ avatar           │
+│ created_at       │
+│ updated_at       │
+│ last_login_at    │
+└────────┬─────────┘
+         │
+         │ 1:N
+         ├─────────────────────────────────────┐
+         │                                     │
+         ▼                                     ▼
+┌──────────────────┐                  ┌──────────────────┐
+│    channels      │                  │    templates     │
+├──────────────────┤                  ├──────────────────┤
+│ id (PK, AI)      │                  │ id (PK, AI)      │
+│ user_id (FK)─────┼──► users.id      │ user_id (FK)─────┼──► users.id
+│ type             │                  │ name             │
+│ name             │                  │ title            │
+│ enabled          │                  │ content          │
+│ config (JSON)    │                  │ channel_types    │
+│ created_at       │                  │ variables        │
+│ updated_at       │                  │ created_at       │
+└────────┬─────────┘                  │ updated_at       │
+         │                            └──────────────────┘
+         │
+         │ 1:N
+         ▼
 ┌──────────────────┐    ┌──────────────────┐
 │     messages     │    │ message_results  │
 ├──────────────────┤    ├──────────────────┤
 │ id (PK, AI)      │◄───┤ message_id (FK)  │
-│ user_id (FK)     │    │ channel_id (FK)──┼────►
-│ title            │    │ success          │
-│ content          │    │ error            │
-│ status           │    │ sent_at          │
-│ channel_ids(JSON)│    └──────────────────┘
-│ scheduled_at     │
+│ user_id (FK)─────┼──► users.id          │
+│ title            │    │ channel_id (FK)──┼────► channels.id
+│ content          │    │ success          │
+│ status           │    │ error            │
+│ channel_ids(JSON)│    │ sent_at          │
+│ scheduled_at     │    └──────────────────┘
 │ sent_at          │
 │ created_at       │
 └──────────────────┘
 
-┌──────────────┐    ┌──────────────────┐
-│  templates   │    │    api_keys      │
-├──────────────┤    ├──────────────────┤
-│ id (PK, AI)  │    │ id (PK, AI)      │
-│ name         │    │ user_id (FK)─────┼──► users.id
-│ title        │    │ name             │
-│ content      │    │ key              │
-│ channel_types│    │ prefix           │
-│ variables    │    │ permissions(JSON)│
-│ created_at   │    │ rate_limit       │
-│ updated_at   │    │ usage_count      │
-└──────────────┘    │ enabled          │
-                    │ expires_at       │
-                    │ last_used_at     │
-                    │ created_at       │
-                    │ updated_at       │
-                    └────────┬─────────┘
-                             │
-                             ▼
-                    ┌──────────────────┐
-                    │ api_usage_logs   │
-                    ├──────────────────┤
-                    │ id (PK, AI)      │
-                    │ api_key_id (FK)  │
-                    │ endpoint         │
-                    │ method           │
-                    │ status_code      │
-                    │ success          │
-                    │ response_time    │
-                    │ ip               │
-                    │ user_agent       │
-                    │ request_body     │
-                    │ error_message    │
-                    │ created_at       │
-                    └──────────────────┘
+┌──────────────────┐
+│    api_keys      │
+├──────────────────┤
+│ id (PK, AI)      │
+│ user_id (FK)─────┼──► users.id
+│ name             │
+│ key              │
+│ prefix           │
+│ permissions(JSON)│
+│ rate_limit       │
+│ usage_count      │
+│ enabled          │
+│ expires_at       │
+│ last_used_at     │
+│ created_at       │
+│ updated_at       │
+└────────┬─────────┘
+         │
+         │ 1:N
+         ▼
+┌──────────────────┐
+│ api_usage_logs   │
+├──────────────────┤
+│ id (PK, AI)      │
+│ api_key_id (FK)  │
+│ endpoint         │
+│ method           │
+│ status_code      │
+│ success          │
+│ response_time    │
+│ ip               │
+│ user_agent       │
+│ request_body     │
+│ error_message    │
+│ created_at       │
+└──────────────────┘
 ```
 
 > **PK:** Primary Key, **AI:** AUTO_INCREMENT, **FK:** Foreign Key, **UK:** Unique Key

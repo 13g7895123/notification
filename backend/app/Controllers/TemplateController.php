@@ -2,33 +2,35 @@
 
 namespace App\Controllers;
 
+use App\Repositories\TemplateRepository;
+
 /**
  * TemplateController - 訊息模板 API
  */
 class TemplateController extends BaseController
 {
+    private TemplateRepository $templateRepository;
+
+    public function __construct()
+    {
+        $this->templateRepository = new TemplateRepository();
+    }
+
     /**
      * GET /api/templates
-     * 取得模板列表
+     * 取得當前使用者的模板列表
      */
     public function index()
     {
-        $templates = $this->db->table('templates')
-            ->orderBy('created_at', 'DESC')
-            ->get()
-            ->getResultArray();
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $templates = $this->templateRepository->findByUserId((int) $user['id']);
 
         $formattedTemplates = array_map(function ($template) {
-            return [
-                'id' => $template['id'],
-                'name' => $template['name'],
-                'title' => $template['title'],
-                'content' => $template['content'],
-                'channelTypes' => json_decode($template['channel_types'], true),
-                'variables' => json_decode($template['variables'], true),
-                'createdAt' => $template['created_at'],
-                'updatedAt' => $template['updated_at'],
-            ];
+            return $template->toArray();
         }, $templates);
 
         return $this->successResponse($formattedTemplates);
@@ -40,6 +42,11 @@ class TemplateController extends BaseController
      */
     public function create()
     {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
         $json = $this->request->getJSON(true);
 
         // 驗證必要欄位
@@ -47,31 +54,10 @@ class TemplateController extends BaseController
             return $this->errorResponse('VALIDATION_ERROR', '缺少必要欄位 (name, title, content)', 400);
         }
 
-        $templateId = $this->generateUuid();
-        $now = date('Y-m-d H:i:s');
+        $json['userId'] = (int) $user['id'];
+        $template = $this->templateRepository->create($json);
 
-        $templateData = [
-            'id' => $templateId,
-            'name' => $json['name'],
-            'title' => $json['title'],
-            'content' => $json['content'],
-            'channel_types' => json_encode($json['channelTypes'] ?? ['line', 'telegram']),
-            'variables' => json_encode($json['variables'] ?? []),
-            'created_at' => $now,
-            'updated_at' => $now,
-        ];
-
-        $this->db->table('templates')->insert($templateData);
-
-        return $this->successResponse([
-            'id' => $templateId,
-            'name' => $templateData['name'],
-            'title' => $templateData['title'],
-            'content' => $templateData['content'],
-            'channelTypes' => $json['channelTypes'] ?? ['line', 'telegram'],
-            'variables' => $json['variables'] ?? [],
-            'createdAt' => $now,
-        ], null, 201);
+        return $this->successResponse($template->toArray(), null, 201);
     }
 
     /**
@@ -84,51 +70,21 @@ class TemplateController extends BaseController
             return $this->errorResponse('VALIDATION_ERROR', '缺少模板 ID', 400);
         }
 
-        $template = $this->db->table('templates')->where('id', $id)->get()->getRow();
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $template = $this->templateRepository->find((int) $id, (int) $user['id']);
 
         if (!$template) {
             return $this->errorResponse('NOT_FOUND', '模板不存在', 404);
         }
 
         $json = $this->request->getJSON(true);
+        $updatedTemplate = $this->templateRepository->update((int) $id, $json, (int) $user['id']);
 
-        $updateData = [];
-
-        if (isset($json['name'])) {
-            $updateData['name'] = $json['name'];
-        }
-        if (isset($json['title'])) {
-            $updateData['title'] = $json['title'];
-        }
-        if (isset($json['content'])) {
-            $updateData['content'] = $json['content'];
-        }
-        if (isset($json['channelTypes'])) {
-            $updateData['channel_types'] = json_encode($json['channelTypes']);
-        }
-        if (isset($json['variables'])) {
-            $updateData['variables'] = json_encode($json['variables']);
-        }
-
-        if (!empty($updateData)) {
-            $updateData['updated_at'] = date('Y-m-d H:i:s');
-            $this->db->table('templates')->where('id', $id)->update($updateData);
-        }
-
-        $updatedTemplate = $this->db->table('templates')
-            ->where('id', $id)
-            ->get()
-            ->getRowArray();
-
-        return $this->successResponse([
-            'id' => $updatedTemplate['id'],
-            'name' => $updatedTemplate['name'],
-            'title' => $updatedTemplate['title'],
-            'content' => $updatedTemplate['content'],
-            'channelTypes' => json_decode($updatedTemplate['channel_types'], true),
-            'variables' => json_decode($updatedTemplate['variables'], true),
-            'updatedAt' => $updatedTemplate['updated_at'],
-        ]);
+        return $this->successResponse($updatedTemplate->toArray());
     }
 
     /**
@@ -141,13 +97,18 @@ class TemplateController extends BaseController
             return $this->errorResponse('VALIDATION_ERROR', '缺少模板 ID', 400);
         }
 
-        $template = $this->db->table('templates')->where('id', $id)->get()->getRow();
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $template = $this->templateRepository->find((int) $id, (int) $user['id']);
 
         if (!$template) {
             return $this->errorResponse('NOT_FOUND', '模板不存在', 404);
         }
 
-        $this->db->table('templates')->where('id', $id)->delete();
+        $this->templateRepository->deleteByUserId((int) $id, (int) $user['id']);
 
         return $this->successResponse(null, '模板已刪除');
     }

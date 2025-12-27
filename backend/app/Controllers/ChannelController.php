@@ -18,20 +18,32 @@ class ChannelController extends BaseController
 
     /**
      * GET /api/channels
+     * 取得當前使用者的所有渠道
      */
     public function index()
     {
-        $channels = $this->channelService->getChannels();
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $channels = $this->channelService->getChannelsByUserId((int) $user['id']);
         return $this->successResponse($channels);
     }
 
     /**
      * POST /api/channels
+     * 建立渠道
      */
     public function create()
     {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
         $json = $this->request->getJSON(true);
-        $result = $this->channelService->createChannel($json);
+        $result = $this->channelService->createChannel($json, (int) $user['id']);
 
         if (!$result['success']) {
             return $this->errorResponse($result['error'], $result['message'], 400);
@@ -42,6 +54,7 @@ class ChannelController extends BaseController
 
     /**
      * PUT /api/channels/:id
+     * 更新渠道
      */
     public function update($id = null)
     {
@@ -49,8 +62,13 @@ class ChannelController extends BaseController
             return $this->errorResponse('VALIDATION_ERROR', '缺少渠道 ID', 400);
         }
 
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
         $json = $this->request->getJSON(true);
-        $result = $this->channelService->updateChannel($id, $json);
+        $result = $this->channelService->updateChannel((int) $id, $json, (int) $user['id']);
 
         if (!$result['success']) {
             return $this->errorResponse($result['error'], $result['message'], 404);
@@ -61,6 +79,7 @@ class ChannelController extends BaseController
 
     /**
      * DELETE /api/channels/:id
+     * 刪除渠道
      */
     public function delete($id = null)
     {
@@ -68,7 +87,12 @@ class ChannelController extends BaseController
             return $this->errorResponse('VALIDATION_ERROR', '缺少渠道 ID', 400);
         }
 
-        $result = $this->channelService->deleteChannel($id);
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $result = $this->channelService->deleteChannel((int) $id, (int) $user['id']);
 
         if (!$result['success']) {
             return $this->errorResponse($result['error'], $result['message'], 404);
@@ -79,6 +103,7 @@ class ChannelController extends BaseController
 
     /**
      * PUT /api/channels/:id/toggle
+     * 切換渠道啟用狀態
      */
     public function toggle($id = null)
     {
@@ -86,7 +111,12 @@ class ChannelController extends BaseController
             return $this->errorResponse('VALIDATION_ERROR', '缺少渠道 ID', 400);
         }
 
-        $result = $this->channelService->toggleChannel($id);
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $result = $this->channelService->toggleChannel((int) $id, (int) $user['id']);
 
         if (!$result['success']) {
             return $this->errorResponse($result['error'], $result['message'], 404);
@@ -97,6 +127,7 @@ class ChannelController extends BaseController
 
     /**
      * POST /api/channels/:id/test
+     * 測試渠道
      */
     public function test($id = null)
     {
@@ -104,7 +135,12 @@ class ChannelController extends BaseController
             return $this->errorResponse('VALIDATION_ERROR', '缺少渠道 ID', 400);
         }
 
-        $result = $this->channelService->testChannel($id);
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $result = $this->channelService->testChannel((int) $id, (int) $user['id']);
 
         if (!$result['success']) {
             $httpCode = $result['error'] === 'NOT_FOUND' ? 404 : 400;

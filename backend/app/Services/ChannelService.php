@@ -18,7 +18,16 @@ class ChannelService
     }
 
     /**
-     * 取得所有渠道
+     * 取得使用者的所有渠道
+     */
+    public function getChannelsByUserId(int $userId): array
+    {
+        $channels = $this->channelRepository->findByUserId($userId);
+        return array_map(fn(ChannelEntity $c) => $c->toArray(), $channels);
+    }
+
+    /**
+     * 取得所有渠道（全域，供管理員使用）
      */
     public function getChannels(): array
     {
@@ -29,15 +38,15 @@ class ChannelService
     /**
      * 取得單一渠道
      */
-    public function getChannel(string $id): ?ChannelEntity
+    public function getChannel(int $id, ?int $userId = null): ?ChannelEntity
     {
-        return $this->channelRepository->find($id);
+        return $this->channelRepository->find($id, $userId);
     }
 
     /**
      * 建立渠道
      */
-    public function createChannel(array $data): array
+    public function createChannel(array $data, int $userId): array
     {
         // 驗證必要欄位
         if (empty($data['type']) || empty($data['name']) || empty($data['config'])) {
@@ -57,6 +66,7 @@ class ChannelService
             ];
         }
 
+        $data['userId'] = $userId;
         $channel = $this->channelRepository->create($data);
 
         return [
@@ -68,9 +78,9 @@ class ChannelService
     /**
      * 更新渠道
      */
-    public function updateChannel(string $id, array $data): array
+    public function updateChannel(int $id, array $data, int $userId): array
     {
-        $channel = $this->channelRepository->find($id);
+        $channel = $this->channelRepository->find($id, $userId);
 
         if (!$channel) {
             return [
@@ -80,7 +90,7 @@ class ChannelService
             ];
         }
 
-        $updatedChannel = $this->channelRepository->update($id, $data);
+        $updatedChannel = $this->channelRepository->update($id, $data, $userId);
 
         return [
             'success' => true,
@@ -91,9 +101,9 @@ class ChannelService
     /**
      * 刪除渠道
      */
-    public function deleteChannel(string $id): array
+    public function deleteChannel(int $id, int $userId): array
     {
-        $channel = $this->channelRepository->find($id);
+        $channel = $this->channelRepository->find($id, $userId);
 
         if (!$channel) {
             return [
@@ -103,7 +113,7 @@ class ChannelService
             ];
         }
 
-        $this->channelRepository->delete($id);
+        $this->channelRepository->deleteByUserId($id, $userId);
 
         return [
             'success' => true,
@@ -114,9 +124,9 @@ class ChannelService
     /**
      * 切換渠道啟用狀態
      */
-    public function toggleChannel(string $id): array
+    public function toggleChannel(int $id, int $userId): array
     {
-        $channel = $this->channelRepository->toggle($id);
+        $channel = $this->channelRepository->toggle($id, $userId);
 
         if (!$channel) {
             return [
@@ -135,9 +145,9 @@ class ChannelService
     /**
      * 測試渠道
      */
-    public function testChannel(string $id): array
+    public function testChannel(int $id, int $userId): array
     {
-        $channel = $this->channelRepository->find($id);
+        $channel = $this->channelRepository->find($id, $userId);
 
         if (!$channel) {
             return [
@@ -242,7 +252,15 @@ class ChannelService
     }
 
     /**
-     * 取得渠道統計
+     * 取得使用者的渠道統計
+     */
+    public function getStatsByUserId(int $userId): array
+    {
+        return $this->channelRepository->getStatsByUserId($userId);
+    }
+
+    /**
+     * 取得渠道統計（全域）
      */
     public function getStats(): array
     {

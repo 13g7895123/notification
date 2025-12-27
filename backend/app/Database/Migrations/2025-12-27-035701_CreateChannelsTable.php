@@ -17,6 +17,10 @@ class CreateChannelsTable extends Migration
                 'unsigned'       => true,
                 'auto_increment' => true,
             ],
+            'user_id' => [
+                'type'     => 'INT',
+                'unsigned' => true,
+            ],
             'type' => [
                 'type'       => 'ENUM',
                 'constraint' => ['line', 'telegram'],
@@ -44,8 +48,10 @@ class CreateChannelsTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
+        $this->forge->addKey('user_id');
         $this->forge->addKey('type');
         $this->forge->addKey('enabled');
+        $this->forge->addForeignKey('user_id', 'users', 'id', 'CASCADE', 'CASCADE');
 
         $this->forge->createTable('channels', false, [
             'ENGINE' => 'InnoDB',
