@@ -102,6 +102,27 @@ class StatsController extends BaseController
             ];
         }, $trendData);
 
+        // 依渠道統計
+        $byChannel = $this->db->table('message_results mr')
+            ->select('c.id as channelId, c.name as channelName, c.type as channelType, COUNT(*) as sent, SUM(mr.success) as success, SUM(CASE WHEN mr.success = 0 THEN 1 ELSE 0 END) as failed')
+            ->join('channels c', 'c.id = mr.channel_id')
+            ->join('messages m', 'm.id = mr.message_id')
+            ->where('m.user_id', $userId)
+            ->groupBy('c.id')
+            ->get()
+            ->getResultArray();
+
+        $formattedByChannel = array_map(function ($item) {
+            return [
+                'channelId' => $item['channelId'],
+                'channelName' => $item['channelName'],
+                'channelType' => $item['channelType'],
+                'sent' => (int) $item['sent'],
+                'success' => (int) $item['success'],
+                'failed' => (int) $item['failed'],
+            ];
+        }, $byChannel);
+
         return $this->successResponse([
             'totalSent' => $totalSent,
             'totalSuccess' => $totalSuccess,
@@ -112,6 +133,7 @@ class StatsController extends BaseController
             'recentMessages' => $formattedMessages,
             'recentLogs' => $formattedLogs,
             'trendData' => $formattedTrend,
+            'byChannel' => $formattedByChannel,
         ]);
     }
 }

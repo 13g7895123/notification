@@ -15,7 +15,16 @@ import { zhTW } from 'date-fns/locale';
 import './Dashboard.css';
 
 export function Dashboard() {
-    const { stats, messages, channels, logs } = useNotification();
+    const { stats, messages, channels, logs, isLoading } = useNotification();
+
+    if (isLoading || !stats) {
+        return (
+            <div className="dashboard-loading">
+                <div className="loader"></div>
+                <p>正在載入統計數據...</p>
+            </div>
+        );
+    }
 
     const recentMessages = messages.slice(0, 5);
     const recentLogs = logs.slice(0, 6);
@@ -208,9 +217,9 @@ export function Dashboard() {
                                     </span>
                                     <span className="recent-item-time">
                                         {msg.sentAt
-                                            ? format(msg.sentAt, 'MM/dd HH:mm', { locale: zhTW })
+                                            ? format(new Date(msg.sentAt), 'MM/dd HH:mm', { locale: zhTW })
                                             : msg.scheduledAt
-                                                ? `預定 ${format(msg.scheduledAt, 'MM/dd HH:mm', { locale: zhTW })}`
+                                                ? `預定 ${format(new Date(msg.scheduledAt), 'MM/dd HH:mm', { locale: zhTW })}`
                                                 : '-'
                                         }
                                     </span>
@@ -247,7 +256,7 @@ export function Dashboard() {
                                 </div>
                                 <div className="log-meta">
                                     <span className="log-time">
-                                        {format(log.sentAt, 'HH:mm:ss')}
+                                        {format(new Date(log.sentAt), 'HH:mm:ss')}
                                     </span>
                                     {log.responseTime && (
                                         <span className="log-response-time">{log.responseTime}ms</span>

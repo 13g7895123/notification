@@ -1,13 +1,13 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User } from '../types';
+import { api } from '../utils/api';
 
-// 擴展 User 類型，加入密碼和狀態
+// 擴展 User 類型，加入密碼和狀態 (管理員使用)
 export interface UserWithAuth extends User {
-    password: string;
     status: 'active' | 'inactive';
-    createdAt: Date;
-    lastLoginAt?: Date;
+    createdAt: string;
+    lastLoginAt?: string;
 }
 
 interface AuthContextType {
@@ -17,194 +17,168 @@ interface AuthContextType {
     isAdmin: boolean;
     login: (email: string, password: string) => Promise<boolean>;
     logout: () => void;
-    updateProfile: (updates: Partial<User>) => void;
+    updateProfile: (updates: Partial<User>) => Promise<boolean>;
 
     // 使用者管理
     users: UserWithAuth[];
-    addUser: (user: Omit<UserWithAuth, 'id' | 'createdAt'>) => void;
-    updateUser: (id: string, updates: Partial<UserWithAuth>) => void;
-    deleteUser: (id: string) => void;
-    toggleUserStatus: (id: string) => void;
-    resetUserPassword: (id: string, newPassword: string) => void;
+    fetchUsers: (params?: any) => Promise<void>;
+    addUser: (user: any) => Promise<boolean>;
+    updateUser: (id: string, updates: any) => Promise<boolean>;
+    deleteUser: (id: string) => Promise<boolean>;
+    toggleUserStatus: (id: string, status: 'active' | 'inactive') => Promise<boolean>;
+    resetUserPassword: (id: string, newPassword: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// 初始模擬用戶資料
-const initialUsers: UserWithAuth[] = [
-    {
-        id: '1',
-        username: 'Admin',
-        email: 'admin@notifyhub.com',
-        password: 'admin123',
-        role: 'admin',
-        status: 'active',
-        createdAt: new Date('2024-01-01'),
-        lastLoginAt: new Date('2024-12-25T10:30:00')
-    },
-    {
-        id: '2',
-        username: 'User',
-        email: 'user@notifyhub.com',
-        password: 'user123',
-        role: 'user',
-        status: 'active',
-        createdAt: new Date('2024-03-15'),
-        lastLoginAt: new Date('2024-12-24T16:45:00')
-    },
-    {
-        id: '3',
-        username: '張小明',
-        email: 'xiaoming@example.com',
-        password: 'password123',
-        role: 'user',
-        status: 'active',
-        createdAt: new Date('2024-06-20'),
-        lastLoginAt: new Date('2024-12-20T09:00:00')
-    },
-    {
-        id: '4',
-        username: '李大華',
-        email: 'dahua@example.com',
-        password: 'password123',
-        role: 'user',
-        status: 'inactive',
-        createdAt: new Date('2024-08-10')
-    },
-    {
-        id: '5',
-        username: 'DevOps Team',
-        email: 'devops@notifyhub.com',
-        password: 'devops123',
-        role: 'admin',
-        status: 'active',
-        createdAt: new Date('2024-02-01'),
-        lastLoginAt: new Date('2024-12-25T08:00:00')
-    }
-];
-
 const STORAGE_KEY = 'notifyhub_auth';
-const USERS_STORAGE_KEY = 'notifyhub_users';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [users, setUsers] = useState<UserWithAuth[]>(() => {
-        const stored = localStorage.getItem(USERS_STORAGE_KEY);
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                return parsed.map((u: UserWithAuth) => ({
-                    ...u,
-                    createdAt: new Date(u.createdAt),
-                    lastLoginAt: u.lastLoginAt ? new Date(u.lastLoginAt) : undefined
-                }));
-            } catch {
-                return initialUsers;
-            }
-        }
-        return initialUsers;
-    });
+    const [users, setUsers] = useState<UserWithAuth[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // 儲存使用者列表到 localStorage
-    useEffect(() => {
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-    }, [users]);
-
-    // 初始化時從 localStorage 恢復登入狀態
+    // 初始化時從 localStorage 恢復登入狀態，並向後端確認 Token 有效性
     useEffect(() => {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             try {
                 const parsed = JSON.parse(stored);
-                setUser(parsed);
+                // 先設定本地快取的用戶資訊
+                setUser(parsed.user);
+
+                // 向後端請求最新的用戶資料以確認 Token 有效
+                api.get('/auth/me')
+                    .then(userData => {
+                        setUser(userData);
+                        // 更新快取
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...parsed, user: userData }));
+                    })
+                    .catch(() => {
+                        // Token 無效，清空狀態
+                        setUser(null);
+                        localStorage.removeItem(STORAGE_KEY);
+                    })
+                    .finally(() => {
+                        setIsLoading(false);
+                    });
             } catch {
                 localStorage.removeItem(STORAGE_KEY);
+                setIsLoading(false);
             }
+        } else {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }, []);
 
     const login = useCallback(async (email: string, password: string): Promise<boolean> => {
         setIsLoading(true);
-
-        // 模擬 API 延遲
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const found = users.find(u => u.email === email && u.password === password && u.status === 'active');
-
-        if (found) {
-            const userData: User = {
-                id: found.id,
-                username: found.username,
-                email: found.email,
-                role: found.role,
-                avatar: found.avatar
-            };
-            setUser(userData);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
-
-            // 更新最後登入時間
-            setUsers(prev => prev.map(u =>
-                u.id === found.id ? { ...u, lastLoginAt: new Date() } : u
-            ));
-
+        try {
+            const data = await api.post<{ user: User; token: string }>('/auth/login', { email, password });
+            setUser(data.user);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             setIsLoading(false);
             return true;
+        } catch (error) {
+            console.error('Login failed', error);
+            setIsLoading(false);
+            return false;
         }
-
-        setIsLoading(false);
-        return false;
-    }, [users]);
-
-    const logout = useCallback(() => {
-        setUser(null);
-        localStorage.removeItem(STORAGE_KEY);
     }, []);
 
-    const updateProfile = useCallback((updates: Partial<User>) => {
-        setUser(prev => {
-            if (!prev) return null;
-            const updated = { ...prev, ...updates };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-            return updated;
-        });
+    const logout = useCallback(async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (error) {
+            console.error('Logout error', error);
+        } finally {
+            setUser(null);
+            localStorage.removeItem(STORAGE_KEY);
+        }
+    }, []);
+
+    const updateProfile = useCallback(async (updates: Partial<User>) => {
+        try {
+            const updatedUser = await api.put<User>('/auth/profile', updates);
+            setUser(updatedUser);
+            // 更新 localStorage 中的 user 資訊，保留 token
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...parsed, user: updatedUser }));
+            }
+            return true;
+        } catch (error) {
+            console.error('Update profile failed', error);
+            return false;
+        }
     }, []);
 
     // 使用者管理功能
-    const addUser = useCallback((userData: Omit<UserWithAuth, 'id' | 'createdAt'>) => {
-        const newUser: UserWithAuth = {
-            ...userData,
-            id: Date.now().toString(),
-            createdAt: new Date()
-        };
-        setUsers(prev => [...prev, newUser]);
+    const fetchUsers = useCallback(async (params?: any) => {
+        try {
+            const data = await api.get('/users', params);
+            // 根據 API.md，返回的是 { users: [], total, page, limit }
+            setUsers(data.users);
+        } catch (error) {
+            console.error('Fetch users failed', error);
+        }
     }, []);
 
-    const updateUser = useCallback((id: string, updates: Partial<UserWithAuth>) => {
-        setUsers(prev => prev.map(u =>
-            u.id === id ? { ...u, ...updates } : u
-        ));
-    }, []);
+    const addUser = useCallback(async (userData: any) => {
+        try {
+            await api.post('/users', userData);
+            await fetchUsers();
+            return true;
+        } catch (error) {
+            console.error('Add user failed', error);
+            return false;
+        }
+    }, [fetchUsers]);
 
-    const deleteUser = useCallback((id: string) => {
-        // 不能刪除自己
-        if (user?.id === id) return;
-        setUsers(prev => prev.filter(u => u.id !== id));
-    }, [user]);
+    const updateUser = useCallback(async (id: string, updates: any) => {
+        try {
+            await api.put(`/users/${id}`, updates);
+            await fetchUsers();
+            return true;
+        } catch (error) {
+            console.error('Update user failed', error);
+            return false;
+        }
+    }, [fetchUsers]);
 
-    const toggleUserStatus = useCallback((id: string) => {
-        // 不能停用自己
-        if (user?.id === id) return;
-        setUsers(prev => prev.map(u =>
-            u.id === id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u
-        ));
-    }, [user]);
+    const deleteUser = useCallback(async (id: string) => {
+        if (user?.id === id) return false;
+        try {
+            await api.delete(`/users/${id}`);
+            await fetchUsers();
+            return true;
+        } catch (error) {
+            console.error('Delete user failed', error);
+            return false;
+        }
+    }, [user, fetchUsers]);
 
-    const resetUserPassword = useCallback((id: string, newPassword: string) => {
-        setUsers(prev => prev.map(u =>
-            u.id === id ? { ...u, password: newPassword } : u
-        ));
+    const toggleUserStatus = useCallback(async (id: string, status: 'active' | 'inactive') => {
+        if (user?.id === id) return false;
+        try {
+            await api.put(`/users/${id}/status`, { status });
+            await fetchUsers();
+            return true;
+        } catch (error) {
+            console.error('Toggle user status failed', error);
+            return false;
+        }
+    }, [user, fetchUsers]);
+
+    const resetUserPassword = useCallback(async (id: string, newPassword: string) => {
+        try {
+            await api.put(`/users/${id}/password`, { newPassword });
+            return true;
+        } catch (error) {
+            console.error('Reset password failed', error);
+            return false;
+        }
     }, []);
 
     return (
@@ -218,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 logout,
                 updateProfile,
                 users,
+                fetchUsers,
                 addUser,
                 updateUser,
                 deleteUser,

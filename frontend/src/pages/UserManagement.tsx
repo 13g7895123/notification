@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
     Users,
@@ -26,13 +26,20 @@ import { toast, confirm } from '../utils/alert';
 import './UserManagement.css';
 
 export function UserManagement() {
-    const { user, isAdmin, users, addUser, updateUser, deleteUser, toggleUserStatus, resetUserPassword } = useAuth();
+    const { user, isAdmin, users, fetchUsers, addUser, updateUser, deleteUser, toggleUserStatus, resetUserPassword } = useAuth();
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState<UserWithAuth | null>(null);
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [showPasswordModal, setShowPasswordModal] = useState<UserWithAuth | null>(null);
+
+    // 初始化獲取使用者資料
+    useEffect(() => {
+        if (isAdmin) {
+            fetchUsers();
+        }
+    }, [isAdmin, fetchUsers]);
 
     // 非管理員無法存取
     if (!isAdmin) {
@@ -81,7 +88,8 @@ export function UserManagement() {
             `${newStatus}使用者`
         );
         if (confirmed) {
-            toggleUserStatus(u.id);
+            const nextStatus = u.status === 'active' ? 'inactive' : 'active';
+            toggleUserStatus(u.id, nextStatus);
             toast.success(`已${newStatus}「${u.username}」`);
         }
     };
@@ -256,11 +264,11 @@ export function UserManagement() {
                                             </button>
                                         </td>
                                         <td className="date-cell">
-                                            {format(u.createdAt, 'yyyy/MM/dd', { locale: zhTW })}
+                                            {format(new Date(u.createdAt), 'yyyy/MM/dd', { locale: zhTW })}
                                         </td>
                                         <td className="date-cell">
                                             {u.lastLoginAt
-                                                ? format(u.lastLoginAt, 'MM/dd HH:mm', { locale: zhTW })
+                                                ? format(new Date(u.lastLoginAt), 'MM/dd HH:mm', { locale: zhTW })
                                                 : '-'
                                             }
                                         </td>
@@ -346,7 +354,7 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const data: Partial<UserWithAuth> = {
+        const data: any = {
             username,
             email,
             role,

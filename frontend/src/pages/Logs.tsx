@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     History,
     Search,
@@ -14,7 +14,11 @@ import { zhTW } from 'date-fns/locale';
 import './Logs.css';
 
 export function Logs() {
-    const { logs } = useNotification();
+    const { logs, fetchStats } = useNotification();
+
+    useEffect(() => {
+        fetchStats();
+    }, [fetchStats]);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed'>('all');
     const [channelFilter, setChannelFilter] = useState<'all' | 'line' | 'telegram'>('all');
@@ -33,7 +37,7 @@ export function Logs() {
 
     const handleExport = () => {
         const data = filteredLogs.map(log => ({
-            時間: format(log.sentAt, 'yyyy-MM-dd HH:mm:ss'),
+            時間: format(new Date(log.sentAt), 'yyyy-MM-dd HH:mm:ss'),
             渠道類型: log.channelType.toUpperCase(),
             渠道名稱: log.channelName,
             標題: log.title,
@@ -189,7 +193,7 @@ export function Logs() {
                                     style={{ animationDelay: `${index * 20}ms` }}
                                 >
                                     <td className="font-mono">
-                                        {format(log.sentAt, 'MM/dd HH:mm:ss', { locale: zhTW })}
+                                        {format(new Date(log.sentAt), 'MM/dd HH:mm:ss', { locale: zhTW })}
                                     </td>
                                     <td>
                                         <div className="channel-cell">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Activity,
     Search,
@@ -18,11 +18,24 @@ import { zhTW } from 'date-fns/locale';
 import './ApiUsage.css';
 
 export function ApiUsage() {
-    const { apiUsageLogs, apiStats, apiKeys } = useNotification();
+    const { apiUsageLogs, apiStats, apiKeys, fetchApiUsage, isLoading } = useNotification();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed'>('all');
     const [keyFilter, setKeyFilter] = useState<string>('all');
     const [selectedLog, setSelectedLog] = useState<ApiUsageLog | null>(null);
+
+    useEffect(() => {
+        fetchApiUsage();
+    }, [fetchApiUsage]);
+
+    if (isLoading || !apiStats) {
+        return (
+            <div className="dashboard-loading">
+                <div className="loader"></div>
+                <p>正在載入 API 使用紀錄...</p>
+            </div>
+        );
+    }
 
     const filteredLogs = apiUsageLogs.filter(log => {
         const matchesSearch = log.endpoint.toLowerCase().includes(search.toLowerCase()) ||
@@ -233,7 +246,7 @@ export function ApiUsage() {
                             {filteredLogs.map((log, index) => (
                                 <tr key={log.id} className="animate-slide-up" style={{ animationDelay: `${index * 20}ms` }}>
                                     <td className="font-mono">
-                                        {format(log.createdAt, 'MM/dd HH:mm:ss', { locale: zhTW })}
+                                        {format(new Date(log.createdAt), 'MM/dd HH:mm:ss', { locale: zhTW })}
                                     </td>
                                     <td>
                                         <span className="key-name-cell">{log.apiKeyName}</span>
@@ -296,7 +309,7 @@ function LogDetailModal({ log, onClose }: { log: ApiUsageLog; onClose: () => voi
                     <div className="detail-row">
                         <span className="detail-label">時間</span>
                         <span className="detail-value font-mono">
-                            {format(log.createdAt, 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}
+                            {format(new Date(log.createdAt), 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}
                         </span>
                     </div>
 

@@ -157,9 +157,9 @@ export function Channels() {
 
                             <div className="channel-card-footer">
                                 <div className="channel-card-meta">
-                                    <span>建立於 {format(channel.createdAt, 'yyyy/MM/dd', { locale: zhTW })}</span>
+                                    <span>建立於 {format(new Date(channel.createdAt), 'yyyy/MM/dd', { locale: zhTW })}</span>
                                     <span>•</span>
-                                    <span>更新於 {format(channel.updatedAt, 'yyyy/MM/dd', { locale: zhTW })}</span>
+                                    <span>更新於 {format(new Date(channel.updatedAt), 'yyyy/MM/dd', { locale: zhTW })}</span>
                                 </div>
                                 <div className="channel-card-actions">
                                     <button
@@ -227,10 +227,10 @@ function LineConfigDisplay({ config }: { config: LineConfig }) {
                 <span className="config-label">Channel Secret</span>
                 <span className="config-value font-mono">{maskString(config.channelSecret)}</span>
             </div>
-            {config.userId && (
+            {config.targetId && (
                 <div className="config-item">
-                    <span className="config-label">User ID</span>
-                    <span className="config-value font-mono">{config.userId}</span>
+                    <span className="config-label">Target ID</span>
+                    <span className="config-value font-mono">{config.targetId}</span>
                 </div>
             )}
         </div>
@@ -276,8 +276,8 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
     const [channelSecret, setChannelSecret] = useState(
         channel?.type === 'line' ? (channel.config as LineConfig).channelSecret : ''
     );
-    const [lineUserId, setLineUserId] = useState(
-        channel?.type === 'line' ? (channel.config as LineConfig).userId || '' : ''
+    const [targetId, setTargetId] = useState(
+        channel?.type === 'line' ? (channel.config as LineConfig).targetId || '' : ''
     );
 
     // Telegram config
@@ -295,7 +295,7 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
         e.preventDefault();
 
         const config = type === 'line'
-            ? { channelAccessToken, channelSecret, userId: lineUserId || undefined }
+            ? { channelAccessToken, channelSecret, targetId }
             : { botToken, chatId, parseMode };
 
         onSave({
@@ -385,9 +385,9 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
                                 <input
                                     type="text"
                                     className="input font-mono"
-                                    value={lineUserId}
-                                    onChange={e => setLineUserId(e.target.value)}
-                                    placeholder="接收訊息的 User ID"
+                                    value={targetId}
+                                    onChange={e => setTargetId(e.target.value)}
+                                    placeholder="接收訊息的 User/Group ID"
                                 />
                             </div>
                         </>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Key,
     Plus,
@@ -28,12 +28,16 @@ const PERMISSION_LABELS: Record<ApiPermission, { label: string; description: str
 };
 
 export function ApiKeys() {
-    const { apiKeys, addApiKey, updateApiKey, deleteApiKey, toggleApiKey, regenerateApiKey } = useNotification();
+    const { apiKeys, fetchApiKeys, addApiKey, updateApiKey, deleteApiKey, toggleApiKey, regenerateApiKey } = useNotification();
     const [showModal, setShowModal] = useState(false);
     const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
     const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchApiKeys();
+    }, [fetchApiKeys]);
 
     const toggleKeyVisibility = (id: string) => {
         setVisibleKeys(prev => {
@@ -80,7 +84,7 @@ export function ApiKeys() {
             `重新產生「${apiKey.name}」的金鑰？`
         );
         if (confirmed) {
-            const newKey = regenerateApiKey(apiKey.id);
+            const newKey = await regenerateApiKey(apiKey.id);
             setNewlyCreatedKey(newKey);
             toast.success('金鑰已重新產生');
         }
@@ -180,7 +184,7 @@ export function ApiKeys() {
                                         </span>
                                         {apiKey.expiresAt && (
                                             <span className="expires-badge">
-                                                {new Date(apiKey.expiresAt) < new Date() ? '已過期' : `${format(apiKey.expiresAt, 'yyyy/MM/dd')} 到期`}
+                                                {new Date(apiKey.expiresAt) < new Date() ? '已過期' : `${format(new Date(apiKey.expiresAt), 'yyyy/MM/dd')} 到期`}
                                             </span>
                                         )}
                                     </div>
@@ -246,7 +250,7 @@ export function ApiKeys() {
                                 </div>
                                 <div className="key-stat">
                                     <span className="key-stat-value">
-                                        {apiKey.lastUsedAt ? format(apiKey.lastUsedAt, 'MM/dd HH:mm') : '-'}
+                                        {apiKey.lastUsedAt ? format(new Date(apiKey.lastUsedAt), 'MM/dd HH:mm') : '-'}
                                     </span>
                                     <span className="key-stat-label">最後使用</span>
                                 </div>
@@ -254,7 +258,7 @@ export function ApiKeys() {
 
                             <div className="api-key-footer">
                                 <span className="key-created">
-                                    建立於 {format(apiKey.createdAt, 'yyyy/MM/dd', { locale: zhTW })}
+                                    建立於 {format(new Date(apiKey.createdAt), 'yyyy/MM/dd', { locale: zhTW })}
                                 </span>
                                 <div className="key-footer-actions">
                                     <button
@@ -311,11 +315,11 @@ export function ApiKeys() {
                 <ApiKeyModal
                     apiKey={editingKey}
                     onClose={() => setShowModal(false)}
-                    onSave={(data) => {
+                    onSave={async (data) => {
                         if (editingKey) {
                             updateApiKey(editingKey.id, data);
                         } else {
-                            const newKey = addApiKey(data as Omit<ApiKey, 'id' | 'key' | 'prefix' | 'usageCount' | 'createdAt' | 'updatedAt'>);
+                            const newKey = await addApiKey(data as Omit<ApiKey, 'id' | 'key' | 'prefix' | 'usageCount' | 'createdAt' | 'updatedAt'>);
                             setNewlyCreatedKey(newKey);
                         }
                         setShowModal(false);
@@ -341,7 +345,7 @@ function ApiKeyModal({ apiKey, onClose, onSave }: ApiKeyModalProps) {
     const [enabled, setEnabled] = useState(apiKey?.enabled ?? true);
     const [hasExpiry, setHasExpiry] = useState(!!apiKey?.expiresAt);
     const [expiryDate, setExpiryDate] = useState(
-        apiKey?.expiresAt ? format(apiKey.expiresAt, 'yyyy-MM-dd') : ''
+        apiKey?.expiresAt ? format(new Date(apiKey.expiresAt), 'yyyy-MM-dd') : ''
     );
 
     const togglePermission = (perm: ApiPermission) => {

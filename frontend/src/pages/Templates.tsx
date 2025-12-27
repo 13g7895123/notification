@@ -121,7 +121,7 @@ export function Templates() {
 
                             <div className="template-footer">
                                 <span className="template-date">
-                                    更新於 {format(template.updatedAt, 'yyyy/MM/dd', { locale: zhTW })}
+                                    更新於 {format(new Date(template.updatedAt), 'yyyy/MM/dd', { locale: zhTW })}
                                 </span>
                                 <div className="template-actions">
                                     <button

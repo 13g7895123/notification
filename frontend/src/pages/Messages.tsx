@@ -142,12 +142,12 @@ export function Messages() {
                                         {message.status === 'scheduled' && message.scheduledAt ? (
                                             <>
                                                 <Clock size={14} />
-                                                預定 {format(message.scheduledAt, 'yyyy/MM/dd HH:mm', { locale: zhTW })}
+                                                預定 {format(new Date(message.scheduledAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}
                                             </>
                                         ) : message.sentAt ? (
-                                            <>發送於 {format(message.sentAt, 'yyyy/MM/dd HH:mm', { locale: zhTW })}</>
+                                            <>發送於 {format(new Date(message.sentAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}</>
                                         ) : (
-                                            <>建立於 {format(message.createdAt, 'yyyy/MM/dd HH:mm', { locale: zhTW })}</>
+                                            <>建立於 {format(new Date(message.createdAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}</>
                                         )}
                                     </div>
                                 </div>
@@ -255,18 +255,18 @@ function MessageDetailModal({ message, onClose }: { message: NotificationMessage
                         <div className="detail-times">
                             <div className="time-item">
                                 <span>建立時間</span>
-                                <span>{format(message.createdAt, 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}</span>
+                                <span>{format(new Date(message.createdAt), 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}</span>
                             </div>
                             {message.scheduledAt && (
                                 <div className="time-item">
                                     <span>排程時間</span>
-                                    <span>{format(message.scheduledAt, 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}</span>
+                                    <span>{format(new Date(message.scheduledAt), 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}</span>
                                 </div>
                             )}
                             {message.sentAt && (
                                 <div className="time-item">
                                     <span>發送時間</span>
-                                    <span>{format(message.sentAt, 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}</span>
+                                    <span>{format(new Date(message.sentAt), 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}</span>
                                 </div>
                             )}
                         </div>
