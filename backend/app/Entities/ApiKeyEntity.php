@@ -7,8 +7,8 @@ namespace App\Entities;
  */
 class ApiKeyEntity
 {
-    public string $id;
-    public string $userId;
+    public int $id;
+    public int $userId;
     public string $name;
     public string $key;
     public string $prefix;
@@ -28,8 +28,8 @@ class ApiKeyEntity
 
     public function __construct(array $data = [])
     {
-        $this->id = $data['id'] ?? '';
-        $this->userId = $data['user_id'] ?? '';
+        $this->id = (int) ($data['id'] ?? 0);
+        $this->userId = (int) ($data['user_id'] ?? 0);
         $this->name = $data['name'] ?? '';
         $this->key = $data['key'] ?? '';
         $this->prefix = $data['prefix'] ?? '';

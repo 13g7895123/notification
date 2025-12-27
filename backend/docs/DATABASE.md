@@ -4,13 +4,13 @@
 
 | 資料表名稱 | 說明 | 主要欄位 |
 |------------|------|----------|
-| `users` | 使用者帳號 | id, username, email, password, role |
-| `channels` | 通知渠道 | id, type, name, enabled, config |
-| `messages` | 通知訊息 | id, title, content, status, channel_ids |
-| `message_results` | 訊息發送結果 | message_id, channel_id, success |
-| `templates` | 訊息模板 | id, name, title, content, variables |
-| `api_keys` | API 金鑰 | id, name, key, permissions, rate_limit |
-| `api_usage_logs` | API 使用紀錄 | api_key_id, endpoint, method, status_code |
+| `users` | 使用者帳號 | id (AUTO_INCREMENT), username, email, password, role |
+| `channels` | 通知渠道 | id (AUTO_INCREMENT), type, name, enabled, config |
+| `messages` | 通知訊息 | id (AUTO_INCREMENT), title, content, status, channel_ids |
+| `message_results` | 訊息發送結果 | id (AUTO_INCREMENT), message_id, channel_id, success |
+| `templates` | 訊息模板 | id (AUTO_INCREMENT), name, title, content, variables |
+| `api_keys` | API 金鑰 | id (AUTO_INCREMENT), name, key, permissions, rate_limit |
+| `api_usage_logs` | API 使用紀錄 | id (AUTO_INCREMENT), api_key_id, endpoint, method, status_code |
 
 ---
 
@@ -20,19 +20,18 @@
 
 ```sql
 CREATE TABLE `users` (
-  `id` char(36) NOT NULL,                    -- UUID
-  `username` varchar(100) NOT NULL,          -- 使用者名稱
-  `email` varchar(255) NOT NULL UNIQUE,      -- 電子郵件（唯一）
-  `password` varchar(255) NOT NULL,          -- 密碼（bcrypt 加密）
-  `role` enum('admin','user') DEFAULT 'user',-- 角色
-  `status` enum('active','inactive') DEFAULT 'active', -- 狀態
-  `avatar` varchar(500) DEFAULT NULL,        -- 頭像 URL
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `last_login_at` datetime DEFAULT NULL,     -- 最後登入時間
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `password` VARCHAR(255) NOT NULL,
+  `role` ENUM('admin','user') DEFAULT 'user',
+  `status` ENUM('active','inactive') DEFAULT 'active',
+  `avatar` VARCHAR(500) DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `last_login_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
-  KEY `idx_users_role` (`role`),
   KEY `idx_users_status` (`status`)
 );
 ```
@@ -41,13 +40,13 @@ CREATE TABLE `users` (
 
 ```sql
 CREATE TABLE `channels` (
-  `id` char(36) NOT NULL,                    -- UUID
-  `type` varchar(50) NOT NULL,               -- 類型：line, telegram
-  `name` varchar(100) NOT NULL,              -- 渠道名稱
-  `enabled` tinyint(1) DEFAULT 1,            -- 是否啟用
-  `config` json NOT NULL,                    -- 渠道設定（JSON）
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type` ENUM('line', 'telegram') NOT NULL,
+  `name` VARCHAR(100) NOT NULL,
+  `enabled` TINYINT(1) DEFAULT 1,
+  `config` JSON NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_channels_type` (`type`),
   KEY `idx_channels_enabled` (`enabled`)
@@ -78,20 +77,21 @@ Telegram:
 
 ```sql
 CREATE TABLE `messages` (
-  `id` char(36) NOT NULL,                    -- UUID
-  `user_id` char(36) NOT NULL,               -- 發送者 ID
-  `title` varchar(255) NOT NULL,             -- 訊息標題
-  `content` text NOT NULL,                   -- 訊息內容
-  `status` enum('pending','scheduled','sending','sent','partial','failed') 
-           DEFAULT 'pending',                -- 發送狀態
-  `channel_ids` json NOT NULL,               -- 目標渠道 ID 列表
-  `scheduled_at` datetime DEFAULT NULL,      -- 排程時間
-  `sent_at` datetime DEFAULT NULL,           -- 實際發送時間
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `content` TEXT NOT NULL,
+  `status` ENUM('pending','scheduled','sending','sent','partial','failed') 
+           DEFAULT 'pending',
+  `channel_ids` JSON NOT NULL,
+  `scheduled_at` DATETIME DEFAULT NULL,
+  `sent_at` DATETIME DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_messages_user_id` (`user_id`),
   KEY `idx_messages_status` (`status`),
-  KEY `idx_messages_created_at` (`created_at`)
+  KEY `idx_messages_created_at` (`created_at`),
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 );
 ```
 
@@ -110,17 +110,18 @@ CREATE TABLE `messages` (
 
 ```sql
 CREATE TABLE `message_results` (
-  `id` char(36) NOT NULL,                    -- UUID
-  `message_id` char(36) NOT NULL,            -- 訊息 ID
-  `channel_id` char(36) NOT NULL,            -- 渠道 ID
-  `success` tinyint(1) NOT NULL DEFAULT 0,   -- 是否成功
-  `error` text DEFAULT NULL,                 -- 錯誤訊息
-  `sent_at` datetime DEFAULT CURRENT_TIMESTAMP,-- 發送時間
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `message_id` INT UNSIGNED NOT NULL,
+  `channel_id` INT UNSIGNED NOT NULL,
+  `success` TINYINT(1) NOT NULL DEFAULT 0,
+  `error` TEXT DEFAULT NULL,
+  `sent_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_results_message_id` (`message_id`),
   KEY `idx_results_channel_id` (`channel_id`),
-  KEY `idx_results_success` (`success`),
-  KEY `idx_results_sent_at` (`sent_at`)
+  KEY `idx_results_sent_at` (`sent_at`),
+  FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE
 );
 ```
 
@@ -128,14 +129,14 @@ CREATE TABLE `message_results` (
 
 ```sql
 CREATE TABLE `templates` (
-  `id` char(36) NOT NULL,                    -- UUID
-  `name` varchar(100) NOT NULL,              -- 模板名稱
-  `title` varchar(255) NOT NULL,             -- 標題模板
-  `content` text NOT NULL,                   -- 內容模板
-  `channel_types` json DEFAULT NULL,         -- 支援的渠道類型
-  `variables` json DEFAULT NULL,             -- 變數列表
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `content` TEXT NOT NULL,
+  `channel_types` JSON DEFAULT NULL,
+  `variables` JSON DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 ```
@@ -155,22 +156,24 @@ CREATE TABLE `templates` (
 
 ```sql
 CREATE TABLE `api_keys` (
-  `id` char(36) NOT NULL,                    -- UUID
-  `user_id` char(36) NOT NULL,               -- 擁有者 ID
-  `name` varchar(100) NOT NULL,              -- 金鑰名稱
-  `key` varchar(255) NOT NULL,               -- 金鑰 Hash
-  `prefix` varchar(50) NOT NULL,             -- 金鑰前綴（用於顯示）
-  `permissions` json NOT NULL,               -- 權限列表
-  `rate_limit` int DEFAULT 60,               -- 每分鐘請求限制
-  `usage_count` int DEFAULT 0,               -- 使用次數
-  `enabled` tinyint(1) DEFAULT 1,            -- 是否啟用
-  `expires_at` datetime DEFAULT NULL,        -- 過期時間
-  `last_used_at` datetime DEFAULT NULL,      -- 最後使用時間
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `name` VARCHAR(100) NOT NULL,
+  `key` VARCHAR(64) NOT NULL UNIQUE,
+  `prefix` VARCHAR(20) NOT NULL,
+  `permissions` JSON NOT NULL,
+  `rate_limit` INT DEFAULT 60,
+  `usage_count` INT DEFAULT 0,
+  `enabled` TINYINT(1) DEFAULT 1,
+  `expires_at` DATETIME DEFAULT NULL,
+  `last_used_at` DATETIME DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`),
   KEY `idx_api_keys_user_id` (`user_id`),
-  KEY `idx_api_keys_enabled` (`enabled`)
+  KEY `idx_api_keys_enabled` (`enabled`),
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 );
 ```
 
@@ -187,23 +190,23 @@ CREATE TABLE `api_keys` (
 
 ```sql
 CREATE TABLE `api_usage_logs` (
-  `id` char(36) NOT NULL,                    -- UUID
-  `api_key_id` char(36) NOT NULL,            -- API 金鑰 ID
-  `endpoint` varchar(255) NOT NULL,          -- API 端點
-  `method` varchar(10) NOT NULL,             -- HTTP 方法
-  `status_code` int NOT NULL,                -- HTTP 狀態碼
-  `success` tinyint(1) NOT NULL DEFAULT 0,   -- 是否成功
-  `response_time` int DEFAULT NULL,          -- 回應時間（毫秒）
-  `ip` varchar(45) DEFAULT NULL,             -- 來源 IP
-  `user_agent` varchar(500) DEFAULT NULL,    -- User Agent
-  `request_body` json DEFAULT NULL,          -- 請求內容
-  `error_message` text DEFAULT NULL,         -- 錯誤訊息
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `api_key_id` INT UNSIGNED NOT NULL,
+  `endpoint` VARCHAR(255) NOT NULL,
+  `method` VARCHAR(10) NOT NULL,
+  `status_code` INT NOT NULL,
+  `success` TINYINT(1) NOT NULL DEFAULT 0,
+  `response_time` INT DEFAULT NULL,
+  `ip` VARCHAR(45) DEFAULT NULL,
+  `user_agent` VARCHAR(500) DEFAULT NULL,
+  `request_body` JSON DEFAULT NULL,
+  `error_message` TEXT DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_logs_api_key_id` (`api_key_id`),
   KEY `idx_logs_endpoint` (`endpoint`),
-  KEY `idx_logs_success` (`success`),
-  KEY `idx_logs_created_at` (`created_at`)
+  KEY `idx_logs_created_at` (`created_at`),
+  FOREIGN KEY (`api_key_id`) REFERENCES `api_keys`(`id`) ON DELETE CASCADE
 );
 ```
 
@@ -215,7 +218,6 @@ CREATE TABLE `api_usage_logs` (
 
 | 資料表 | 索引名稱 | 欄位 | 用途 |
 |--------|----------|------|------|
-| users | idx_users_role | role | 角色篩選 |
 | users | idx_users_status | status | 狀態篩選 |
 | channels | idx_channels_type | type | 類型篩選 |
 | channels | idx_channels_enabled | enabled | 啟用篩選 |
@@ -233,7 +235,7 @@ CREATE TABLE `api_usage_logs` (
 ┌──────────────┐         ┌──────────────┐
 │    users     │         │   channels   │
 ├──────────────┤         ├──────────────┤
-│ id (PK)      │         │ id (PK)      │
+│ id (PK, AI)  │         │ id (PK, AI)  │
 │ username     │         │ type         │
 │ email (UK)   │         │ name         │
 │ password     │         │ enabled      │
@@ -250,7 +252,7 @@ CREATE TABLE `api_usage_logs` (
 ┌──────────────────┐    ┌──────────────────┐
 │     messages     │    │ message_results  │
 ├──────────────────┤    ├──────────────────┤
-│ id (PK)          │◄───┤ message_id (FK)  │
+│ id (PK, AI)      │◄───┤ message_id (FK)  │
 │ user_id (FK)     │    │ channel_id (FK)──┼────►
 │ title            │    │ success          │
 │ content          │    │ error            │
@@ -264,7 +266,7 @@ CREATE TABLE `api_usage_logs` (
 ┌──────────────┐    ┌──────────────────┐
 │  templates   │    │    api_keys      │
 ├──────────────┤    ├──────────────────┤
-│ id (PK)      │    │ id (PK)          │
+│ id (PK, AI)  │    │ id (PK, AI)      │
 │ name         │    │ user_id (FK)─────┼──► users.id
 │ title        │    │ name             │
 │ content      │    │ key              │
@@ -283,7 +285,7 @@ CREATE TABLE `api_usage_logs` (
                     ┌──────────────────┐
                     │ api_usage_logs   │
                     ├──────────────────┤
-                    │ id (PK)          │
+                    │ id (PK, AI)      │
                     │ api_key_id (FK)  │
                     │ endpoint         │
                     │ method           │
@@ -297,6 +299,8 @@ CREATE TABLE `api_usage_logs` (
                     │ created_at       │
                     └──────────────────┘
 ```
+
+> **PK:** Primary Key, **AI:** AUTO_INCREMENT, **FK:** Foreign Key, **UK:** Unique Key
 
 ---
 

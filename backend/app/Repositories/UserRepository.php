@@ -14,7 +14,7 @@ class UserRepository extends BaseRepository
     /**
      * 根據 ID 查找使用者
      */
-    public function find(string $id): ?UserEntity
+    public function find(int $id): ?UserEntity
     {
         $data = $this->db->table($this->table)
             ->where('id', $id)
@@ -88,11 +88,9 @@ class UserRepository extends BaseRepository
      */
     public function create(array $data): UserEntity
     {
-        $id = $this->generateUuid();
         $now = date('Y-m-d H:i:s');
 
         $userData = [
-            'id' => $id,
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => password_hash($data['password'], PASSWORD_BCRYPT),
@@ -104,6 +102,7 @@ class UserRepository extends BaseRepository
         ];
 
         $this->db->table($this->table)->insert($userData);
+        $userData['id'] = $this->getInsertId();
 
         return new UserEntity($userData);
     }
@@ -111,7 +110,7 @@ class UserRepository extends BaseRepository
     /**
      * 更新使用者
      */
-    public function update(string $id, array $data): ?UserEntity
+    public function update(int $id, array $data): ?UserEntity
     {
         $data['updated_at'] = date('Y-m-d H:i:s');
 
@@ -125,7 +124,7 @@ class UserRepository extends BaseRepository
     /**
      * 更新密碼
      */
-    public function updatePassword(string $id, string $password): bool
+    public function updatePassword(int $id, string $password): bool
     {
         return $this->db->table($this->table)
             ->where('id', $id)
@@ -138,7 +137,7 @@ class UserRepository extends BaseRepository
     /**
      * 更新最後登入時間
      */
-    public function updateLastLogin(string $id): bool
+    public function updateLastLogin(int $id): bool
     {
         return $this->db->table($this->table)
             ->where('id', $id)
@@ -148,7 +147,7 @@ class UserRepository extends BaseRepository
     /**
      * 檢查 Email 是否存在
      */
-    public function emailExists(string $email, ?string $excludeId = null): bool
+    public function emailExists(string $email, ?int $excludeId = null): bool
     {
         $builder = $this->db->table($this->table)->where('email', $email);
 

@@ -14,7 +14,7 @@ class ChannelRepository extends BaseRepository
     /**
      * 根據 ID 查找渠道
      */
-    public function find(string $id): ?ChannelEntity
+    public function find(int $id): ?ChannelEntity
     {
         $data = $this->db->table($this->table)
             ->where('id', $id)
@@ -72,11 +72,9 @@ class ChannelRepository extends BaseRepository
      */
     public function create(array $data): ChannelEntity
     {
-        $id = $this->generateUuid();
         $now = date('Y-m-d H:i:s');
 
         $channelData = [
-            'id' => $id,
             'type' => $data['type'],
             'name' => $data['name'],
             'enabled' => $data['enabled'] ?? true ? 1 : 0,
@@ -86,6 +84,7 @@ class ChannelRepository extends BaseRepository
         ];
 
         $this->db->table($this->table)->insert($channelData);
+        $channelData['id'] = $this->getInsertId();
 
         return new ChannelEntity($channelData);
     }
@@ -93,7 +92,7 @@ class ChannelRepository extends BaseRepository
     /**
      * 更新渠道
      */
-    public function update(string $id, array $data): ?ChannelEntity
+    public function update(int $id, array $data): ?ChannelEntity
     {
         $updateData = ['updated_at' => date('Y-m-d H:i:s')];
 
@@ -117,7 +116,7 @@ class ChannelRepository extends BaseRepository
     /**
      * 切換啟用狀態
      */
-    public function toggle(string $id): ?ChannelEntity
+    public function toggle(int $id): ?ChannelEntity
     {
         $channel = $this->find($id);
         if (!$channel) {

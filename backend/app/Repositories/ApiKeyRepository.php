@@ -14,7 +14,7 @@ class ApiKeyRepository extends BaseRepository
     /**
      * 根據 ID 查找金鑰
      */
-    public function find(string $id): ?ApiKeyEntity
+    public function find(int $id): ?ApiKeyEntity
     {
         $data = $this->db->table($this->table)
             ->where('id', $id)
@@ -39,7 +39,7 @@ class ApiKeyRepository extends BaseRepository
     /**
      * 取得使用者的金鑰列表
      */
-    public function findByUserId(string $userId): array
+    public function findByUserId(int $userId): array
     {
         $data = $this->db->table($this->table)
             ->where('user_id', $userId)
@@ -68,12 +68,10 @@ class ApiKeyRepository extends BaseRepository
      */
     public function create(array $data): array
     {
-        $id = $this->generateUuid();
         $now = date('Y-m-d H:i:s');
         $keyData = ApiKeyEntity::generateKey();
 
         $apiKeyData = [
-            'id' => $id,
             'user_id' => $data['userId'],
             'name' => $data['name'],
             'key' => $keyData['hash'],
@@ -88,6 +86,7 @@ class ApiKeyRepository extends BaseRepository
         ];
 
         $this->db->table($this->table)->insert($apiKeyData);
+        $apiKeyData['id'] = $this->getInsertId();
 
         return [
             'entity' => new ApiKeyEntity($apiKeyData),
@@ -98,7 +97,7 @@ class ApiKeyRepository extends BaseRepository
     /**
      * 更新金鑰
      */
-    public function update(string $id, array $data): ?ApiKeyEntity
+    public function update(int $id, array $data): ?ApiKeyEntity
     {
         $updateData = ['updated_at' => date('Y-m-d H:i:s')];
 
@@ -128,7 +127,7 @@ class ApiKeyRepository extends BaseRepository
     /**
      * 切換啟用狀態
      */
-    public function toggle(string $id): ?ApiKeyEntity
+    public function toggle(int $id): ?ApiKeyEntity
     {
         $apiKey = $this->find($id);
         if (!$apiKey) {
@@ -148,7 +147,7 @@ class ApiKeyRepository extends BaseRepository
     /**
      * 重新產生金鑰
      */
-    public function regenerate(string $id): ?array
+    public function regenerate(int $id): ?array
     {
         $keyData = ApiKeyEntity::generateKey();
 
@@ -168,7 +167,7 @@ class ApiKeyRepository extends BaseRepository
     /**
      * 更新使用次數
      */
-    public function incrementUsage(string $id): bool
+    public function incrementUsage(int $id): bool
     {
         return $this->db->table($this->table)
             ->where('id', $id)
@@ -180,7 +179,7 @@ class ApiKeyRepository extends BaseRepository
     /**
      * 刪除金鑰及其使用紀錄
      */
-    public function delete(string $id): bool
+    public function delete(int $id): bool
     {
         $this->db->table('api_usage_logs')->where('api_key_id', $id)->delete();
         return parent::delete($id);

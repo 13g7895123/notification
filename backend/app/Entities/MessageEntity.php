@@ -7,7 +7,7 @@ namespace App\Entities;
  */
 class MessageEntity
 {
-    public string $id;
+    public int $id;
     public string $title;
     public string $content;
     public string $status;
@@ -15,7 +15,7 @@ class MessageEntity
     public ?string $scheduledAt;
     public ?string $sentAt;
     public string $createdAt;
-    public string $userId;
+    public int $userId;
     public array $results = [];
 
     public const STATUS_PENDING = 'pending';
@@ -27,7 +27,7 @@ class MessageEntity
 
     public function __construct(array $data = [])
     {
-        $this->id = $data['id'] ?? '';
+        $this->id = (int) ($data['id'] ?? 0);
         $this->title = $data['title'] ?? '';
         $this->content = $data['content'] ?? '';
         $this->status = $data['status'] ?? self::STATUS_PENDING;
@@ -37,7 +37,7 @@ class MessageEntity
         $this->scheduledAt = $data['scheduled_at'] ?? null;
         $this->sentAt = $data['sent_at'] ?? null;
         $this->createdAt = $data['created_at'] ?? date('Y-m-d H:i:s');
-        $this->userId = $data['user_id'] ?? '';
+        $this->userId = (int) ($data['user_id'] ?? 0);
     }
 
     /**

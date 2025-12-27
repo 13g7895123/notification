@@ -7,7 +7,7 @@ namespace App\Entities;
  */
 class TemplateEntity
 {
-    public string $id;
+    public int $id;
     public string $name;
     public string $title;
     public string $content;
@@ -18,7 +18,7 @@ class TemplateEntity
 
     public function __construct(array $data = [])
     {
-        $this->id = $data['id'] ?? '';
+        $this->id = (int) ($data['id'] ?? 0);
         $this->name = $data['name'] ?? '';
         $this->title = $data['title'] ?? '';
         $this->content = $data['content'] ?? '';

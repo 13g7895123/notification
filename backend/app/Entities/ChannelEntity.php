@@ -7,7 +7,7 @@ namespace App\Entities;
  */
 class ChannelEntity
 {
-    public string $id;
+    public int $id;
     public string $type;
     public string $name;
     public bool $enabled;
@@ -17,7 +17,7 @@ class ChannelEntity
 
     public function __construct(array $data = [])
     {
-        $this->id = $data['id'] ?? '';
+        $this->id = (int) ($data['id'] ?? 0);
         $this->type = $data['type'] ?? '';
         $this->name = $data['name'] ?? '';
         $this->enabled = (bool) ($data['enabled'] ?? true);

@@ -14,7 +14,7 @@ class TemplateRepository extends BaseRepository
     /**
      * 根據 ID 查找模板
      */
-    public function find(string $id): ?TemplateEntity
+    public function find(int $id): ?TemplateEntity
     {
         $data = $this->db->table($this->table)
             ->where('id', $id)
@@ -41,11 +41,9 @@ class TemplateRepository extends BaseRepository
      */
     public function create(array $data): TemplateEntity
     {
-        $id = $this->generateUuid();
         $now = date('Y-m-d H:i:s');
 
         $templateData = [
-            'id' => $id,
             'name' => $data['name'],
             'title' => $data['title'],
             'content' => $data['content'],
@@ -56,6 +54,7 @@ class TemplateRepository extends BaseRepository
         ];
 
         $this->db->table($this->table)->insert($templateData);
+        $templateData['id'] = $this->getInsertId();
 
         return new TemplateEntity($templateData);
     }
@@ -63,7 +62,7 @@ class TemplateRepository extends BaseRepository
     /**
      * 更新模板
      */
-    public function update(string $id, array $data): ?TemplateEntity
+    public function update(int $id, array $data): ?TemplateEntity
     {
         $updateData = ['updated_at' => date('Y-m-d H:i:s')];
 

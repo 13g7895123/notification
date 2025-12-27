@@ -18,7 +18,6 @@ notification/
 ├── frontend/               # React 前端應用
 ├── backend/                # CodeIgniter 4 後端 API
 ├── docker/                 # Docker 配置與腳本
-│   ├── mariadb/init/       # 資料庫初始化
 │   ├── backend/            # 後端 Entrypoint 與權限設定
 │   └── frontend-proxy/     # Nginx 藍綠切換配置
 ├── docker-compose.yml      # 服務編排
@@ -46,12 +45,22 @@ docker compose --profile green up -d
 ```
 
 系統會自動執行初始化流程：
-- ✅ 初始化 MariaDB 資料庫
+- ✅ 啟動 MariaDB 資料庫
 - ✅ 安裝後端 PHP 依賴 (Composer)
 - ✅ 設定 `writable` 目錄權限
 - ✅ 啟動 CI4 `spark serve` 服務 (CLI Mode)
 
-### 3. 存取服務
+### 3. 初始化資料庫
+
+```bash
+# 執行資料庫 migration（建立資料表結構）
+docker compose exec backend php spark migrate
+
+# 建立預設帳號
+docker compose exec backend php spark db:seed AdminSeeder
+```
+
+### 4. 存取服務
 
 | 服務 | URL | 說明 |
 |------|-----|------|
@@ -61,7 +70,7 @@ docker compose --profile green up -d
 | **後端 API** | http://localhost:8080 | CI4 Spark Serve |
 | **phpMyAdmin** | http://localhost:8081 | 資料庫管理 |
 
-### 4. 預設帳號
+### 5. 預設帳號
 
 | 角色 | Email | 密碼 |
 |------|-------|------|
@@ -70,7 +79,7 @@ docker compose --profile green up -d
 
 > ⚠️ **警告**：生產環境請務必更改預設密碼！
 
-### 5. 重置 Admin 帳號
+### 6. 重置 Admin 帳號
 
 如果需要重置 admin 帳號密碼：
 

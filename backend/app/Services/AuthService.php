@@ -101,7 +101,7 @@ class AuthService
     /**
      * 變更密碼
      */
-    public function changePassword(string $userId, string $currentPassword, string $newPassword): array
+    public function changePassword(int $userId, string $currentPassword, string $newPassword): array
     {
         $user = $this->userRepository->find($userId);
 
@@ -132,7 +132,7 @@ class AuthService
     /**
      * 更新個人資料
      */
-    public function updateProfile(string $userId, array $data): array
+    public function updateProfile(int $userId, array $data): array
     {
         $updateData = [];
 

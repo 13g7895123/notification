@@ -18,27 +18,17 @@ abstract class BaseRepository
     }
 
     /**
-     * 生成 UUID
+     * 取得最後插入的 ID
      */
-    protected function generateUuid(): string
+    protected function getInsertId(): int
     {
-        return sprintf(
-            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0x0fff) | 0x4000,
-            mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff)
-        );
+        return $this->db->insertID();
     }
 
     /**
      * 根據 ID 查找
      */
-    public function findById(string $id): ?array
+    public function findById(int $id): ?array
     {
         return $this->db->table($this->table)
             ->where('id', $id)
@@ -60,7 +50,7 @@ abstract class BaseRepository
     /**
      * 刪除記錄
      */
-    public function delete(string $id): bool
+    public function delete(int $id): bool
     {
         return $this->db->table($this->table)
             ->where('id', $id)

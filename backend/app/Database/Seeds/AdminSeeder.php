@@ -14,9 +14,8 @@ class AdminSeeder extends Seeder
 {
     public function run()
     {
-        // Admin 帳號資料
+        // Admin 帳號資料（不含 id，讓資料庫自動產生）
         $adminData = [
-            'id'         => '550e8400-e29b-41d4-a716-446655440001',
             'username'   => 'jarvis',
             'email'      => '13g7895123@gmail.com',
             'password'   => password_hash('termit0035', PASSWORD_BCRYPT),
@@ -26,9 +25,8 @@ class AdminSeeder extends Seeder
             'updated_at' => date('Y-m-d H:i:s'),
         ];
 
-        // User 帳號資料
+        // User 帳號資料（不含 id，讓資料庫自動產生）
         $userData = [
-            'id'         => '550e8400-e29b-41d4-a716-446655440002',
             'username'   => 'User',
             'email'      => 'user@notifyhub.com',
             'password'   => password_hash('admin123', PASSWORD_BCRYPT),
@@ -55,7 +53,7 @@ class AdminSeeder extends Seeder
         } else {
             // 新增帳號
             $db->table('users')->insert($adminData);
-            echo "✅ Admin 帳號已建立\n";
+            echo "✅ Admin 帳號已建立 (ID: " . $db->insertID() . ")\n";
         }
 
         // 處理 User 帳號
@@ -73,14 +71,14 @@ class AdminSeeder extends Seeder
         } else {
             // 新增帳號
             $db->table('users')->insert($userData);
-            echo "✅ User 帳號已建立\n";
+            echo "✅ User 帳號已建立 (ID: " . $db->insertID() . ")\n";
         }
 
         echo "\n";
         echo "========================================\n";
         echo "  預設帳號資訊\n";
         echo "========================================\n";
-        echo "Admin: admin@notifyhub.com / admin123\n";
+        echo "Admin: 13g7895123@gmail.com / termit0035\n";
         echo "User:  user@notifyhub.com / admin123\n";
         echo "========================================\n";
         echo "⚠️  生產環境請務必更改密碼！\n";

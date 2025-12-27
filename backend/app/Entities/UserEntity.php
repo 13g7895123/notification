@@ -7,7 +7,7 @@ namespace App\Entities;
  */
 class UserEntity
 {
-    public string $id;
+    public int $id;
     public string $username;
     public string $email;
     public string $password;
@@ -20,7 +20,7 @@ class UserEntity
 
     public function __construct(array $data = [])
     {
-        $this->id = $data['id'] ?? '';
+        $this->id = (int) ($data['id'] ?? 0);
         $this->username = $data['username'] ?? '';
         $this->email = $data['email'] ?? '';
         $this->password = $data['password'] ?? '';

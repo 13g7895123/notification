@@ -14,7 +14,7 @@ class MessageRepository extends BaseRepository
     /**
      * 根據 ID 查找訊息
      */
-    public function find(string $id): ?MessageEntity
+    public function find(int $id): ?MessageEntity
     {
         $data = $this->db->table($this->table)
             ->where('id', $id)
@@ -69,11 +69,9 @@ class MessageRepository extends BaseRepository
      */
     public function create(array $data): MessageEntity
     {
-        $id = $this->generateUuid();
         $now = date('Y-m-d H:i:s');
 
         $messageData = [
-            'id' => $id,
             'title' => $data['title'],
             'content' => $data['content'],
             'status' => $data['status'] ?? MessageEntity::STATUS_PENDING,
@@ -84,6 +82,7 @@ class MessageRepository extends BaseRepository
         ];
 
         $this->db->table($this->table)->insert($messageData);
+        $messageData['id'] = $this->getInsertId();
 
         return new MessageEntity($messageData);
     }
@@ -91,7 +90,7 @@ class MessageRepository extends BaseRepository
     /**
      * 更新訊息狀態
      */
-    public function updateStatus(string $id, string $status, ?string $sentAt = null): bool
+    public function updateStatus(int $id, string $status, ?string $sentAt = null): bool
     {
         $data = ['status' => $status];
         if ($sentAt) {
@@ -106,10 +105,9 @@ class MessageRepository extends BaseRepository
     /**
      * 新增發送結果
      */
-    public function addResult(string $messageId, string $channelId, bool $success, ?string $error = null): void
+    public function addResult(int $messageId, int $channelId, bool $success, ?string $error = null): void
     {
         $this->db->table('message_results')->insert([
-            'id' => $this->generateUuid(),
             'message_id' => $messageId,
             'channel_id' => $channelId,
             'success' => $success ? 1 : 0,
@@ -121,7 +119,7 @@ class MessageRepository extends BaseRepository
     /**
      * 取得訊息結果
      */
-    public function getResults(string $messageId): array
+    public function getResults(int $messageId): array
     {
         return $this->db->table('message_results mr')
             ->select('mr.*, c.name as channel_name, c.type as channel_type')
@@ -149,7 +147,7 @@ class MessageRepository extends BaseRepository
     /**
      * 刪除訊息及其結果
      */
-    public function delete(string $id): bool
+    public function delete(int $id): bool
     {
         $this->db->table('message_results')->where('message_id', $id)->delete();
         return parent::delete($id);
