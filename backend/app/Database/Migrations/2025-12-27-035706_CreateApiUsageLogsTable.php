@@ -68,9 +68,8 @@ class CreateApiUsageLogsTable extends Migration
         $this->forge->addKey('endpoint');
         $this->forge->addForeignKey('api_key_id', 'api_keys', 'id', 'CASCADE', 'CASCADE');
 
-        $this->forge->createTable('api_usage_logs', false, [
-            'ENGINE' => 'InnoDB',
-        ]);
+        $attributes = ($this->db->getPlatform() === 'MySQLi') ? ['ENGINE' => 'InnoDB'] : [];
+        $this->forge->createTable('api_usage_logs', false, $attributes);
     }
 
     public function down()

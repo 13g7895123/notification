@@ -62,9 +62,8 @@ class CreateUsersTable extends Migration
         $this->forge->addUniqueKey('email');
         $this->forge->addKey('status');
 
-        $this->forge->createTable('users', false, [
-            'ENGINE' => 'InnoDB',
-        ]);
+        $attributes = ($this->db->getPlatform() === 'MySQLi') ? ['ENGINE' => 'InnoDB'] : [];
+        $this->forge->createTable('users', false, $attributes);
     }
 
     public function down()

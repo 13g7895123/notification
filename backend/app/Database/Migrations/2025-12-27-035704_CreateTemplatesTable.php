@@ -52,9 +52,8 @@ class CreateTemplatesTable extends Migration
         $this->forge->addKey('user_id');
         $this->forge->addForeignKey('user_id', 'users', 'id', 'CASCADE', 'CASCADE');
 
-        $this->forge->createTable('templates', false, [
-            'ENGINE' => 'InnoDB',
-        ]);
+        $attributes = ($this->db->getPlatform() === 'MySQLi') ? ['ENGINE' => 'InnoDB'] : [];
+        $this->forge->createTable('templates', false, $attributes);
     }
 
     public function down()

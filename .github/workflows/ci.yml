@@ -36,3 +36,25 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
+
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl, json, xml, sqlite3, curl
+          coverage: none
+
+      - name: Install Dependencies
+        working-directory: backend
+        run: composer install --no-progress --no-interaction --prefer-dist
+
+      - name: Run PHPUnit
+        working-directory: backend
+        run: ./vendor/bin/phpunit

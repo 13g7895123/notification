@@ -45,9 +45,8 @@ class CreateMessageResultsTable extends Migration
         $this->forge->addForeignKey('message_id', 'messages', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('channel_id', 'channels', 'id', 'CASCADE', 'CASCADE');
 
-        $this->forge->createTable('message_results', false, [
-            'ENGINE' => 'InnoDB',
-        ]);
+        $attributes = ($this->db->getPlatform() === 'MySQLi') ? ['ENGINE' => 'InnoDB'] : [];
+        $this->forge->createTable('message_results', false, $attributes);
     }
 
     public function down()

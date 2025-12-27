@@ -19,7 +19,7 @@ class ChannelEntity
     public function __construct(array $data = [])
     {
         $this->id = (int) ($data['id'] ?? 0);
-        $this->userId = (int) ($data['user_id'] ?? 0);
+        $this->userId = (int) ($data['user_id'] ?? $data['userId'] ?? 0);
         $this->type = $data['type'] ?? '';
         $this->name = $data['name'] ?? '';
         $this->enabled = (bool) ($data['enabled'] ?? true);
@@ -37,6 +37,7 @@ class ChannelEntity
     {
         return [
             'id' => $this->id,
+            'userId' => $this->userId,
             'type' => $this->type,
             'name' => $this->name,
             'enabled' => $this->enabled,

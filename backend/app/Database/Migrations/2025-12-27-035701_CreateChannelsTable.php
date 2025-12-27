@@ -53,9 +53,8 @@ class CreateChannelsTable extends Migration
         $this->forge->addKey('enabled');
         $this->forge->addForeignKey('user_id', 'users', 'id', 'CASCADE', 'CASCADE');
 
-        $this->forge->createTable('channels', false, [
-            'ENGINE' => 'InnoDB',
-        ]);
+        $attributes = ($this->db->getPlatform() === 'MySQLi') ? ['ENGINE' => 'InnoDB'] : [];
+        $this->forge->createTable('channels', false, $attributes);
     }
 
     public function down()
