@@ -34,6 +34,7 @@ services:
     environment:
       PMA_HOST: mariadb
       PMA_PORT: 3306
+      PMA_ABSOLUTE_URI: ${PMA_ABSOLUTE_URI:-http://localhost:${PHPMYADMIN_PORT:-8081}/}
       UPLOAD_LIMIT: 50M
     depends_on:
       mariadb:

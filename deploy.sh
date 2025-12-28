@@ -59,8 +59,8 @@ build_version() {
 
     echo -e "${YELLOW}正在建構 ${VERSION} 版本...${NC}"
     
-    echo -e "${YELLOW}正在確保基礎服務運行 (Database, Backend, Proxy)...${NC}"
-    docker compose up -d mariadb backend frontend-proxy
+    echo -e "${YELLOW}正在確保基礎服務運行 (Database, Backend, Proxy, phpMyAdmin)...${NC}"
+    docker compose up -d mariadb backend frontend-proxy phpmyadmin
 
     echo -e "${YELLOW}正在建構並啟動 ${VERSION} 版本...${NC}"
     
@@ -124,6 +124,7 @@ show_status() {
     echo -e "Nginx 設定指向: ${GREEN}${CURRENT_VERSION}${NC}"
     echo -e "Frontend Port:  ${FRONTEND_PORT:-3000}"
     echo -e "Backend Port:   ${BACKEND_PORT:-8080}"
+    echo -e "phpMyAdmin Port: ${PHPMYADMIN_PORT:-8081}"
 }
 
 # 回滾
