@@ -5,13 +5,21 @@ import {
     Loader2,
     CheckCircle,
     AlertCircle,
-    FileText
+    FileText,
+    Users,
+    ChevronUp
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
+import type { ChannelUser } from '../types';
 import './SendNotification.css';
 
+interface ChannelOption {
+    mode: 'all' | 'selected';
+    users: string[]; // providerId array
+}
+
 export function SendNotification() {
-    const { channels, templates, sendMessage, isLoading } = useNotification();
+    const { channels, templates, sendMessage, isLoading, getChannelUsers } = useNotification();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
@@ -20,6 +28,14 @@ export function SendNotification() {
     const [scheduledTime, setScheduledTime] = useState('');
     const [selectedTemplate, setSelectedTemplate] = useState('');
     const [sendResult, setSendResult] = useState<'success' | 'error' | null>(null);
+
+    // Channel Options State
+    const [channelOptions, setChannelOptions] = useState<Record<string, ChannelOption>>({});
+    // Cache for channel users
+    const [channelUsersCache, setChannelUsersCache] = useState<Record<string, ChannelUser[]>>({});
+    // Expanded channel for user selection
+    const [expandedChannelId, setExpandedChannelId] = useState<string | null>(null);
+    const [loadingUsers, setLoadingUsers] = useState<string | null>(null);
 
     const enabledChannels = channels.filter(c => c.enabled);
 
@@ -33,19 +49,81 @@ export function SendNotification() {
     };
 
     const handleChannelToggle = (channelId: string) => {
-        setSelectedChannels(prev =>
-            prev.includes(channelId)
-                ? prev.filter(id => id !== channelId)
-                : [...prev, channelId]
-        );
+        setSelectedChannels(prev => {
+            const isSelected = prev.includes(channelId);
+            if (isSelected) {
+                // Removing
+                const newOptions = { ...channelOptions };
+                delete newOptions[channelId];
+                setChannelOptions(newOptions);
+                if (expandedChannelId === channelId) setExpandedChannelId(null);
+                return prev.filter(id => id !== channelId);
+            } else {
+                // Adding
+                setChannelOptions(prevOpts => ({
+                    ...prevOpts,
+                    [channelId]: { mode: 'all', users: [] }
+                }));
+                // Auto expand if only one channel or user prefers? logic: just add.
+                return [...prev, channelId];
+            }
+        });
     };
 
     const handleSelectAll = () => {
         if (selectedChannels.length === enabledChannels.length) {
             setSelectedChannels([]);
+            setChannelOptions({});
         } else {
-            setSelectedChannels(enabledChannels.map(c => c.id));
+            const allIds = enabledChannels.map(c => c.id);
+            setSelectedChannels(allIds);
+            const newOptions: Record<string, ChannelOption> = {};
+            allIds.forEach(id => {
+                newOptions[id] = { mode: 'all', users: [] };
+            });
+            setChannelOptions(newOptions);
         }
+    };
+
+    const toggleChannelExpand = async (channelId: string) => {
+        if (expandedChannelId === channelId) {
+            setExpandedChannelId(null);
+            return;
+        }
+
+        setExpandedChannelId(channelId);
+
+        // Fetch users if not cached
+        if (!channelUsersCache[channelId]) {
+            setLoadingUsers(channelId);
+            try {
+                const users = await getChannelUsers(channelId);
+                setChannelUsersCache(prev => ({ ...prev, [channelId]: users }));
+            } finally {
+                setLoadingUsers(null);
+            }
+        }
+    };
+
+    const handleOptionModeChange = (channelId: string, mode: 'all' | 'selected') => {
+        setChannelOptions(prev => ({
+            ...prev,
+            [channelId]: { ...prev[channelId], mode }
+        }));
+    };
+
+    const handleUserToggle = (channelId: string, providerId: string) => {
+        setChannelOptions(prev => {
+            const currentUsers = prev[channelId]?.users || [];
+            const newUsers = currentUsers.includes(providerId)
+                ? currentUsers.filter(u => u !== providerId)
+                : [...currentUsers, providerId];
+
+            return {
+                ...prev,
+                [channelId]: { ...prev[channelId], mode: 'selected', users: newUsers }
+            };
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -56,11 +134,24 @@ export function SendNotification() {
             return;
         }
 
+        // Prepare structure for backend
+        // Backend expects: channelIds, and optional channelOptions map
+        const finalOptions: Record<string, any> = {};
+        selectedChannels.forEach(cid => {
+            const opt = channelOptions[cid];
+            if (opt && opt.mode === 'selected') {
+                finalOptions[cid] = { type: 'selected', users: opt.users };
+            } else {
+                finalOptions[cid] = { type: 'all' };
+            }
+        });
+
         try {
             await sendMessage({
                 title,
                 content,
                 channelIds: selectedChannels,
+                channelOptions: finalOptions,
                 scheduledAt: scheduleEnabled && scheduledDate && scheduledTime
                     ? new Date(`${scheduledDate}T${scheduledTime}`)
                     : undefined
@@ -72,10 +163,12 @@ export function SendNotification() {
             setTitle('');
             setContent('');
             setSelectedChannels([]);
+            setChannelOptions({});
             setScheduleEnabled(false);
             setScheduledDate('');
             setScheduledTime('');
             setSelectedTemplate('');
+            setExpandedChannelId(null);
 
             setTimeout(() => setSendResult(null), 3000);
         } catch {
@@ -243,29 +336,95 @@ export function SendNotification() {
                         </div>
                     ) : (
                         <div className="channels-select-list">
-                            {enabledChannels.map((channel, index) => (
-                                <label
-                                    key={channel.id}
-                                    className={`channel-select-item animate-slide-up ${selectedChannels.includes(channel.id) ? 'selected' : ''}`}
-                                    style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedChannels.includes(channel.id)}
-                                        onChange={() => handleChannelToggle(channel.id)}
-                                        className="channel-checkbox"
-                                    />
-                                    <div className="channel-select-info">
-                                        <span className={`channel-type-tag ${channel.type}`}>
-                                            {(channel.type || '').toUpperCase()}
-                                        </span>
-                                        <span className="channel-select-name">{channel.name}</span>
+                            {enabledChannels.map((channel, index) => {
+                                const isSelected = selectedChannels.includes(channel.id);
+                                const isExpanded = expandedChannelId === channel.id;
+                                const option = channelOptions[channel.id];
+
+                                return (
+                                    <div key={channel.id} className={`channel-select-wrapper ${isSelected ? 'selected' : ''}`}>
+                                        <div
+                                            className="channel-select-item"
+                                            style={{ animationDelay: `${index * 50}ms` }}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => handleChannelToggle(channel.id)}
+                                                className="channel-checkbox"
+                                            />
+                                            <div className="channel-select-info" onClick={() => handleChannelToggle(channel.id)}>
+                                                <span className={`channel-type-tag ${channel.type}`}>
+                                                    {(channel.type || '').toUpperCase()}
+                                                </span>
+                                                <span className="channel-select-name">{channel.name}</span>
+                                            </div>
+
+                                            {isSelected && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-ghost btn-xs btn-icon"
+                                                    onClick={() => toggleChannelExpand(channel.id)}
+                                                    title="設定發送對象"
+                                                >
+                                                    {isExpanded ? <ChevronUp size={16} /> : <Users size={16} />}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {isSelected && isExpanded && (
+                                            <div className="channel-users-panel animate-slide-down">
+                                                <div className="channel-users-header">
+                                                    <label className="radio-label">
+                                                        <input
+                                                            type="radio"
+                                                            name={`mode-${channel.id}`}
+                                                            checked={option?.mode === 'all'}
+                                                            onChange={() => handleOptionModeChange(channel.id, 'all')}
+                                                        />
+                                                        全部使用者
+                                                    </label>
+                                                    <label className="radio-label">
+                                                        <input
+                                                            type="radio"
+                                                            name={`mode-${channel.id}`}
+                                                            checked={option?.mode === 'selected'}
+                                                            onChange={() => handleOptionModeChange(channel.id, 'selected')}
+                                                        />
+                                                        指定使用者
+                                                    </label>
+                                                </div>
+
+                                                {option?.mode === 'selected' && (
+                                                    <div className="channel-users-list">
+                                                        {loadingUsers === channel.id ? (
+                                                            <div className="loading-users">
+                                                                <Loader2 size={16} className="animate-spin" /> 載入中...
+                                                            </div>
+                                                        ) : (channelUsersCache[channel.id] || []).length === 0 ? (
+                                                            <div className="no-users">該渠道尚無使用者</div>
+                                                        ) : (
+                                                            (channelUsersCache[channel.id] || []).map(u => (
+                                                                <label key={u.providerId} className="user-item">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={option.users.includes(u.providerId)}
+                                                                        onChange={() => handleUserToggle(channel.id, u.providerId)}
+                                                                    />
+                                                                    <div className="user-info">
+                                                                        {u.pictureUrl && <img src={u.pictureUrl} alt="" className="user-avatar-small" />}
+                                                                        <span>{u.displayName || '未知使用者'}</span>
+                                                                    </div>
+                                                                </label>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="channel-select-check">
-                                        <CheckCircle size={18} />
-                                    </div>
-                                </label>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
 

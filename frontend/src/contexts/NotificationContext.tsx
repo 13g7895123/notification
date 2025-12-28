@@ -8,7 +8,8 @@ import type {
     NotificationStats,
     ApiKey,
     ApiUsageLog,
-    ApiStats
+    ApiStats,
+    ChannelUser
 } from '../types';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
@@ -23,6 +24,7 @@ interface NotificationContextType {
     toggleChannel: (id: string) => Promise<boolean>;
     testChannel: (id: string) => Promise<boolean>;
     regenerateChannelWebhook: (id: string) => Promise<string | null>;
+    getChannelUsers: (id: string) => Promise<ChannelUser[]>;
 
     // 訊息
     messages: NotificationMessage[];
@@ -185,8 +187,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const regenerateChannelWebhook = useCallback(async (id: string): Promise<string | null> => {
         try {
             const data = await api.post<{ webhookKey: string }>(`/channels/${id}/regenerate-key`);
-            // Update channel list to reflect changes if method returns channel, or we just trust the return.
-            // But we should probably refresh channels to be safe or update local state.
             await fetchChannels();
             return data.webhookKey;
         } catch (error) {
@@ -194,6 +194,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             return null;
         }
     }, [fetchChannels]);
+
+    const getChannelUsers = useCallback(async (id: string): Promise<ChannelUser[]> => {
+        try {
+            const data = await api.get<ChannelUser[]>(`/channels/${id}/users`);
+            return data || [];
+        } catch (error) {
+            console.error('Get channel users failed', error);
+            return [];
+        }
+    }, []);
 
     // 模板操作
     const fetchTemplates = useCallback(async () => {
@@ -386,6 +396,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 toggleChannel,
                 testChannel,
                 regenerateChannelWebhook,
+                getChannelUsers,
                 messages,
                 fetchMessages,
                 sendMessage,

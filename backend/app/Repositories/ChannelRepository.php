@@ -27,6 +27,19 @@ class ChannelRepository extends BaseRepository
     }
 
     /**
+     * 根據 Webhook Key 查找渠道
+     */
+    public function findByWebhookKey(string $key): ?ChannelEntity
+    {
+        $data = $this->db->table($this->table)
+            ->where('webhook_key', $key)
+            ->get()
+            ->getRowArray();
+
+        return $data ? new ChannelEntity($data) : null;
+    }
+
+    /**
      * 根據使用者 ID 取得所有渠道
      */
     public function findByUserId(int $userId): array

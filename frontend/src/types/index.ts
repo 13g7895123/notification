@@ -73,6 +73,7 @@ export interface NotificationMessage {
     title: string;
     content: string;
     channelIds: string[];
+    channelOptions?: Record<string, { type: 'all' | 'selected'; users?: string[] }>;
     status: MessageStatus;
     scheduledAt?: Date;
     sentAt?: Date;
@@ -144,6 +145,17 @@ export interface NotificationStats {
         today: number;
         trends: { date: string; count: number }[];
     };
+}
+
+export interface ChannelUser {
+    id: number;
+    channelId: number;
+    providerId: string;
+    displayName: string | null;
+    pictureUrl: string | null;
+    status: 'active' | 'blocked';
+    createdAt: string;
+    updatedAt: string;
 }
 
 // 用戶

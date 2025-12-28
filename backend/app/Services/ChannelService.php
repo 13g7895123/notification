@@ -291,4 +291,21 @@ class ChannelService
     {
         return $this->channelRepository->getStats();
     }
+
+    /**
+     * 取得渠道使用者列表
+     */
+    public function getChannelUsers(int $channelId, int $userId): array
+    {
+        $channel = $this->channelRepository->find($channelId, $userId);
+
+        if (!$channel) {
+            return [];
+        }
+
+        $channelUserRepo = new \App\Repositories\ChannelUserRepository();
+        $users = $channelUserRepo->findByChannelId($channelId);
+
+        return array_map(fn($u) => $u->toArray(), $users);
+    }
 }

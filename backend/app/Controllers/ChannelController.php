@@ -173,4 +173,24 @@ class ChannelController extends BaseController
 
         return $this->successResponse($result['channel']);
     }
+
+    /**
+     * GET /api/channels/:id/users
+     * 取得渠道使用者
+     */
+    public function users($id = null)
+    {
+        if (!$id) {
+            return $this->errorResponse('VALIDATION_ERROR', '缺少渠道 ID', 400);
+        }
+
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $users = $this->channelService->getChannelUsers((int) $id, (int) $user['id']);
+
+        return $this->successResponse($users);
+    }
 }

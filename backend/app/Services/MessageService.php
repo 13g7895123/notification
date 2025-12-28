@@ -14,11 +14,13 @@ class MessageService
 {
     private MessageRepository $messageRepository;
     private ChannelRepository $channelRepository;
+    private \App\Repositories\ChannelUserRepository $channelUserRepository;
 
     public function __construct()
     {
         $this->messageRepository = new MessageRepository();
         $this->channelRepository = new ChannelRepository();
+        $this->channelUserRepository = new \App\Repositories\ChannelUserRepository();
     }
 
     /**
@@ -72,6 +74,8 @@ class MessageService
 
         // 發送到各渠道
         $results = [];
+        $channelOptions = $data['channelOptions'] ?? [];
+
         foreach ($data['channelIds'] as $channelId) {
             $channel = $this->channelRepository->find($channelId, $userId);
 
@@ -86,7 +90,35 @@ class MessageService
                 continue;
             }
 
-            $sendResult = $this->sendToChannel($channel, $data['title'], $data['content']);
+            // 決定發送對象
+            $targetUsers = [];
+            $options = $channelOptions[$channelId] ?? ['type' => 'all'];
+
+            if ($options['type'] === 'selected' && !empty($options['users'])) {
+                $targetUsers = $options['users']; // Expecting provider IDs
+            } else {
+                // Send to all active users
+                $users = $this->channelUserRepository->findByChannelId($channelId);
+                $targetUsers = array_map(fn($u) => $u->providerId, array_filter($users, fn($u) => $u->status === 'active'));
+            }
+
+            // Backward compatibility: If no users helper found, try old config targetId
+            if (empty($targetUsers) && $channel->getConfigValue('targetId')) {
+                $targetUsers = [$channel->getConfigValue('targetId')];
+            }
+
+            if (empty($targetUsers)) {
+                $this->messageRepository->addResult($message->id, $channelId, false, '無發送對象');
+                $results[] = [
+                    'channelId' => $channelId,
+                    'channelName' => $channel->name,
+                    'success' => false,
+                    'error' => '無發送對象',
+                ];
+                continue;
+            }
+
+            $sendResult = $this->sendToChannel($channel, $data['title'], $data['content'], $targetUsers);
 
             $this->messageRepository->addResult(
                 $message->id,
@@ -143,13 +175,23 @@ class MessageService
     /**
      * 發送到渠道
      */
-    private function sendToChannel(ChannelEntity $channel, string $title, string $content): array
+    private function sendToChannel(ChannelEntity $channel, string $title, string $content, array $targetUsers): array
     {
         try {
             if ($channel->isLine()) {
-                return $this->sendToLine($channel, $title, $content);
+                return $this->sendToLine($channel, $title, $content, $targetUsers);
             } elseif ($channel->isTelegram()) {
-                return $this->sendToTelegram($channel, $title, $content);
+                // Telegram might need broadcast implementation or individual sends
+                $successCount = 0;
+                $errors = [];
+                foreach ($targetUsers as $chatId) {
+                    $res = $this->sendToTelegram($channel, $title, $content, $chatId);
+                    if ($res['success']) $successCount++;
+                    else $errors[] = $res['error'] ?? 'Unknown error';
+                }
+
+                if ($successCount > 0) return ['success' => true];
+                return ['success' => false, 'error' => implode(', ', $errors)];
             }
             return ['success' => false, 'error' => '不支援的渠道類型'];
         } catch (\Exception $e) {
@@ -160,7 +202,7 @@ class MessageService
     /**
      * 發送到 LINE
      */
-    private function sendToLine(ChannelEntity $channel, string $title, string $content): array
+    private function sendToLine(ChannelEntity $channel, string $title, string $content, array $targetIds): array
     {
         try {
             $httpClient = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
@@ -176,12 +218,16 @@ class MessageService
                 'text' => $text
             ]);
 
-            $pushMessage = new \LINE\Clients\MessagingApi\Model\PushMessageRequest([
-                'to' => $channel->getConfigValue('targetId'),
-                'messages' => [$message]
-            ]);
+            // Multicast handles up to 500 users. If more, need to chunk.
+            $chunks = array_chunk($targetIds, 500);
 
-            $httpClient->pushMessage($pushMessage);
+            foreach ($chunks as $chunk) {
+                $multicastRequest = new \LINE\Clients\MessagingApi\Model\MulticastRequest([
+                    'to' => $chunk,
+                    'messages' => [$message]
+                ]);
+                $httpClient->multicast($multicastRequest);
+            }
 
             return ['success' => true];
         } catch (\Exception $e) {
@@ -190,13 +236,13 @@ class MessageService
     }
 
     /**
-     * 發送到 Telegram
+     * 發送到 Telegram (Single)
      */
-    private function sendToTelegram(ChannelEntity $channel, string $title, string $content): array
+    private function sendToTelegram(ChannelEntity $channel, string $title, string $content, string $chatId): array
     {
         try {
             $botToken = $channel->getConfigValue('botToken');
-            $chatId = $channel->getConfigValue('chatId');
+            // $chatId passed as argument now
             $parseMode = $channel->getConfigValue('parseMode', 'HTML');
 
             $text = "📢 <b>{$title}</b>\n\n{$content}";
