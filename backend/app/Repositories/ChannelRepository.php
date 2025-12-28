@@ -158,6 +158,12 @@ class ChannelRepository extends BaseRepository
             $updateData['config'] = json_encode($data['config']);
         }
 
+        // 檢查現有渠道是否已有 webhook_key，若無則補上
+        $currentChannel = $this->find($id, $userId);
+        if ($currentChannel && empty($currentChannel->webhookKey)) {
+            $updateData['webhook_key'] = bin2hex(random_bytes(16));
+        }
+
         $builder = $this->db->table($this->table)->where('id', $id);
 
         if ($userId !== null) {
