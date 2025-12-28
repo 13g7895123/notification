@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Sidebar } from './Sidebar';
@@ -33,14 +34,12 @@ vi.mock('lucide-react', () => ({
     Book: () => <div data-testid="icon-docs" />,
     Users: () => <div data-testid="icon-users" />,
     Bell: () => <div data-testid="icon-bell" />,
-    ChevronLeft: () => <div data-testid="icon-left" />,
-    ChevronRight: () => <div data-testid="icon-right" />,
-    ChevronDown: () => <div data-testid="icon-down" />,
-    Zap: () => <div data-testid="icon-zap" />,
     LogOut: () => <div data-testid="icon-logout" />,
-    User: () => <div data-testid="icon-user" />,
-    Shield: () => <div data-testid="icon-shield" />,
-    Monitor: () => <div data-testid="icon-monitor" />
+    Monitor: () => <div data-testid="icon-monitor" />,
+    Database: () => <div data-testid="icon-database" />,
+    ShieldCheck: () => <div data-testid="icon-shield-check" />,
+    ChevronDown: () => <div data-testid="icon-down" />,
+    ChevronRight: () => <div data-testid="icon-right" />
 }));
 
 describe('Sidebar 組件', () => {
@@ -52,21 +51,24 @@ describe('Sidebar 組件', () => {
 
     it('應該正確渲染導航標籤', () => {
         renderSidebar();
-        expect(screen.getByText('儀表板')).toBeInTheDocument();
-        expect(screen.getByText('通知渠道')).toBeInTheDocument();
-        expect(screen.getByText('發送通知')).toBeInTheDocument();
+        // 預設應該選中「總覽」分組，顯示「實時儀表板」
+        expect(screen.getByText('實時儀表板')).toBeInTheDocument();
     });
 
-    it('管理員應該能看到使用者管理選項', () => {
+    it('管理員應該能看到系統管理組件', () => {
         renderSidebar();
-        expect(screen.getByText('使用者管理')).toBeInTheDocument();
+        // 管理員應該能看到「系統管理」的 Tooltip 或導覽標籤
+        expect(screen.getAllByText('系統管理').length).toBeGreaterThan(0);
     });
 
-    it('點擊使用者選單應該展開下拉內容', () => {
+    it('點擊使用者頭像按鈕應該展開選單內容', () => {
         renderSidebar();
-        const userTrigger = screen.getByText('Admin');
+        // 找到頭像按鈕 (顯示 'A')
+        const userTrigger = screen.getByText('A');
         fireEvent.click(userTrigger);
+
+        // 檢查選單內容
         expect(screen.getByText('admin@example.com')).toBeInTheDocument();
-        expect(screen.getByText('登出')).toBeInTheDocument();
+        expect(screen.getByText('安全登出')).toBeInTheDocument();
     });
 });
