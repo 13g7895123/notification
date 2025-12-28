@@ -13,6 +13,7 @@ import {
     GitCommit,
     Eye,
     EyeOff,
+    HelpCircle,
     Filter
 } from 'lucide-react';
 import { api } from '../utils/api';
@@ -40,6 +41,7 @@ const STATUS_CONFIG: Record<WindowsNotificationStatus, { label: string; color: s
 export function WindowsNotifications() {
     const [notifications, setNotifications] = useState<WindowsNotification[]>([]);
     const [stats, setStats] = useState<WindowsNotificationStats | null>(null);
+    const [showHelpModal, setShowHelpModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('');
@@ -148,6 +150,10 @@ export function WindowsNotifications() {
                     </p>
                 </div>
                 <div className="page-actions">
+                    <button className="btn btn-secondary" onClick={() => setShowHelpModal(true)}>
+                        <HelpCircle size={18} />
+                        API 說明
+                    </button>
                     <button className="btn btn-secondary" onClick={handleExpire}>
                         <XCircle size={18} />
                         標記過期
@@ -158,6 +164,12 @@ export function WindowsNotifications() {
                     </button>
                 </div>
             </div>
+
+            {/* ... rest of the code ... */}
+
+            {showHelpModal && (
+                <IntegrationHelpModal onClose={() => setShowHelpModal(false)} />
+            )}
 
             {/* 統計卡片 */}
             {stats && (
@@ -399,6 +411,132 @@ export function WindowsNotifications() {
                         )}
                     </>
                 )}
+            </div>
+        </div>
+    );
+}
+
+function IntegrationHelpModal({ onClose }: { onClose: () => void }) {
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div className="modal-header">
+                    <h2>Windows 通知 API 整合說明</h2>
+                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
+                        <XCircle size={20} />
+                    </button>
+                </div>
+                <div className="modal-body space-y-6">
+                    {/* CI/CD Integration */}
+                    <div className="section">
+                        <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                            <GitCommit size={20} />
+                            發送通知 (CI/CD)
+                        </h3>
+                        <p className="mb-2 text-sm text-secondary">在 CI/CD Pipeline 中呼叫此 API 來發送通知到 Windows 桌面。</p>
+
+                        <div className="bg-tertiary p-4 rounded-md mb-4 font-mono text-sm overflow-x-auto">
+                            <div className="text-success mb-2">POST {window.location.origin}/api/notifications/windows</div>
+                            <div className="text-muted mb-2">Headers:</div>
+                            <div className="pl-4 mb-2">Content-Type: application/json</div>
+                            <div className="pl-4 mb-2">X-API-Key: YOUR_API_KEY</div>
+                        </div>
+
+                        <h4 className="font-semibold mb-2 text-sm">參數說明</h4>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-tertiary">
+                                    <tr>
+                                        <th className="p-2">參數</th>
+                                        <th className="p-2">類型</th>
+                                        <th className="p-2">必填</th>
+                                        <th className="p-2">說明</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b border-light">
+                                        <td className="p-2 font-mono">title</td>
+                                        <td className="p-2">String</td>
+                                        <td className="p-2 text-error">是</td>
+                                        <td className="p-2">通知標題 (例如: Build Success)</td>
+                                    </tr>
+                                    <tr className="border-b border-light">
+                                        <td className="p-2 font-mono">message</td>
+                                        <td className="p-2">String</td>
+                                        <td className="p-2 text-error">是</td>
+                                        <td className="p-2">通知內容</td>
+                                    </tr>
+                                    <tr className="border-b border-light">
+                                        <td className="p-2 font-mono">repo</td>
+                                        <td className="p-2">String</td>
+                                        <td className="p-2 text-error">是</td>
+                                        <td className="p-2">專案名稱 (例如: user/repo)</td>
+                                    </tr>
+                                    <tr className="border-b border-light">
+                                        <td className="p-2 font-mono">branch</td>
+                                        <td className="p-2">String</td>
+                                        <td className="p-2">否</td>
+                                        <td className="p-2">分支名稱</td>
+                                    </tr>
+                                    <tr className="border-b border-light">
+                                        <td className="p-2 font-mono">commit_sha</td>
+                                        <td className="p-2">String</td>
+                                        <td className="p-2">否</td>
+                                        <td className="p-2">Commit SHA</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="p-2 font-mono">action_url</td>
+                                        <td className="p-2">String</td>
+                                        <td className="p-2">否</td>
+                                        <td className="p-2">點擊通知後開啟的連結</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 className="font-semibold mt-4 mb-2 text-sm">Curl 範例</h4>
+                        <pre className="bg-tertiary p-4 rounded-md text-xs font-mono overflow-x-auto">
+                            {`curl -X POST ${window.location.origin}/api/notifications/windows \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: your_api_key" \\
+  -d '{
+    "title": "Build Failed",
+    "message": "Unit tests failed on develop branch",
+    "repo": "jarvis/backend",
+    "branch": "develop",
+    "priority": "high",
+    "commit_sha": "a1b2c3d",
+    "action_url": "https://github.com/..."
+  }'`}
+                        </pre>
+                    </div>
+
+                    <div className="divider my-4 border-t border-light"></div>
+
+                    {/* Windows Client Integration */}
+                    <div className="section">
+                        <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                            <Monitor size={20} />
+                            接收通知 (Windows App)
+                        </h3>
+                        <p className="mb-2 text-sm text-secondary">Windows 客戶端應用程式應輪詢此 API 以獲取新通知。</p>
+
+                        <div className="bg-tertiary p-4 rounded-md mb-4 font-mono text-sm overflow-x-auto">
+                            <div className="text-success mb-2">GET {window.location.origin}/api/notifications/windows/pending</div>
+                            <div className="text-muted mb-2">Parameters: limit=50 (Default)</div>
+                            <div className="text-muted">Response: {`{ "notifications": [...], "count": 10 }`}</div>
+                        </div>
+
+                        <h4 className="font-semibold mb-2 text-sm">更新狀態 (標記已送達/已讀)</h4>
+                        <div className="bg-tertiary p-4 rounded-md font-mono text-sm overflow-x-auto">
+                            <div className="text-warning mb-2">PATCH {window.location.origin}/api/notifications/windows/:id/status</div>
+                            <div className="text-muted mb-2">Body: {`{ "status": "delivered" }`}</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="modal-footer p-4 border-t border-light flex justify-end">
+                    <button className="btn btn-primary" onClick={onClose}>關閉</button>
+                </div>
             </div>
         </div>
     );
