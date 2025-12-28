@@ -14,9 +14,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="layout">
             <Sidebar />
             <main className={`main-content ${sidebarCollapsed ? 'expanded' : ''}`}>
-                <div className="animate-fade-in">
-                    {children}
-                </div>
+                {children}
             </main>
         </div>
     );

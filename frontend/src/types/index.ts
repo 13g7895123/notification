@@ -45,7 +45,6 @@ export interface NotificationChannel {
     name: string;
     enabled: boolean;
     config: LineConfig | TelegramConfig;
-    webhookKey?: string;
     createdAt: Date;
     updatedAt: Date;
 }

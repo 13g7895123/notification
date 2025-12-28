@@ -124,7 +124,7 @@ export function Dashboard() {
                             >
                                 <div className="channel-info">
                                     <div className={`channel-type-badge ${channel.type}`}>
-                                        {(channel.type || '').toUpperCase()}
+                                        {channel.type.toUpperCase()}
                                     </div>
                                     <span className="channel-name">{channel.name}</span>
                                 </div>
@@ -248,7 +248,7 @@ export function Dashboard() {
                                 <div className="log-content">
                                     <div className="log-header">
                                         <span className={`badge badge-${log.channelType}`}>
-                                            {(log.channelType || '').toUpperCase()}
+                                            {log.channelType.toUpperCase()}
                                         </span>
                                         <span className="log-channel-name">{log.channelName}</span>
                                     </div>

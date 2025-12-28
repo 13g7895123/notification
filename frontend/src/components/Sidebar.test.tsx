@@ -1,4 +1,3 @@
-/// <reference types="vitest" />
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Sidebar } from './Sidebar';
@@ -41,9 +40,7 @@ vi.mock('lucide-react', () => ({
     LogOut: () => <div data-testid="icon-logout" />,
     User: () => <div data-testid="icon-user" />,
     Shield: () => <div data-testid="icon-shield" />,
-    Monitor: () => <div data-testid="icon-monitor" />,
-    Database: () => <div data-testid="icon-database" />,
-    ShieldCheck: () => <div data-testid="icon-shield-check" />
+    Monitor: () => <div data-testid="icon-monitor" />
 }));
 
 describe('Sidebar 組件', () => {
@@ -67,7 +64,7 @@ describe('Sidebar 組件', () => {
 
     it('點擊使用者選單應該展開下拉內容', () => {
         renderSidebar();
-        const userTrigger = screen.getByText('A');
+        const userTrigger = screen.getByText('Admin');
         fireEvent.click(userTrigger);
         expect(screen.getByText('admin@example.com')).toBeInTheDocument();
         expect(screen.getByText('登出')).toBeInTheDocument();

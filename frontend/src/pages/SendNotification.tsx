@@ -257,7 +257,7 @@ export function SendNotification() {
                                     />
                                     <div className="channel-select-info">
                                         <span className={`channel-type-tag ${channel.type}`}>
-                                            {(channel.type || '').toUpperCase()}
+                                            {channel.type.toUpperCase()}
                                         </span>
                                         <span className="channel-select-name">{channel.name}</span>
                                     </div>

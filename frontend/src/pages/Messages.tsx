@@ -128,7 +128,7 @@ export function Messages() {
                                                 key={result.channelId}
                                                 className={`channel-chip ${result.channelType} ${result.success ? 'success' : 'failed'}`}
                                             >
-                                                {(result.channelType || '').toUpperCase()}
+                                                {result.channelType.toUpperCase()}
                                                 {result.success ? <CheckCircle size={12} /> : <XCircle size={12} />}
                                             </span>
                                         )) || message.channelIds.map(chId => (
@@ -280,7 +280,7 @@ function MessageDetailModal({ message, onClose }: { message: NotificationMessage
                                     <div key={result.channelId} className={`result-item ${result.success ? 'success' : 'failed'}`}>
                                         <div className="result-info">
                                             <span className={`channel-type-tag ${result.channelType}`}>
-                                                {(result.channelType || '').toUpperCase()}
+                                                {result.channelType.toUpperCase()}
                                             </span>
                                             <span className="result-channel-name">{result.channelName}</span>
                                         </div>

@@ -131,7 +131,7 @@ export function Channels() {
                                 <div className="channel-card-type">
                                     <span className={`channel-badge ${channel.type}`}>
                                         {channel.type === 'line' ? <MessageCircle size={16} /> : <SendIcon size={16} />}
-                                        {(channel.type || '').toUpperCase()}
+                                        {channel.type.toUpperCase()}
                                     </span>
                                 </div>
                                 <label className="switch">
@@ -265,7 +265,6 @@ interface ChannelModalProps {
 }
 
 function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
-    const apiUrl = import.meta.env.VITE_API_URL;
     const [type, setType] = useState<ChannelType>(channel?.type || 'line');
     const [name, setName] = useState(channel?.name || '');
     const [enabled, setEnabled] = useState(channel?.enabled ?? true);
@@ -359,34 +358,6 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
                     {/* 渠道設定 */}
                     {type === 'line' ? (
                         <>
-                            {channel && (
-                                <div className="input-group">
-                                    <label className="input-label">Webhook URL (填寫至 LINE Developer 控制台)</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            className="input font-mono bg-bg-tertiary/50"
-                                            value={`${apiUrl.replace('/api', '')}/api/webhook/line?key=${channel.webhookKey}`}
-                                            readOnly
-                                            onClick={(e) => (e.target as HTMLInputElement).select()}
-                                        />
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary btn-sm"
-                                            onClick={() => {
-                                                const url = `${apiUrl.replace('/api', '')}/api/webhook/line?key=${channel.webhookKey}`;
-                                                navigator.clipboard.writeText(url);
-                                                toast.success('已複製 Webhook URL');
-                                            }}
-                                        >
-                                            複製
-                                        </button>
-                                    </div>
-                                    <p className="text-[10px] text-text-muted mt-1 leading-relaxed">
-                                        * 此 URL 用於接收來自 LINE 的事件（如加入好友、自動回覆等）。
-                                    </p>
-                                </div>
-                            )}
                             <div className="input-group">
                                 <label className="input-label">Channel Access Token</label>
                                 <input

@@ -38,7 +38,7 @@ export function Logs() {
     const handleExport = () => {
         const data = filteredLogs.map(log => ({
             時間: format(new Date(log.sentAt), 'yyyy-MM-dd HH:mm:ss'),
-            渠道類型: (log.channelType || '').toUpperCase(),
+            渠道類型: log.channelType.toUpperCase(),
             渠道名稱: log.channelName,
             標題: log.title,
             狀態: log.status === 'success' ? '成功' : '失敗',
@@ -198,7 +198,7 @@ export function Logs() {
                                     <td>
                                         <div className="channel-cell">
                                             <span className={`channel-type-tag ${log.channelType}`}>
-                                                {(log.channelType || '').toUpperCase()}
+                                                {log.channelType.toUpperCase()}
                                             </span>
                                             <span className="channel-name-text">{log.channelName}</span>
                                         </div>

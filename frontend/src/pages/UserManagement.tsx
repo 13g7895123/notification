@@ -233,7 +233,7 @@ export function UserManagement() {
                                         <td>
                                             <div className="user-cell">
                                                 <div className="user-avatar-sm">
-                                                    {(u.username || '?').charAt(0).toUpperCase()}
+                                                    {u.username.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="user-info-cell">
                                                     <span className="user-name-cell">
@@ -547,7 +547,7 @@ function PasswordModal({ user, onClose, onSave }: PasswordModalProps) {
                 <form onSubmit={handleSubmit} className="modal-body">
                     <div className="password-user-info">
                         <div className="user-avatar-sm">
-                            {(user.username || '?').charAt(0).toUpperCase()}
+                            {user.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
                             <span className="user-name">{user.username}</span>
