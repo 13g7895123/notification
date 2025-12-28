@@ -12,7 +12,7 @@ import {
     Loader2,
     RefreshCw,
     Users,
-    Activity
+    ClipboardList
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { NotificationChannel, ChannelType, LineConfig, TelegramConfig } from '../types';
@@ -193,21 +193,11 @@ export function Channels() {
                                         className="btn btn-ghost btn-icon"
                                         onClick={() => {
                                             setViewingChannelId(channel.id);
-                                            setShowUsersModal(true);
-                                        }}
-                                        title="查看使用者"
-                                    >
-                                        <Users size={18} />
-                                    </button>
-                                    <button
-                                        className="btn btn-ghost btn-icon"
-                                        onClick={() => {
-                                            setViewingChannelId(channel.id);
                                             setShowLogsModal(true);
                                         }}
                                         title="Webhook 記錄"
                                     >
-                                        <Activity size={18} />
+                                        <ClipboardList size={18} />
                                     </button>
                                     <button
                                         className="btn btn-ghost btn-icon text-error"
@@ -579,9 +569,6 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
             <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
                 <div className="modal-header">
                     <h2>渠道使用者列表</h2>
-                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
-                        <X size={20} />
-                    </button>
                 </div>
                 <div className="modal-body">
                     {loading ? (
@@ -626,6 +613,7 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
                         </div>
                     )}
                 </div>
+                {/* Remove duplicate close button section if any was here previously */}
             </div>
         </div>
     );
