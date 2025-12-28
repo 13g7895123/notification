@@ -1,29 +1,43 @@
 .windows-notifications-page {
-    padding: var(--space-lg);
+    padding: var(--spacing-lg);
 }
 
 /* 統計卡片 */
 .win-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: var(--space-md);
-    margin-bottom: var(--space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
 }
 
 .win-stat-card {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-lg);
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.win-stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.05), transparent 70%);
+    pointer-events: none;
 }
 
 .win-stat-card:hover {
     border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .win-stat-card .stat-icon {
@@ -32,7 +46,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .win-stat-card .stat-icon.total {
@@ -63,33 +78,40 @@
 .win-stat-card .stat-content {
     display: flex;
     flex-direction: column;
-}
-
-.win-stat-card .stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    justify-content: center;
 }
 
 .win-stat-card .stat-label {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.win-stat-card .stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
 }
 
 /* 篩選器 */
 .win-filters {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md);
-    margin-bottom: var(--space-lg);
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
     flex-wrap: wrap;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
 }
 
 .win-filters .filter-group {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: var(--spacing-sm);
 }
 
 .win-filters .filter-group svg {
@@ -106,7 +128,7 @@
 .win-notifications-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--spacing-xl);
 }
 
 .loading-state {
@@ -114,32 +136,39 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: calc(var(--space-xl) * 2);
-    gap: var(--space-md);
+    padding: calc(var(--spacing-xl) * 2);
+    gap: var(--spacing-md);
     color: var(--text-muted);
 }
 
 /* 通知項目 */
 .win-notification-item {
-    padding: var(--space-lg);
-    transition: all 0.2s ease;
+    padding: var(--spacing-xl);
+    /* Changed from --space-xl */
+    border-radius: var(--radius-xl);
+    background: var(--bg-card);
+    /* Changed from --bg-secondary */
+    border: 1px solid var(--border-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .win-notification-item:hover {
     border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateX(4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .notification-header {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--spacing-lg);
+    /* Changed from --space-lg */
 }
 
 .notification-title-row {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-sm);
-    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    flex-wrap: nowrap;
 }
 
 .notification-title {
@@ -211,7 +240,7 @@
 .notification-meta {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
+    gap: var(--spacing-md);
     flex-wrap: wrap;
 }
 
@@ -250,18 +279,18 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--border-color);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color-light);
 }
 
 .status-actions {
     display: flex;
-    gap: var(--space-sm);
+    gap: var(--spacing-sm);
 }
 
 .item-actions {
     display: flex;
-    gap: var(--space-xs);
+    gap: var(--spacing-xs);
 }
 
 /* 分頁 */
@@ -269,8 +298,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-md);
-    padding: var(--space-lg);
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
 }
 
 .page-info {

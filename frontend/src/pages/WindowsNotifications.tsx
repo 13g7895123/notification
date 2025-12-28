@@ -162,49 +162,49 @@ export function WindowsNotifications() {
             {/* 統計卡片 */}
             {stats && (
                 <div className="win-stats-grid">
-                    <div className="win-stat-card">
+                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '0ms' }}>
                         <div className="stat-icon total">
-                            <Monitor size={20} />
+                            <Monitor size={24} />
                         </div>
                         <div className="stat-content">
-                            <span className="stat-value">{stats.total}</span>
                             <span className="stat-label">總通知數</span>
+                            <span className="stat-value">{stats.total}</span>
                         </div>
                     </div>
-                    <div className="win-stat-card">
+                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '50ms' }}>
                         <div className="stat-icon pending">
-                            <Clock size={20} />
+                            <Clock size={24} />
                         </div>
                         <div className="stat-content">
-                            <span className="stat-value">{stats.pending}</span>
                             <span className="stat-label">待處理</span>
+                            <span className="stat-value">{stats.pending}</span>
                         </div>
                     </div>
-                    <div className="win-stat-card">
+                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '100ms' }}>
                         <div className="stat-icon delivered">
-                            <CheckCircle size={20} />
+                            <CheckCircle size={24} />
                         </div>
                         <div className="stat-content">
-                            <span className="stat-value">{stats.delivered}</span>
                             <span className="stat-label">已送達</span>
+                            <span className="stat-value">{stats.delivered}</span>
                         </div>
                     </div>
-                    <div className="win-stat-card">
+                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '150ms' }}>
                         <div className="stat-icon read">
-                            <Eye size={20} />
+                            <Eye size={24} />
                         </div>
                         <div className="stat-content">
-                            <span className="stat-value">{stats.read}</span>
                             <span className="stat-label">已讀</span>
+                            <span className="stat-value">{stats.read}</span>
                         </div>
                     </div>
-                    <div className="win-stat-card">
+                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '200ms' }}>
                         <div className="stat-icon today">
-                            <AlertCircle size={20} />
+                            <AlertCircle size={24} />
                         </div>
                         <div className="stat-content">
-                            <span className="stat-value">{stats.today}</span>
                             <span className="stat-label">今日新增</span>
+                            <span className="stat-value">{stats.today}</span>
                         </div>
                     </div>
                 </div>
