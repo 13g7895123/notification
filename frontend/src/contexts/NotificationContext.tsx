@@ -82,7 +82,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const fetchChannels = useCallback(async () => {
         try {
             const data = await api.get<NotificationChannel[]>('/channels');
-            setChannels(data);
+            setChannels(data || []);
         } catch (error) {
             console.error('Fetch channels failed', error);
         }
@@ -150,7 +150,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         try {
             const data = await api.get<{ messages: NotificationMessage[]; total: number; page: number; limit: number }>('/messages', params);
             // API 返回 { messages: [], total, page, limit }
-            setMessages(data.messages);
+            setMessages(data.messages || []);
         } catch (error) {
             console.error('Fetch messages failed', error);
         }
@@ -185,7 +185,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const fetchTemplates = useCallback(async () => {
         try {
             const data = await api.get<NotificationTemplate[]>('/templates');
-            setTemplates(data);
+            setTemplates(data || []);
         } catch (error) {
             console.error('Fetch templates failed', error);
         }
@@ -242,16 +242,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             // 轉換後端 trendData 為前端 recentActivity
             const formattedStats: NotificationStats = {
                 ...data,
-                recentActivity: data.trendData
+                recentActivity: data.trendData || []
             };
             setStats(formattedStats);
 
             // 同時更新最近日誌與訊息
             if (data.recentLogs) {
-                setLogs(data.recentLogs);
+                setLogs(data.recentLogs || []);
             }
             if (data.recentMessages) {
-                setMessages(data.recentMessages);
+                setMessages(data.recentMessages || []);
             }
         } catch (error) {
             console.error('Fetch stats failed', error);
@@ -262,7 +262,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const fetchApiKeys = useCallback(async () => {
         try {
             const data = await api.get<ApiKey[]>('/api-keys');
-            setApiKeys(data);
+            setApiKeys(data || []);
         } catch (error) {
             console.error('Fetch API keys failed', error);
         }
@@ -327,7 +327,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const fetchApiUsage = useCallback(async (params?: Record<string, string | number | boolean>) => {
         try {
             const data = await api.get<{ logs: ApiUsageLog[]; stats: ApiStats }>('/api-usage', params);
-            setApiUsageLogs(data.logs);
+            setApiUsageLogs(data.logs || []);
             setApiStats(data.stats);
         } catch (error) {
             console.error('Fetch API usage failed', error);
