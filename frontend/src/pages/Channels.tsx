@@ -131,7 +131,7 @@ export function Channels() {
                                 <div className="channel-card-type">
                                     <span className={`channel-badge ${channel.type}`}>
                                         {channel.type === 'line' ? <MessageCircle size={16} /> : <SendIcon size={16} />}
-                                        {channel.type.toUpperCase()}
+                                        {(channel.type || '').toUpperCase()}
                                     </span>
                                 </div>
                                 <label className="switch">

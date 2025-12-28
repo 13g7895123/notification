@@ -289,7 +289,7 @@ export function WindowsNotifications() {
                                     <div className="notification-header">
                                         <div className="notification-title-row">
                                             <span className={`type-badge ${notification.type}`}>
-                                                {notification.type.toUpperCase()}
+                                                {(notification.type || '').toUpperCase()}
                                             </span>
                                             <h3 className="notification-title">{notification.title}</h3>
                                             <span className={`status-badge ${statusConfig.color}`}>

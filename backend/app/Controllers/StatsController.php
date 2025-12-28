@@ -63,7 +63,7 @@ class StatsController extends BaseController
 
         // 最近發送紀錄（只顯示使用者自己的訊息結果）
         $recentLogs = $this->db->table('message_results mr')
-            ->select('mr.id, c.name as channel_name, m.title, mr.success, mr.sent_at')
+            ->select('mr.id, c.name as channel_name, c.type as channel_type, m.title, mr.success, mr.sent_at')
             ->join('channels c', 'c.id = mr.channel_id', 'left')
             ->join('messages m', 'm.id = mr.message_id', 'left')
             ->where('m.user_id', $userId)
@@ -76,6 +76,7 @@ class StatsController extends BaseController
             return [
                 'id' => $log['id'],
                 'channelName' => $log['channel_name'],
+                'channelType' => $log['channel_type'],
                 'title' => $log['title'],
                 'status' => $log['success'] ? 'success' : 'failed',
                 'sentAt' => $log['sent_at'],
