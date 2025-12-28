@@ -60,6 +60,10 @@
     background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
 }
 
+.stat-icon.windows {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+
 .stat-card .stat-change {
     display: flex;
     align-items: center;
@@ -89,6 +93,12 @@
 .stat-card .stat-label {
     font-size: 0.875rem;
     color: var(--text-secondary);
+}
+
+.stat-meta {
+    margin-top: var(--spacing-xs);
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .stat-progress {

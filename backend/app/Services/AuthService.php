@@ -24,15 +24,15 @@ class AuthService
     /**
      * 登入
      */
-    public function login(string $email, string $password): array
+    public function login(string $username, string $password): array
     {
-        $user = $this->userRepository->findByEmail($email);
+        $user = $this->userRepository->findByUsername($username);
 
         if (!$user) {
             return [
                 'success' => false,
                 'error' => 'INVALID_CREDENTIALS',
-                'message' => '電子郵件或密碼錯誤',
+                'message' => '使用者名稱或密碼錯誤',
             ];
         }
 
@@ -40,7 +40,7 @@ class AuthService
             return [
                 'success' => false,
                 'error' => 'INVALID_CREDENTIALS',
-                'message' => '電子郵件或密碼錯誤',
+                'message' => '使用者名稱或密碼錯誤',
             ];
         }
 
@@ -78,6 +78,7 @@ class AuthService
             'iat' => $issuedAt,
             'exp' => $expiresAt,
             'sub' => $user->id,
+            'username' => $user->username,
             'email' => $user->email,
             'role' => $user->role,
         ];
@@ -138,6 +139,9 @@ class AuthService
 
         if (isset($data['username'])) {
             $updateData['username'] = $data['username'];
+        }
+        if (isset($data['display_name'])) {
+            $updateData['display_name'] = $data['display_name'];
         }
         if (isset($data['avatar'])) {
             $updateData['avatar'] = $data['avatar'];

@@ -231,6 +231,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 trendData: { date: string; sent: number; success: number; failed: number }[];
                 recentLogs?: NotificationLog[];
                 recentMessages?: NotificationMessage[];
+                windowsStats?: {
+                    total: number;
+                    pending: number;
+                    today: number;
+                    trends: { date: string; count: number }[];
+                };
             }
             const data = await api.get<DashboardData>('/stats/dashboard');
             // 轉換後端 trendData 為前端 recentActivity

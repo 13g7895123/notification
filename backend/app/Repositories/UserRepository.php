@@ -24,6 +24,19 @@ class UserRepository extends BaseRepository
     }
 
     /**
+     * 根據使用者名稱查找使用者
+     */
+    public function findByUsername(string $username): ?UserEntity
+    {
+        $data = $this->db->table($this->table)
+            ->where('username', $username)
+            ->get()
+            ->getRowArray();
+
+        return $data ? new UserEntity($data) : null;
+    }
+
+    /**
      * 根據 Email 查找使用者
      */
     public function findByEmail(string $email): ?UserEntity
@@ -67,7 +80,7 @@ class UserRepository extends BaseRepository
 
         // 取得資料
         $data = $builder
-            ->select('id, username, email, role, status, avatar, created_at, last_login_at')
+            ->select('id, username, display_name, email, role, status, avatar, created_at, last_login_at')
             ->orderBy('created_at', 'DESC')
             ->limit($limit, $offset)
             ->get()
@@ -92,6 +105,7 @@ class UserRepository extends BaseRepository
 
         $userData = [
             'username' => $data['username'],
+            'display_name' => $data['display_name'] ?? $data['username'],
             'email' => $data['email'],
             'password' => password_hash($data['password'], PASSWORD_BCRYPT),
             'role' => $data['role'] ?? 'user',
@@ -142,6 +156,20 @@ class UserRepository extends BaseRepository
         return $this->db->table($this->table)
             ->where('id', $id)
             ->update(['last_login_at' => date('Y-m-d H:i:s')]);
+    }
+
+    /**
+     * 檢查使用者名稱是否存在
+     */
+    public function usernameExists(string $username, ?int $excludeId = null): bool
+    {
+        $builder = $this->db->table($this->table)->where('username', $username);
+
+        if ($excludeId) {
+            $builder->where('id !=', $excludeId);
+        }
+
+        return $builder->countAllResults() > 0;
     }
 
     /**

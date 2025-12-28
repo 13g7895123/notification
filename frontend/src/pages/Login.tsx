@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
 export function Login() {
     const { login, isAuthenticated, isLoading } = useAuth();
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -22,20 +22,20 @@ export function Login() {
         setError('');
         setIsSubmitting(true);
 
-        const success = await login(email, password);
+        const success = await login(username, password);
 
         if (!success) {
-            setError('電子郵件或密碼錯誤');
+            setError('使用者名稱或密碼錯誤');
         }
         setIsSubmitting(false);
     };
 
     const fillDemo = (type: 'admin' | 'user') => {
         if (type === 'admin') {
-            setEmail('admin@notifyhub.com');
+            setUsername('admin');
             setPassword('admin123');
         } else {
-            setEmail('user@notifyhub.com');
+            setUsername('user');
             setPassword('user123');
         }
     };
@@ -81,17 +81,17 @@ export function Login() {
                     )}
 
                     <div className="input-group">
-                        <label className="input-label">電子郵件</label>
+                        <label className="input-label">使用者名稱</label>
                         <div className="input-wrapper">
-                            <Mail size={18} className="input-icon" />
+                            <User size={18} className="input-icon" />
                             <input
-                                type="email"
+                                type="text"
                                 className="input"
-                                placeholder="your@email.com"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
+                                placeholder="帳號名稱"
+                                value={username}
+                                onChange={e => setUsername(e.target.value)}
                                 required
-                                autoComplete="email"
+                                autoComplete="username"
                             />
                         </div>
                     </div>

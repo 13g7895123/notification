@@ -134,10 +134,10 @@ export function Sidebar() {
                             onClick={() => setShowUserMenu(!showUserMenu)}
                         >
                             <div className="user-avatar">
-                                {user?.username.charAt(0).toUpperCase()}
+                                {(user?.displayName || user?.username || '?').charAt(0).toUpperCase()}
                             </div>
                             <div className="user-info">
-                                <span className="user-name">{user?.username}</span>
+                                <span className="user-name">{user?.displayName || user?.username}</span>
                                 <span className="user-role">
                                     {user?.role === 'admin' ? '管理員' : '使用者'}
                                 </span>

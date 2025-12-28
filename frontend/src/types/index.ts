@@ -137,12 +137,19 @@ export interface NotificationStats {
         success: number;
         failed: number;
     }[];
+    windowsStats?: {
+        total: number;
+        pending: number;
+        today: number;
+        trends: { date: string; count: number }[];
+    };
 }
 
 // 用戶
 export interface User {
     id: string;
     username: string;
+    displayName?: string;
     email: string;
     role: 'admin' | 'user';
     avatar?: string;

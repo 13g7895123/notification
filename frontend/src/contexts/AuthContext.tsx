@@ -15,7 +15,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     isAdmin: boolean;
-    login: (email: string, password: string) => Promise<boolean>;
+    login: (username: string, password: string) => Promise<boolean>;
     logout: () => void;
     updateProfile: (updates: Partial<User>) => Promise<boolean>;
 
@@ -71,10 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+    const login = useCallback(async (username: string, password: string): Promise<boolean> => {
         setIsLoading(true);
         try {
-            const data = await api.post<{ user: User; token: string }>('/auth/login', { email, password });
+            const data = await api.post<{ user: User; token: string }>('/auth/login', { username, password });
             setUser(data.user);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             setIsLoading(false);

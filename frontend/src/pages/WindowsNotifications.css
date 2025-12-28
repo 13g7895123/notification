@@ -114,7 +114,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--space-xl) * 2;
+    padding: calc(var(--space-xl) * 2);
     gap: var(--space-md);
     color: var(--text-muted);
 }

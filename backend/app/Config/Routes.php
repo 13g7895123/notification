@@ -85,6 +85,7 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
         $routes->post('api-keys/(:segment)/regenerate', 'ApiKeyController::regenerate/$1');
 
         // API 使用紀錄
+        $routes->get('api-usage', 'ApiUsageController::stats');
         $routes->get('api-usage/logs', 'ApiUsageController::logs');
         $routes->get('api-usage/stats', 'ApiUsageController::stats');
 

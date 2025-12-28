@@ -9,6 +9,7 @@ class UserEntity
 {
     public int $id;
     public string $username;
+    public ?string $displayName;
     public string $email;
     public string $password;
     public string $role;
@@ -22,6 +23,7 @@ class UserEntity
     {
         $this->id = (int) ($data['id'] ?? 0);
         $this->username = $data['username'] ?? '';
+        $this->displayName = $data['display_name'] ?? null;
         $this->email = $data['email'] ?? '';
         $this->password = $data['password'] ?? '';
         $this->role = $data['role'] ?? 'user';
@@ -57,6 +59,7 @@ class UserEntity
         return [
             'id' => $this->id,
             'username' => $this->username,
+            'displayName' => $this->displayName,
             'email' => $this->email,
             'role' => $this->role,
             'avatar' => $this->avatar,

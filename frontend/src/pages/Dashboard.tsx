@@ -7,7 +7,8 @@ import {
     MessageSquare,
     Zap,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    Monitor
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import { format } from 'date-fns';
@@ -47,7 +48,7 @@ export function Dashboard() {
             </div>
 
             {/* 統計卡片 */}
-            <div className="stats-grid">
+            <div className="stats-grid dashboard-stats-grid">
                 <div className="card stat-card">
                     <div className="stat-header">
                         <div className="stat-icon sent">
@@ -92,17 +93,14 @@ export function Dashboard() {
 
                 <div className="card stat-card">
                     <div className="stat-header">
-                        <div className="stat-icon rate">
-                            <TrendingUp size={20} />
+                        <div className="stat-icon windows">
+                            <Monitor size={20} />
                         </div>
                     </div>
-                    <div className="stat-value">{stats.successRate}%</div>
-                    <div className="stat-label">成功率</div>
-                    <div className="stat-progress">
-                        <div
-                            className="stat-progress-bar"
-                            style={{ width: `${stats.successRate}%` }}
-                        />
+                    <div className="stat-value">{stats.windowsStats?.total || 0}</div>
+                    <div className="stat-label">桌面通知數</div>
+                    <div className="stat-meta">
+                        今日新增: {stats.windowsStats?.today || 0}
                     </div>
                 </div>
             </div>

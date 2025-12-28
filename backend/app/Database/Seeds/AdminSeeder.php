@@ -16,24 +16,26 @@ class AdminSeeder extends Seeder
     {
         // Admin 帳號資料（不含 id，讓資料庫自動產生）
         $adminData = [
-            'username'   => 'jarvis',
-            'email'      => '13g7895123@gmail.com',
-            'password'   => password_hash('termit0035', PASSWORD_BCRYPT),
-            'role'       => 'admin',
-            'status'     => 'active',
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
+            'username'     => 'jarvis',
+            'display_name' => 'Antigravity Jarvis',
+            'email'        => '13g7895123@gmail.com',
+            'password'     => password_hash('termit0035', PASSWORD_BCRYPT),
+            'role'         => 'admin',
+            'status'       => 'active',
+            'created_at'   => date('Y-m-d H:i:s'),
+            'updated_at'   => date('Y-m-d H:i:s'),
         ];
 
         // User 帳號資料（不含 id，讓資料庫自動產生）
         $userData = [
-            'username'   => 'User',
-            'email'      => 'user@notifyhub.com',
-            'password'   => password_hash('admin123', PASSWORD_BCRYPT),
-            'role'       => 'user',
-            'status'     => 'active',
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
+            'username'     => 'user',
+            'display_name' => '測試人員',
+            'email'        => 'user@notifyhub.com',
+            'password'     => password_hash('admin123', PASSWORD_BCRYPT),
+            'role'         => 'user',
+            'status'       => 'active',
+            'created_at'   => date('Y-m-d H:i:s'),
+            'updated_at'   => date('Y-m-d H:i:s'),
         ];
 
         $db = \Config\Database::connect();
@@ -78,8 +80,8 @@ class AdminSeeder extends Seeder
         echo "========================================\n";
         echo "  預設帳號資訊\n";
         echo "========================================\n";
-        echo "Admin: 13g7895123@gmail.com / termit0035\n";
-        echo "User:  user@notifyhub.com / admin123\n";
+        echo "Admin: jarvis / termit0035 (13g7895123@gmail.com)\n";
+        echo "User:  user / admin123 (user@notifyhub.com)\n";
         echo "========================================\n";
         echo "⚠️  生產環境請務必更改密碼！\n";
     }

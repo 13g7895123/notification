@@ -141,6 +141,10 @@ class StatsController extends BaseController
             ];
         }, $byChannel);
 
+        // Windows 桌面通知統計
+        $winRepo = new \App\Repositories\WindowsNotificationRepository();
+        $winStats = $winRepo->getStats();
+
         return $this->successResponse([
             'totalSent' => $totalSent,
             'totalSuccess' => $totalSuccess,
@@ -152,6 +156,12 @@ class StatsController extends BaseController
             'recentLogs' => $formattedLogs,
             'trendData' => $formattedTrend,
             'byChannel' => $formattedByChannel,
+            'windowsStats' => [
+                'total' => $winStats['total'],
+                'pending' => $winStats['pending'],
+                'today' => $winStats['today'],
+                'trends' => $winStats['trends']
+            ]
         ]);
     }
 }

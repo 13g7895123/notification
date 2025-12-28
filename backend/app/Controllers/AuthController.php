@@ -23,14 +23,14 @@ class AuthController extends BaseController
     {
         $json = $this->request->getJSON(true);
 
-        $email = $json['email'] ?? '';
+        $username = $json['username'] ?? $json['email'] ?? '';
         $password = $json['password'] ?? '';
 
-        if (empty($email) || empty($password)) {
-            return $this->errorResponse('VALIDATION_ERROR', '請提供電子郵件和密碼', 400);
+        if (empty($username) || empty($password)) {
+            return $this->errorResponse('VALIDATION_ERROR', '請提供使用者名稱和密碼', 400);
         }
 
-        $result = $this->authService->login($email, $password);
+        $result = $this->authService->login($username, $password);
 
         if (!$result['success']) {
             $httpCode = $result['error'] === 'ACCOUNT_DISABLED' ? 403 : 401;
@@ -63,11 +63,12 @@ class AuthController extends BaseController
         }
 
         return $this->successResponse([
-            'id' => $user['id'],
+            'id' => (int)$user['id'],
             'username' => $user['username'],
+            'displayName' => $user['displayName'] ?? $user['username'],
             'email' => $user['email'],
             'role' => $user['role'],
-            'avatar' => $user['avatar'],
+            'avatar' => $user['avatar'] ?? null,
         ]);
     }
 
