@@ -27,36 +27,38 @@ class AuthServiceTest extends CIUnitTestCase
     public function testLoginSuccess()
     {
         // 建立測試使用者
+        $username = 'testuser';
         $email = 'test@example.com';
         $password = 'password123';
         $this->userRepository->create([
-            'username' => 'testuser',
+            'username' => $username,
             'email' => $email,
             'password' => $password,
             'role' => 'user',
             'status' => 'active'
         ]);
 
-        $result = $this->authService->login($email, $password);
+        $result = $this->authService->login($username, $password);
 
         $this->assertTrue($result['success']);
         $this->assertArrayHasKey('token', $result);
         $this->assertEquals($email, $result['user']['email']);
+        $this->assertEquals($username, $result['user']['username']);
     }
 
     public function testLoginInvalidPassword()
     {
-        $email = 'test@example.com';
+        $username = 'testuser_invalid';
         $password = 'password123';
         $this->userRepository->create([
-            'username' => 'testuser',
-            'email' => $email,
+            'username' => $username,
+            'email' => 'test_invalid@example.com',
             'password' => $password,
             'role' => 'user',
             'status' => 'active'
         ]);
 
-        $result = $this->authService->login($email, 'wrongpassword');
+        $result = $this->authService->login($username, 'wrongpassword');
 
         $this->assertFalse($result['success']);
         $this->assertEquals('INVALID_CREDENTIALS', $result['error']);
@@ -64,17 +66,17 @@ class AuthServiceTest extends CIUnitTestCase
 
     public function testLoginDisabledAccount()
     {
-        $email = 'disabled@example.com';
+        $username = 'disableduser';
         $password = 'password123';
         $this->userRepository->create([
-            'username' => 'disableduser',
-            'email' => $email,
+            'username' => $username,
+            'email' => 'disabled@example.com',
             'password' => $password,
             'role' => 'user',
             'status' => 'inactive'
         ]);
 
-        $result = $this->authService->login($email, $password);
+        $result = $this->authService->login($username, $password);
 
         $this->assertFalse($result['success']);
         $this->assertEquals('ACCOUNT_DISABLED', $result['error']);
@@ -84,6 +86,7 @@ class AuthServiceTest extends CIUnitTestCase
     {
         $user = new UserEntity([
             'id' => 123,
+            'username' => 'testuser',
             'email' => 'test@example.com',
             'role' => 'admin'
         ]);
@@ -93,6 +96,7 @@ class AuthServiceTest extends CIUnitTestCase
 
         $this->assertNotNull($decoded);
         $this->assertEquals(123, $decoded['sub']);
+        $this->assertEquals('testuser', $decoded['username']);
         $this->assertEquals('admin', $decoded['role']);
     }
 }

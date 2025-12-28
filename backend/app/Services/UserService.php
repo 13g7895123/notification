@@ -91,6 +91,7 @@ class UserService
 
         $updateData = [];
         if (isset($data['username'])) $updateData['username'] = $data['username'];
+        if (isset($data['display_name'])) $updateData['display_name'] = $data['display_name'];
         if (isset($data['role'])) $updateData['role'] = $data['role'];
         if (isset($data['status'])) $updateData['status'] = $data['status'];
         if (isset($data['avatar'])) $updateData['avatar'] = $data['avatar'];
