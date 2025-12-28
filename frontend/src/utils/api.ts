@@ -5,22 +5,29 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 const STORAGE_KEY = 'notifyhub_auth';
 
-interface ApiResponse<T = any> {
+interface ApiError {
+    code: string;
+    message: string;
+    details?: unknown;
+    status?: number;
+}
+
+interface ApiResponse<T = unknown> {
     success: boolean;
     data?: T;
     message?: string;
     error?: {
         code: string;
         message: string;
-        details?: any;
+        details?: unknown;
     };
 }
 
 class ApiClient {
-    private async request<T = any>(
+    private async request<T = unknown>(
         endpoint: string,
         method: string = 'GET',
-        body?: any,
+        body?: unknown,
         headers: Record<string, string> = {}
     ): Promise<T> {
         const url = `${BASE_URL}${endpoint}`;
@@ -59,16 +66,16 @@ class ApiClient {
             const result: ApiResponse<T> = await response.json();
 
             if (!result.success) {
-                const error = new Error(result.error?.message || '未知錯誤');
-                (error as any).code = result.error?.code || 'UNKNOWN_ERROR';
-                (error as any).details = result.error?.details;
-                (error as any).status = response.status;
+                const error = new Error(result.error?.message || '未知錯誤') as Error & ApiError;
+                error.code = result.error?.code || 'UNKNOWN_ERROR';
+                error.details = result.error?.details;
+                error.status = response.status;
                 throw error;
             }
 
             return result.data as T;
         } catch (error) {
-            if ((error as any).status === 401) {
+            if ((error as ApiError).status === 401) {
                 // Token 過期或無效，清空登入狀態
                 localStorage.removeItem(STORAGE_KEY);
                 if (window.location.pathname !== '/login') {
@@ -79,7 +86,7 @@ class ApiClient {
         }
     }
 
-    public get<T = any>(endpoint: string, params?: Record<string, string | number | boolean>) {
+    public get<T = unknown>(endpoint: string, params?: Record<string, string | number | boolean>) {
         let url = endpoint;
         if (params) {
             const query = new URLSearchParams();
@@ -93,19 +100,19 @@ class ApiClient {
         return this.request<T>(url, 'GET');
     }
 
-    public post<T = any>(endpoint: string, body?: any) {
+    public post<T = unknown>(endpoint: string, body?: unknown) {
         return this.request<T>(endpoint, 'POST', body);
     }
 
-    public put<T = any>(endpoint: string, body?: any) {
+    public put<T = unknown>(endpoint: string, body?: unknown) {
         return this.request<T>(endpoint, 'PUT', body);
     }
 
-    public delete<T = any>(endpoint: string) {
+    public delete<T = unknown>(endpoint: string) {
         return this.request<T>(endpoint, 'DELETE');
     }
 
-    public patch<T = any>(endpoint: string, body?: any) {
+    public patch<T = unknown>(endpoint: string, body?: unknown) {
         return this.request<T>(endpoint, 'PATCH', body);
     }
 }

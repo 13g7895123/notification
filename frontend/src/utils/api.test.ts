@@ -74,7 +74,9 @@ describe('ApiClient', () => {
 
         // Mock window.location
         const originalLocation = window.location;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (window as any).location;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         window.location = { ...originalLocation, href: '', pathname: '/test' } as any;
 
         mockFetch.mockResolvedValueOnce({

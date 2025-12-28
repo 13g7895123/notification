@@ -78,7 +78,7 @@ export function SendNotification() {
             setSelectedTemplate('');
 
             setTimeout(() => setSendResult(null), 3000);
-        } catch (error) {
+        } catch {
             setSendResult('error');
             setTimeout(() => setSendResult(null), 3000);
         }

@@ -315,7 +315,7 @@ export function UserManagement() {
                         if (editingUser) {
                             updateUser(editingUser.id, data);
                         } else {
-                            addUser(data as Omit<UserWithAuth, 'id' | 'createdAt'>);
+                            addUser(data as Omit<UserWithAuth, 'id' | 'createdAt' | 'lastLoginAt'> & { password: string });
                         }
                         setShowModal(false);
                     }}
@@ -354,7 +354,7 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const data: any = {
+        const data: Partial<UserWithAuth> & { password?: string } = {
             username,
             email,
             role,

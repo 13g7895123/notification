@@ -21,9 +21,9 @@ interface AuthContextType {
 
     // 使用者管理
     users: UserWithAuth[];
-    fetchUsers: (params?: any) => Promise<void>;
-    addUser: (user: any) => Promise<boolean>;
-    updateUser: (id: string, updates: any) => Promise<boolean>;
+    fetchUsers: (params?: Record<string, string | number | boolean>) => Promise<void>;
+    addUser: (user: Omit<UserWithAuth, 'id' | 'createdAt' | 'lastLoginAt'> & { password: string }) => Promise<boolean>;
+    updateUser: (id: string, updates: Partial<UserWithAuth> & { password?: string }) => Promise<boolean>;
     deleteUser: (id: string) => Promise<boolean>;
     toggleUserStatus: (id: string, status: 'active' | 'inactive') => Promise<boolean>;
     resetUserPassword: (id: string, newPassword: string) => Promise<boolean>;
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(parsed.user);
 
                 // 向後端請求最新的用戶資料以確認 Token 有效
-                api.get('/auth/me')
+                api.get<User>('/auth/me')
                     .then(userData => {
                         setUser(userData);
                         // 更新快取
@@ -115,9 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     // 使用者管理功能
-    const fetchUsers = useCallback(async (params?: any) => {
+    const fetchUsers = useCallback(async (params?: Record<string, string | number | boolean>) => {
         try {
-            const data = await api.get('/users', params);
+            const data = await api.get<{ users: UserWithAuth[]; total: number; page: number; limit: number }>('/users', params);
             // 根據 API.md，返回的是 { users: [], total, page, limit }
             setUsers(data.users);
         } catch (error) {
@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const addUser = useCallback(async (userData: any) => {
+    const addUser = useCallback(async (userData: Omit<UserWithAuth, 'id' | 'createdAt' | 'lastLoginAt'> & { password: string }) => {
         try {
             await api.post('/users', userData);
             await fetchUsers();
@@ -136,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [fetchUsers]);
 
-    const updateUser = useCallback(async (id: string, updates: any) => {
+    const updateUser = useCallback(async (id: string, updates: Partial<UserWithAuth> & { password?: string }) => {
         try {
             await api.put(`/users/${id}`, updates);
             await fetchUsers();
@@ -205,6 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) {

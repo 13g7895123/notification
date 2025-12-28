@@ -25,7 +25,7 @@ interface NotificationContextType {
 
     // 訊息
     messages: NotificationMessage[];
-    fetchMessages: (params?: any) => Promise<void>;
+    fetchMessages: (params?: Record<string, string | number | boolean>) => Promise<void>;
     sendMessage: (message: Omit<NotificationMessage, 'id' | 'createdAt' | 'status' | 'results'>) => Promise<boolean>;
     deleteMessage: (id: string) => Promise<boolean>;
 
@@ -55,7 +55,7 @@ interface NotificationContextType {
     // API 使用紀錄
     apiUsageLogs: ApiUsageLog[];
     apiStats: ApiStats | null;
-    fetchApiUsage: (params?: any) => Promise<void>;
+    fetchApiUsage: (params?: Record<string, string | number | boolean>) => Promise<void>;
 
     // UI 狀態
     isLoading: boolean;
@@ -81,7 +81,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // 渠道操作
     const fetchChannels = useCallback(async () => {
         try {
-            const data = await api.get('/channels');
+            const data = await api.get<NotificationChannel[]>('/channels');
             setChannels(data);
         } catch (error) {
             console.error('Fetch channels failed', error);
@@ -146,9 +146,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, []);
 
     // 訊息操作
-    const fetchMessages = useCallback(async (params?: any) => {
+    const fetchMessages = useCallback(async (params?: Record<string, string | number | boolean>) => {
         try {
-            const data = await api.get('/messages', params);
+            const data = await api.get<{ messages: NotificationMessage[]; total: number; page: number; limit: number }>('/messages', params);
             // API 返回 { messages: [], total, page, limit }
             setMessages(data.messages);
         } catch (error) {
@@ -184,7 +184,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // 模板操作
     const fetchTemplates = useCallback(async () => {
         try {
-            const data = await api.get('/templates');
+            const data = await api.get<NotificationTemplate[]>('/templates');
             setTemplates(data);
         } catch (error) {
             console.error('Fetch templates failed', error);
@@ -227,7 +227,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // 統計操作
     const fetchStats = useCallback(async () => {
         try {
-            const data = await api.get('/stats/dashboard');
+            interface DashboardData extends Omit<NotificationStats, 'recentActivity'> {
+                trendData: { date: string; sent: number; success: number; failed: number }[];
+                recentLogs?: NotificationLog[];
+                recentMessages?: NotificationMessage[];
+            }
+            const data = await api.get<DashboardData>('/stats/dashboard');
             // 轉換後端 trendData 為前端 recentActivity
             const formattedStats: NotificationStats = {
                 ...data,
@@ -250,7 +255,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // API 金鑰操作
     const fetchApiKeys = useCallback(async () => {
         try {
-            const data = await api.get('/api-keys');
+            const data = await api.get<ApiKey[]>('/api-keys');
             setApiKeys(data);
         } catch (error) {
             console.error('Fetch API keys failed', error);
@@ -259,7 +264,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const addApiKey = useCallback(async (apiKey: Omit<ApiKey, 'id' | 'key' | 'prefix' | 'usageCount' | 'createdAt' | 'updatedAt'>): Promise<string | null> => {
         try {
-            const data = await api.post('/api-keys', apiKey);
+            const data = await api.post<{ key: string }>('/api-keys', apiKey);
             await fetchApiKeys();
             return data.key; // 返回明文金鑰
         } catch (error) {
@@ -303,7 +308,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const regenerateApiKey = useCallback(async (id: string): Promise<string | null> => {
         try {
-            const data = await api.put(`/api-keys/${id}/regenerate`);
+            const data = await api.put<{ key: string }>(`/api-keys/${id}/regenerate`);
             await fetchApiKeys();
             return data.key;
         } catch (error) {
@@ -313,9 +318,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, [fetchApiKeys]);
 
     // API 使用紀錄操作
-    const fetchApiUsage = useCallback(async (params?: any) => {
+    const fetchApiUsage = useCallback(async (params?: Record<string, string | number | boolean>) => {
         try {
-            const data = await api.get('/api-usage', params);
+            const data = await api.get<{ logs: ApiUsageLog[]; stats: ApiStats }>('/api-usage', params);
             setApiUsageLogs(data.logs);
             setApiStats(data.stats);
         } catch (error) {
@@ -328,11 +333,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, []);
 
     // 登入後自動加載基本數據
+    // 這裡需要在認證狀態改變時獲取數據，這是合理的 useEffect 使用場景
+    /* eslint-disable react-hooks/set-state-in-effect */
     useEffect(() => {
         if (isAuthenticated) {
-            fetchChannels();
-            fetchTemplates();
-            fetchStats();
+            // 使用 void 表示我們不關心這些 Promise 的結果
+            void fetchChannels();
+            void fetchTemplates();
+            void fetchStats();
         } else {
             // 清空數據
             setChannels([]);
@@ -345,6 +353,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             setApiStats(null);
         }
     }, [isAuthenticated, fetchChannels, fetchTemplates, fetchStats]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     return (
         <NotificationContext.Provider
@@ -388,6 +397,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useNotification() {
     const context = useContext(NotificationContext);
     if (!context) {
