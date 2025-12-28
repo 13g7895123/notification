@@ -83,24 +83,42 @@ class StatsController extends BaseController
         }, $recentLogs);
 
         // 趨勢數據（過去 7 天，只顯示使用者自己的數據）
+        // 先查詢實際數據
         $trendData = $this->db->table('message_results mr')
             ->select("DATE(mr.sent_at) as date, COUNT(*) as sent, SUM(mr.success) as success, SUM(CASE WHEN mr.success = 0 THEN 1 ELSE 0 END) as failed")
             ->join('messages m', 'm.id = mr.message_id')
             ->where('m.user_id', $userId)
-            ->where('mr.sent_at >=', date('Y-m-d', strtotime('-7 days')))
+            ->where('mr.sent_at >=', date('Y-m-d', strtotime('-6 days')))
             ->groupBy('DATE(mr.sent_at)')
-            ->orderBy('date', 'ASC')
             ->get()
             ->getResultArray();
 
-        $formattedTrend = array_map(function ($trend) {
-            return [
-                'date' => $trend['date'],
-                'sent' => (int) $trend['sent'],
-                'success' => (int) $trend['success'],
-                'failed' => (int) $trend['failed'],
-            ];
-        }, $trendData);
+        // 將查詢結果轉換為以日期為 key 的陣列
+        $trendByDate = [];
+        foreach ($trendData as $trend) {
+            $trendByDate[$trend['date']] = $trend;
+        }
+
+        // 生成過去 7 天的完整資料（含無資料的日期）
+        $formattedTrend = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-{$i} days"));
+            if (isset($trendByDate[$date])) {
+                $formattedTrend[] = [
+                    'date' => $date,
+                    'sent' => (int) $trendByDate[$date]['sent'],
+                    'success' => (int) $trendByDate[$date]['success'],
+                    'failed' => (int) $trendByDate[$date]['failed'],
+                ];
+            } else {
+                $formattedTrend[] = [
+                    'date' => $date,
+                    'sent' => 0,
+                    'success' => 0,
+                    'failed' => 0,
+                ];
+            }
+        }
 
         // 依渠道統計
         $byChannel = $this->db->table('message_results mr')

@@ -149,7 +149,9 @@ export function Dashboard() {
                     </div>
                     <div className="activity-chart">
                         {stats.recentActivity.map((day, index) => {
-                            const maxSent = Math.max(...stats.recentActivity.map(d => d.sent));
+                            const maxSent = Math.max(...stats.recentActivity.map(d => d.sent), 1);
+                            const successHeight = maxSent > 0 ? (day.success / maxSent) * 100 : 0;
+                            const failedHeight = maxSent > 0 ? (day.failed / maxSent) * 100 : 0;
                             return (
                                 <div
                                     key={day.date}
@@ -159,13 +161,13 @@ export function Dashboard() {
                                     <div className="chart-bar-wrapper">
                                         <div
                                             className="chart-bar success-bar"
-                                            style={{ height: `${(day.success / maxSent) * 100}%` }}
+                                            style={{ height: `${successHeight}%` }}
                                         />
                                         <div
                                             className="chart-bar failed-bar"
                                             style={{
-                                                height: `${(day.failed / maxSent) * 100}%`,
-                                                bottom: `${(day.success / maxSent) * 100}%`
+                                                height: `${failedHeight}%`,
+                                                bottom: `${successHeight}%`
                                             }}
                                         />
                                     </div>
