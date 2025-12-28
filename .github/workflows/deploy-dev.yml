@@ -78,8 +78,8 @@ jobs:
             # 執行部署腳本
             echo ""
             echo "[5/6] 執行部署..."
-            ./deploy.sh build blue
-            ./deploy.sh switch blue
+            ./scripts/deploy.sh build blue
+            ./scripts/deploy.sh switch blue
             
             # 顯示服務狀態
             echo ""

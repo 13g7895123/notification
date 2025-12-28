@@ -100,14 +100,14 @@ jobs:
             fi
             
             echo "正在部署到 $IDLE_VERSION 版本..."
-            ./deploy.sh build "$IDLE_VERSION"
+            ./scripts/deploy.sh build "$IDLE_VERSION"
             
             # 健康檢查
             echo "執行健康檢查..."
             sleep 15
             
             # 切換流量
-            ./deploy.sh switch "$IDLE_VERSION"
+            ./scripts/deploy.sh switch "$IDLE_VERSION"
             
             # 顯示服務狀態
             echo ""

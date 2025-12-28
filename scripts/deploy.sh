@@ -13,6 +13,11 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# 取得腳本所在目錄並切換到專案根目錄
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
+
 # 設定檔路徑
 PROXY_CONF="./docker/frontend-proxy/conf.d/default.conf"
 
@@ -41,11 +46,11 @@ echo ""
 
 show_help() {
     echo "使用方式:"
-    echo "  ./deploy.sh build [blue|green]   - 建構指定版本"
-    echo "  ./deploy.sh switch [blue|green]  - 切換流量到指定版本"
-    echo "  ./deploy.sh status               - 顯示狀態"
-    echo "  ./deploy.sh rollback             - 回滾到待命版本"
-    echo "  ./deploy.sh reload               - 重用 Nginx 設定"
+    echo "  ./scripts/deploy.sh build [blue|green]   - 建構指定版本"
+    echo "  ./scripts/deploy.sh switch [blue|green]  - 切換流量到指定版本"
+    echo "  ./scripts/deploy.sh status               - 顯示狀態"
+    echo "  ./scripts/deploy.sh rollback             - 回滾到待命版本"
+    echo "  ./scripts/deploy.sh reload               - 重整 Nginx 設定"
     echo ""
 }
 
