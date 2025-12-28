@@ -67,6 +67,7 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
         $routes->delete('channels/(:segment)', 'ChannelController::delete/$1');
         $routes->put('channels/(:segment)/toggle', 'ChannelController::toggle/$1');
         $routes->post('channels/(:segment)/test', 'ChannelController::test/$1');
+        $routes->post('channels/(:segment)/regenerate-key', 'ChannelController::regenerateKey/$1');
 
         // 通知訊息
         $routes->get('messages', 'MessageController::index');

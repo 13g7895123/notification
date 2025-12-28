@@ -9,7 +9,8 @@ import {
     Send as SendIcon,
     X,
     Check,
-    Loader2
+    Loader2,
+    RefreshCw
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { NotificationChannel, ChannelType, LineConfig, TelegramConfig } from '../types';
@@ -265,6 +266,7 @@ interface ChannelModalProps {
 }
 
 function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
+    const { regenerateChannelWebhook } = useNotification();
     const [type, setType] = useState<ChannelType>(channel?.type || 'line');
     const [name, setName] = useState(channel?.name || '');
     const [enabled, setEnabled] = useState(channel?.enabled ?? true);
@@ -276,9 +278,10 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
     const [channelSecret, setChannelSecret] = useState(
         channel?.type === 'line' ? (channel.config as LineConfig).channelSecret : ''
     );
-    const [targetId, setTargetId] = useState(
-        channel?.type === 'line' ? (channel.config as LineConfig).targetId || '' : ''
-    );
+    const [webhookKey, setWebhookKey] = useState(channel?.webhookKey || '');
+    const [isRegenerating, setIsRegenerating] = useState(false);
+
+    // Telegram config
 
     // Telegram config
     const [botToken, setBotToken] = useState(
@@ -297,7 +300,7 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
         e.preventDefault();
 
         const config = type === 'line'
-            ? { channelAccessToken, channelSecret, targetId }
+            ? { channelAccessToken, channelSecret }
             : { botToken, chatId, parseMode };
 
         onSave({
@@ -368,7 +371,7 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
                                             type="text"
                                             className="input font-mono"
                                             style={{ background: 'var(--bg-tertiary)', fontSize: '0.85rem' }}
-                                            value={`${apiUrl.replace('/api', '')}/api/webhook/line?key=${channel.webhookKey || '尚未生成'}`}
+                                            value={`${apiUrl.replace('/api', '')}/api/webhook/line?key=${webhookKey || '尚未生成'}`}
                                             readOnly
                                             onClick={(e) => (e.target as HTMLInputElement).select()}
                                         />
@@ -376,13 +379,37 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
                                             type="button"
                                             className="btn btn-secondary btn-sm"
                                             onClick={() => {
-                                                const url = `${apiUrl.replace('/api', '')}/api/webhook/line?key=${channel.webhookKey || ''}`;
+                                                const url = `${apiUrl.replace('/api', '')}/api/webhook/line?key=${webhookKey || ''}`;
                                                 navigator.clipboard.writeText(url);
                                                 toast.success('已複製 Webhook URL');
                                             }}
-                                            disabled={!channel.webhookKey}
+                                            disabled={!webhookKey}
+                                            title="複製 URL"
                                         >
                                             複製
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={async () => {
+                                                if (!channel) return;
+                                                const confirmed = await window.confirm('確定要重新生成 Webhook Key 嗎？舊的 Key 將會失效，請記得更新 LINE Developer 控制台的設定。');
+                                                if (!confirmed) return;
+
+                                                setIsRegenerating(true);
+                                                const newKey = await regenerateChannelWebhook(channel.id);
+                                                if (newKey) {
+                                                    setWebhookKey(newKey);
+                                                    toast.success('Webhook Key 已重新生成');
+                                                } else {
+                                                    toast.error('重新生成失敗');
+                                                }
+                                                setIsRegenerating(false);
+                                            }}
+                                            disabled={!channel || isRegenerating}
+                                            title="重新生成 Key"
+                                        >
+                                            {isRegenerating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                                         </button>
                                     </div>
                                     <p className="input-hint" style={{ marginTop: '4px' }}>
@@ -410,16 +437,6 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
                                     onChange={e => setChannelSecret(e.target.value)}
                                     placeholder="請輸入 LINE Channel Secret"
                                     required
-                                />
-                            </div>
-                            <div className="input-group">
-                                <label className="input-label">User ID (選填)</label>
-                                <input
-                                    type="text"
-                                    className="input font-mono"
-                                    value={targetId}
-                                    onChange={e => setTargetId(e.target.value)}
-                                    placeholder="接收訊息的 User/Group ID"
                                 />
                             </div>
                         </>

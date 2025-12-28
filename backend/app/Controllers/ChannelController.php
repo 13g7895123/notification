@@ -149,4 +149,28 @@ class ChannelController extends BaseController
 
         return $this->successResponse(null, $result['message']);
     }
+
+    /**
+     * POST /api/channels/:id/regenerate-key
+     * 重新產生 Webhook Key
+     */
+    public function regenerateKey($id = null)
+    {
+        if (!$id) {
+            return $this->errorResponse('VALIDATION_ERROR', '缺少渠道 ID', 400);
+        }
+
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $result = $this->channelService->regenerateWebhookKey((int) $id, (int) $user['id']);
+
+        if (!$result['success']) {
+            return $this->errorResponse($result['error'], $result['message'], 404);
+        }
+
+        return $this->successResponse($result['channel']);
+    }
 }

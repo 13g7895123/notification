@@ -54,7 +54,7 @@ export interface NotificationChannel {
 export interface LineConfig {
     channelAccessToken: string;
     channelSecret: string;
-    targetId: string;
+    targetId?: string;
 }
 
 // Telegram Bot 設定

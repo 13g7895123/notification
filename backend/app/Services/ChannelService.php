@@ -189,6 +189,31 @@ class ChannelService
     }
 
     /**
+     * 重新產生 Webhook Key
+     */
+    public function regenerateWebhookKey(int $id, int $userId): array
+    {
+        $channel = $this->channelRepository->find($id, $userId);
+
+        if (!$channel) {
+            return [
+                'success' => false,
+                'error' => 'NOT_FOUND',
+                'message' => '渠道不存在',
+            ];
+        }
+
+        $newKey = bin2hex(random_bytes(16));
+        $updatedChannel = $this->channelRepository->updateWebhookKey($id, $newKey, $userId);
+
+        return [
+            'success' => true,
+            'channel' => $updatedChannel->toArray(),
+            'webhookKey' => $newKey
+        ];
+    }
+
+    /**
      * 測試 LINE 渠道
      */
     private function testLineChannel(ChannelEntity $channel): array

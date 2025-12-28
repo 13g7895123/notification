@@ -176,6 +176,23 @@ class ChannelRepository extends BaseRepository
     }
 
     /**
+     * 更新 Webhook Key
+     */
+    public function updateWebhookKey(int $id, string $key, int $userId): ?ChannelEntity
+    {
+        $builder = $this->db->table($this->table)
+            ->where('id', $id)
+            ->where('user_id', $userId);
+
+        $builder->update([
+            'webhook_key' => $key,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->find($id, $userId);
+    }
+
+    /**
      * 切換啟用狀態
      */
     public function toggle(int $id, ?int $userId = null): ?ChannelEntity

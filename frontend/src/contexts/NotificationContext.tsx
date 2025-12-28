@@ -22,6 +22,7 @@ interface NotificationContextType {
     deleteChannel: (id: string) => Promise<boolean>;
     toggleChannel: (id: string) => Promise<boolean>;
     testChannel: (id: string) => Promise<boolean>;
+    regenerateChannelWebhook: (id: string) => Promise<string | null>;
 
     // 訊息
     messages: NotificationMessage[];
@@ -180,6 +181,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             return false;
         }
     }, [fetchMessages]);
+
+    const regenerateChannelWebhook = useCallback(async (id: string): Promise<string | null> => {
+        try {
+            const data = await api.post<{ webhookKey: string }>(`/channels/${id}/regenerate-key`);
+            // Update channel list to reflect changes if method returns channel, or we just trust the return.
+            // But we should probably refresh channels to be safe or update local state.
+            await fetchChannels();
+            return data.webhookKey;
+        } catch (error) {
+            console.error('Regenerate channel webhook failed', error);
+            return null;
+        }
+    }, [fetchChannels]);
 
     // 模板操作
     const fetchTemplates = useCallback(async () => {
@@ -371,6 +385,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 deleteChannel,
                 toggleChannel,
                 testChannel,
+                regenerateChannelWebhook,
                 messages,
                 fetchMessages,
                 sendMessage,
