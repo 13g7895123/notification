@@ -37,6 +37,33 @@ class ApiKeyRepository extends BaseRepository
     }
 
     /**
+     * 根據原始金鑰查找（API Key 認證用）
+     */
+    public function findByKey(string $rawKey): ?array
+    {
+        // 計算 hash 值比對
+        $hash = hash('sha256', $rawKey);
+        $data = $this->db->table($this->table)
+            ->where('key', $hash)
+            ->get()
+            ->getRowArray();
+
+        return $data;
+    }
+
+    /**
+     * 更新最後使用時間
+     */
+    public function updateLastUsed(int $id): bool
+    {
+        return $this->db->table($this->table)
+            ->where('id', $id)
+            ->update([
+                'last_used_at' => date('Y-m-d H:i:s'),
+            ]);
+    }
+
+    /**
      * 取得使用者的金鑰列表
      */
     public function findByUserId(int $userId): array

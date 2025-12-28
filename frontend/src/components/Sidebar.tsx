@@ -17,7 +17,8 @@ import {
     User,
     ChevronDown,
     Users,
-    Shield
+    Shield,
+    Monitor
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -38,6 +39,7 @@ const menuItems: MenuItem[] = [
     { path: '/messages', icon: MessageSquare, label: '訊息管理' },
     { path: '/logs', icon: History, label: '發送紀錄' },
     { path: '/templates', icon: FileText, label: '訊息模板' },
+    { path: '/windows-notifications', icon: Monitor, label: 'Windows 通知' },
     { path: '/api-keys', icon: Key, label: 'API 金鑰' },
     { path: '/api-usage', icon: Activity, label: 'API 使用紀錄' },
     { path: '/api-docs', icon: Book, label: 'API 文件' },

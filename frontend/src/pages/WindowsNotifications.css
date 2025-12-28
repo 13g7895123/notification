@@ -1,0 +1,311 @@
+.windows-notifications-page {
+    padding: var(--space-lg);
+}
+
+/* 統計卡片 */
+.win-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.win-stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    transition: all 0.2s ease;
+}
+
+.win-stat-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.win-stat-card .stat-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+}
+
+.win-stat-card .stat-icon.total {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+}
+
+.win-stat-card .stat-icon.pending {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.win-stat-card .stat-icon.delivered {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.win-stat-card .stat-icon.read {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.win-stat-card .stat-icon.today {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+}
+
+.win-stat-card .stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.win-stat-card .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.win-stat-card .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+/* 篩選器 */
+.win-filters {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+.win-filters .filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.win-filters .filter-group svg {
+    color: var(--text-muted);
+}
+
+.win-filters .filter-stats {
+    margin-left: auto;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+/* 通知列表 */
+.win-notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl) * 2;
+    gap: var(--space-md);
+    color: var(--text-muted);
+}
+
+/* 通知項目 */
+.win-notification-item {
+    padding: var(--space-lg);
+    transition: all 0.2s ease;
+}
+
+.win-notification-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.notification-header {
+    margin-bottom: var(--space-md);
+}
+
+.notification-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.notification-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    margin: 0;
+}
+
+.type-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.type-badge.cicd {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.type-badge.system {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+}
+
+.type-badge.custom {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.status-badge.info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.status-badge.success {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.status-badge.muted {
+    background: rgba(107, 114, 128, 0.15);
+    color: #6b7280;
+}
+
+.status-badge.error {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.notification-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.repo-info,
+.commit-info,
+.time-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.repo-info {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.commit-info {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.notification-body {
+    margin-bottom: var(--space-md);
+}
+
+.notification-message {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.notification-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.status-actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.item-actions {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+/* 分頁 */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+}
+
+.page-info {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+/* 響應式 */
+@media (max-width: 768px) {
+    .windows-notifications-page {
+        padding: var(--space-md);
+    }
+
+    .win-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .win-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .win-filters .filter-stats {
+        margin-left: 0;
+        text-align: center;
+    }
+
+    .notification-footer {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .status-actions,
+    .item-actions {
+        width: 100%;
+        justify-content: center;
+    }
+}

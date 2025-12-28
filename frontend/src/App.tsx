@@ -14,6 +14,7 @@ import { ApiKeys } from './pages/ApiKeys';
 import { ApiUsage } from './pages/ApiUsage';
 import { ApiDocs } from './pages/ApiDocs';
 import { UserManagement } from './pages/UserManagement';
+import { WindowsNotifications } from './pages/WindowsNotifications';
 import './index.css';
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
                     <Route path="/api-usage" element={<ApiUsage />} />
                     <Route path="/api-docs" element={<ApiDocs />} />
                     <Route path="/users" element={<UserManagement />} />
+                    <Route path="/windows-notifications" element={<WindowsNotifications />} />
                   </Routes>
                 </Layout>
               </ProtectedRoute>

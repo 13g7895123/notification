@@ -100,5 +100,17 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
             $routes->put('users/(:segment)/status', 'UserController::updateStatus/$1');
             $routes->put('users/(:segment)/password', 'UserController::resetPassword/$1');
         });
+
+        // =========================================
+        // Windows 通知 API
+        // =========================================
+        $routes->get('notifications/windows', 'WindowsNotificationController::index');
+        $routes->get('notifications/windows/pending', 'WindowsNotificationController::pending');
+        $routes->get('notifications/windows/stats', 'WindowsNotificationController::stats');
+        $routes->post('notifications/windows', 'WindowsNotificationController::create');
+        $routes->get('notifications/windows/(:segment)', 'WindowsNotificationController::show/$1');
+        $routes->patch('notifications/windows/(:segment)/status', 'WindowsNotificationController::updateStatus/$1');
+        $routes->delete('notifications/windows/(:segment)', 'WindowsNotificationController::delete/$1');
+        $routes->post('notifications/windows/expire', 'WindowsNotificationController::expire');
     });
 });

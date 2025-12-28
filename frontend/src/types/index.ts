@@ -1,3 +1,40 @@
+// Windows 通知類型
+export type WindowsNotificationType = 'cicd' | 'system' | 'custom';
+export type WindowsNotificationStatus = 'pending' | 'delivered' | 'read' | 'dismissed' | 'expired';
+export type WindowsNotificationPriority = 'low' | 'normal' | 'high';
+
+// Windows 通知
+export interface WindowsNotification {
+    id: string;
+    type: WindowsNotificationType;
+    title: string;
+    message: string;
+    repo: string;
+    branch?: string;
+    commit_sha?: string;
+    status: WindowsNotificationStatus;
+    priority: WindowsNotificationPriority;
+    icon?: string;
+    action_url?: string;
+    metadata?: Record<string, unknown>;
+    delivered_at?: string;
+    read_at?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+// Windows 通知統計
+export interface WindowsNotificationStats {
+    total: number;
+    pending: number;
+    delivered: number;
+    read: number;
+    dismissed: number;
+    expired: number;
+    today: number;
+    trends: { date: string; count: number }[];
+}
+
 // 通知渠道類型
 export type ChannelType = 'line' | 'telegram';
 

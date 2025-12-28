@@ -1,0 +1,60 @@
+# GitHub Actions 範例 - 部署完成後發送 Windows 通知
+#
+# 將此步驟加入您的 CI/CD 工作流程中，在部署成功後呼叫 API 建立通知。
+# Windows Client 會輪詢取得 pending 狀態的通知並顯示 Toast。
+#
+# 必要的 Secrets:
+# - NOTIFY_API_URL: NotifyHub API 位址 (例如: https://your-domain/api)
+# - NOTIFY_API_KEY: API Key (在 NotifyHub 的「API 金鑰」頁面建立)
+#
+
+name: Deploy with Windows Notification
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      # ... 您的部署步驟 ...
+      
+      # 部署成功後發送 Windows 通知
+      - name: Send Windows Notification
+        if: success()
+        run: |
+          curl -X POST "${{ secrets.NOTIFY_API_URL }}/notifications/windows" \
+            -H "X-API-Key: ${{ secrets.NOTIFY_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "type": "cicd",
+              "title": "部署完成 ✅",
+              "message": "${{ github.repository }} 已成功部署到 production\n\nCommit: ${{ github.event.head_commit.message }}",
+              "repo": "${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "commitSha": "${{ github.sha }}",
+              "priority": "normal",
+              "actionUrl": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }'
+
+      # 部署失敗時發送高優先級通知
+      - name: Send Failure Notification
+        if: failure()
+        run: |
+          curl -X POST "${{ secrets.NOTIFY_API_URL }}/notifications/windows" \
+            -H "X-API-Key: ${{ secrets.NOTIFY_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "type": "cicd",
+              "title": "部署失敗 ❌",
+              "message": "${{ github.repository }} 部署失敗！\n\n請檢查 GitHub Actions 日誌。",
+              "repo": "${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "commitSha": "${{ github.sha }}",
+              "priority": "high",
+              "actionUrl": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }'
