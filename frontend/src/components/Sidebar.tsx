@@ -6,7 +6,6 @@ import {
     Settings2,
     History,
     FileText,
-    Bell,
     ChevronLeft,
     ChevronRight,
     MessageSquare,
@@ -69,7 +68,7 @@ export function Sidebar() {
             <div className="sidebar-header">
                 <div className="sidebar-logo">
                     <div className="logo-icon">
-                        <Bell size={24} />
+                        <img src="/icon.png" alt="NotifyHub" className="logo-img" />
                     </div>
                     {!sidebarCollapsed && (
                         <div className="logo-text">

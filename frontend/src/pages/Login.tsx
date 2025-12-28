@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Bell, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
@@ -65,7 +65,7 @@ export function Login() {
                 {/* Logo */}
                 <div className="login-logo">
                     <div className="logo-icon-wrapper">
-                        <Bell size={32} />
+                        <img src="/icon.png" alt="NotifyHub" className="logo-img" />
                     </div>
                     <h1 className="logo-title">NotifyHub</h1>
                     <p className="logo-subtitle">通知管理中心</p>
