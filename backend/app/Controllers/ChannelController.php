@@ -193,4 +193,27 @@ class ChannelController extends BaseController
 
         return $this->successResponse($users);
     }
+
+    /**
+     * GET /api/channels/:id/webhook-logs
+     * 取得渠道 Webhook 記錄
+     */
+    public function webhookLogs($id = null)
+    {
+        if (!$id) {
+            return $this->errorResponse('VALIDATION_ERROR', '缺少渠道 ID', 400);
+        }
+
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return $this->errorResponse('UNAUTHORIZED', '請先登入', 401);
+        }
+
+        $limit = $this->request->getGet('limit') ?? 50;
+        $offset = $this->request->getGet('offset') ?? 0;
+
+        $logs = $this->channelService->getWebhookLogs((int) $id, (int) $user['id'], (int) $limit, (int) $offset);
+
+        return $this->successResponse($logs);
+    }
 }

@@ -1,15 +1,17 @@
+```typescript
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type {
     NotificationChannel,
     NotificationMessage,
-    NotificationLog,
+    SendNotificationData,
     NotificationTemplate,
     NotificationStats,
+    ChannelUser,
     ApiKey,
     ApiUsageLog,
     ApiStats,
-    ChannelUser
+    WebhookLog // Added WebhookLog type
 } from '../types';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
@@ -25,6 +27,7 @@ interface NotificationContextType {
     testChannel: (id: string) => Promise<boolean>;
     regenerateChannelWebhook: (id: string) => Promise<string | null>;
     getChannelUsers: (id: string) => Promise<ChannelUser[]>;
+    getChannelWebhookLogs: (id: string) => Promise<WebhookLog[]>;
 
     // 訊息
     messages: NotificationMessage[];
@@ -104,7 +107,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const updateChannel = useCallback(async (id: string, updates: Partial<NotificationChannel>) => {
         try {
-            await api.put(`/channels/${id}`, updates);
+            await api.put(`/ channels / ${ id } `, updates);
             await fetchChannels();
             return true;
         } catch (error) {
@@ -115,7 +118,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const deleteChannel = useCallback(async (id: string) => {
         try {
-            await api.delete(`/channels/${id}`);
+            await api.delete(`/ channels / ${ id } `);
             await fetchChannels();
             return true;
         } catch (error) {
@@ -126,307 +129,318 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const toggleChannel = useCallback(async (id: string) => {
         try {
-            await api.put(`/channels/${id}/toggle`);
-            await fetchChannels();
-            return true;
+            await api.put(`/ channels / ${ id }/toggle`);
+await fetchChannels();
+return true;
         } catch (error) {
-            console.error('Toggle channel failed', error);
-            return false;
-        }
+    console.error('Toggle channel failed', error);
+    return false;
+}
     }, [fetchChannels]);
 
-    const testChannel = useCallback(async (id: string): Promise<boolean> => {
-        setIsLoading(true);
-        try {
-            await api.post(`/channels/${id}/test`);
-            setIsLoading(false);
-            return true;
-        } catch (error) {
-            console.error('Test channel failed', error);
-            setIsLoading(false);
-            return false;
-        }
-    }, []);
+const testChannel = useCallback(async (id: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+        await api.post(`/channels/${id}/test`);
+        setIsLoading(false);
+        return true;
+    } catch (error) {
+        console.error('Test channel failed', error);
+        setIsLoading(false);
+        return false;
+    }
+}, []);
 
-    // 訊息操作
-    const fetchMessages = useCallback(async (params?: Record<string, string | number | boolean>) => {
-        try {
-            const data = await api.get<{ messages: NotificationMessage[]; total: number; page: number; limit: number }>('/messages', params);
-            // API 返回 { messages: [], total, page, limit }
-            setMessages(data.messages || []);
-        } catch (error) {
-            console.error('Fetch messages failed', error);
-        }
-    }, []);
+// 訊息操作
+const fetchMessages = useCallback(async (params?: Record<string, string | number | boolean>) => {
+    try {
+        const data = await api.get<{ messages: NotificationMessage[]; total: number; page: number; limit: number }>('/messages', params);
+        // API 返回 { messages: [], total, page, limit }
+        setMessages(data.messages || []);
+    } catch (error) {
+        console.error('Fetch messages failed', error);
+    }
+}, []);
 
-    const sendMessage = useCallback(async (message: Omit<NotificationMessage, 'id' | 'createdAt' | 'status' | 'results'>) => {
-        setIsLoading(true);
-        try {
-            await api.post('/messages/send', message);
-            await fetchMessages();
-            setIsLoading(false);
-            return true;
-        } catch (error) {
-            console.error('Send message failed', error);
-            setIsLoading(false);
-            return false;
-        }
-    }, [fetchMessages]);
+const sendMessage = useCallback(async (message: Omit<NotificationMessage, 'id' | 'createdAt' | 'status' | 'results'>) => {
+    setIsLoading(true);
+    try {
+        await api.post('/messages/send', message);
+        await fetchMessages();
+        setIsLoading(false);
+        return true;
+    } catch (error) {
+        console.error('Send message failed', error);
+        setIsLoading(false);
+        return false;
+    }
+}, [fetchMessages]);
 
-    const deleteMessage = useCallback(async (id: string) => {
-        try {
-            await api.delete(`/messages/${id}`);
-            await fetchMessages();
-            return true;
-        } catch (error) {
-            console.error('Delete message failed', error);
-            return false;
-        }
-    }, [fetchMessages]);
+const deleteMessage = useCallback(async (id: string) => {
+    try {
+        await api.delete(`/messages/${id}`);
+        await fetchMessages();
+        return true;
+    } catch (error) {
+        console.error('Delete message failed', error);
+        return false;
+    }
+}, [fetchMessages]);
 
-    const regenerateChannelWebhook = useCallback(async (id: string): Promise<string | null> => {
-        try {
-            const data = await api.post<{ webhookKey: string }>(`/channels/${id}/regenerate-key`);
-            await fetchChannels();
-            return data.webhookKey;
-        } catch (error) {
-            console.error('Regenerate channel webhook failed', error);
-            return null;
-        }
-    }, [fetchChannels]);
+const regenerateChannelWebhook = useCallback(async (id: string): Promise<string | null> => {
+    try {
+        const data = await api.post<{ webhookKey: string }>(`/channels/${id}/regenerate-key`);
+        await fetchChannels();
+        return data.webhookKey;
+    } catch (error) {
+        console.error('Regenerate channel webhook failed', error);
+        return null;
+    }
+}, [fetchChannels]);
 
-    const getChannelUsers = useCallback(async (id: string): Promise<ChannelUser[]> => {
-        try {
-            const data = await api.get<ChannelUser[]>(`/channels/${id}/users`);
-            return data || [];
-        } catch (error) {
-            console.error('Get channel users failed', error);
-            return [];
-        }
-    }, []);
+const getChannelUsers = useCallback(async (id: string): Promise<ChannelUser[]> => {
+    try {
+        const data = await api.get<ChannelUser[]>(`/channels/${id}/users`);
+        return data || [];
+    } catch (error) {
+        console.error('Get channel users failed', error);
+        return [];
+    }
+}, []);
 
-    // 模板操作
-    const fetchTemplates = useCallback(async () => {
-        try {
-            const data = await api.get<NotificationTemplate[]>('/templates');
-            setTemplates(data || []);
-        } catch (error) {
-            console.error('Fetch templates failed', error);
-        }
-    }, []);
+const getChannelWebhookLogs = useCallback(async (id: string): Promise<WebhookLog[]> => {
+    try {
+        const data = await api.get<WebhookLog[]>(`/channels/${id}/webhook-logs`);
+        return data || [];
+    } catch (error) {
+        console.error('Get channel logs failed', error);
+        return [];
+    }
+}, []);
 
-    const addTemplate = useCallback(async (template: Omit<NotificationTemplate, 'id' | 'createdAt' | 'updatedAt'>) => {
-        try {
-            await api.post('/templates', template);
-            await fetchTemplates();
-            return true;
-        } catch (error) {
-            console.error('Add template failed', error);
-            return false;
-        }
-    }, [fetchTemplates]);
+// 模板操作
+const fetchTemplates = useCallback(async () => {
+    try {
+        const data = await api.get<NotificationTemplate[]>('/templates');
+        setTemplates(data || []);
+    } catch (error) {
+        console.error('Fetch templates failed', error);
+    }
+}, []);
 
-    const updateTemplate = useCallback(async (id: string, updates: Partial<NotificationTemplate>) => {
-        try {
-            await api.put(`/templates/${id}`, updates);
-            await fetchTemplates();
-            return true;
-        } catch (error) {
-            console.error('Update template failed', error);
-            return false;
-        }
-    }, [fetchTemplates]);
+const addTemplate = useCallback(async (template: Omit<NotificationTemplate, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+        await api.post('/templates', template);
+        await fetchTemplates();
+        return true;
+    } catch (error) {
+        console.error('Add template failed', error);
+        return false;
+    }
+}, [fetchTemplates]);
 
-    const deleteTemplate = useCallback(async (id: string) => {
-        try {
-            await api.delete(`/templates/${id}`);
-            await fetchTemplates();
-            return true;
-        } catch (error) {
-            console.error('Delete template failed', error);
-            return false;
-        }
-    }, [fetchTemplates]);
+const updateTemplate = useCallback(async (id: string, updates: Partial<NotificationTemplate>) => {
+    try {
+        await api.put(`/templates/${id}`, updates);
+        await fetchTemplates();
+        return true;
+    } catch (error) {
+        console.error('Update template failed', error);
+        return false;
+    }
+}, [fetchTemplates]);
 
-    // 統計操作
-    const fetchStats = useCallback(async () => {
-        try {
-            interface DashboardData extends Omit<NotificationStats, 'recentActivity'> {
-                trendData: { date: string; sent: number; success: number; failed: number }[];
-                recentLogs?: NotificationLog[];
-                recentMessages?: NotificationMessage[];
-                windowsStats?: {
-                    total: number;
-                    pending: number;
-                    today: number;
-                    trends: { date: string; count: number }[];
-                };
-            }
-            const data = await api.get<DashboardData>('/stats/dashboard');
-            // 轉換後端 trendData 為前端 recentActivity
-            const formattedStats: NotificationStats = {
-                ...data,
-                recentActivity: data.trendData || []
+const deleteTemplate = useCallback(async (id: string) => {
+    try {
+        await api.delete(`/templates/${id}`);
+        await fetchTemplates();
+        return true;
+    } catch (error) {
+        console.error('Delete template failed', error);
+        return false;
+    }
+}, [fetchTemplates]);
+
+// 統計操作
+const fetchStats = useCallback(async () => {
+    try {
+        interface DashboardData extends Omit<NotificationStats, 'recentActivity'> {
+            trendData: { date: string; sent: number; success: number; failed: number }[];
+            recentLogs?: NotificationLog[];
+            recentMessages?: NotificationMessage[];
+            windowsStats?: {
+                total: number;
+                pending: number;
+                today: number;
+                trends: { date: string; count: number }[];
             };
-            setStats(formattedStats);
-
-            // 同時更新最近日誌與訊息
-            if (data.recentLogs) {
-                setLogs(data.recentLogs || []);
-            }
-            if (data.recentMessages) {
-                setMessages(data.recentMessages || []);
-            }
-        } catch (error) {
-            console.error('Fetch stats failed', error);
         }
-    }, []);
+        const data = await api.get<DashboardData>('/stats/dashboard');
+        // 轉換後端 trendData 為前端 recentActivity
+        const formattedStats: NotificationStats = {
+            ...data,
+            recentActivity: data.trendData || []
+        };
+        setStats(formattedStats);
 
-    // API 金鑰操作
-    const fetchApiKeys = useCallback(async () => {
-        try {
-            const data = await api.get<ApiKey[]>('/api-keys');
-            setApiKeys(data || []);
-        } catch (error) {
-            console.error('Fetch API keys failed', error);
+        // 同時更新最近日誌與訊息
+        if (data.recentLogs) {
+            setLogs(data.recentLogs || []);
         }
-    }, []);
-
-    const addApiKey = useCallback(async (apiKey: Omit<ApiKey, 'id' | 'key' | 'prefix' | 'usageCount' | 'createdAt' | 'updatedAt'>): Promise<string | null> => {
-        try {
-            const data = await api.post<{ key: string }>('/api-keys', apiKey);
-            await fetchApiKeys();
-            return data.key; // 返回明文金鑰
-        } catch (error) {
-            console.error('Add API key failed', error);
-            return null;
+        if (data.recentMessages) {
+            setMessages(data.recentMessages || []);
         }
-    }, [fetchApiKeys]);
+    } catch (error) {
+        console.error('Fetch stats failed', error);
+    }
+}, []);
 
-    const updateApiKey = useCallback(async (id: string, updates: Partial<ApiKey>) => {
-        try {
-            await api.put(`/api-keys/${id}`, updates);
-            await fetchApiKeys();
-            return true;
-        } catch (error) {
-            console.error('Update API key failed', error);
-            return false;
-        }
-    }, [fetchApiKeys]);
+// API 金鑰操作
+const fetchApiKeys = useCallback(async () => {
+    try {
+        const data = await api.get<ApiKey[]>('/api-keys');
+        setApiKeys(data || []);
+    } catch (error) {
+        console.error('Fetch API keys failed', error);
+    }
+}, []);
 
-    const deleteApiKey = useCallback(async (id: string) => {
-        try {
-            await api.delete(`/api-keys/${id}`);
-            await fetchApiKeys();
-            return true;
-        } catch (error) {
-            console.error('Delete API key failed', error);
-            return false;
-        }
-    }, [fetchApiKeys]);
+const addApiKey = useCallback(async (apiKey: Omit<ApiKey, 'id' | 'key' | 'prefix' | 'usageCount' | 'createdAt' | 'updatedAt'>): Promise<string | null> => {
+    try {
+        const data = await api.post<{ key: string }>('/api-keys', apiKey);
+        await fetchApiKeys();
+        return data.key; // 返回明文金鑰
+    } catch (error) {
+        console.error('Add API key failed', error);
+        return null;
+    }
+}, [fetchApiKeys]);
 
-    const toggleApiKey = useCallback(async (id: string) => {
-        try {
-            await api.put(`/api-keys/${id}/toggle`);
-            await fetchApiKeys();
-            return true;
-        } catch (error) {
-            console.error('Toggle API key failed', error);
-            return false;
-        }
-    }, [fetchApiKeys]);
+const updateApiKey = useCallback(async (id: string, updates: Partial<ApiKey>) => {
+    try {
+        await api.put(`/api-keys/${id}`, updates);
+        await fetchApiKeys();
+        return true;
+    } catch (error) {
+        console.error('Update API key failed', error);
+        return false;
+    }
+}, [fetchApiKeys]);
 
-    const regenerateApiKey = useCallback(async (id: string): Promise<string | null> => {
-        try {
-            const data = await api.put<{ key: string }>(`/api-keys/${id}/regenerate`);
-            await fetchApiKeys();
-            return data.key;
-        } catch (error) {
-            console.error('Regenerate API key failed', error);
-            return null;
-        }
-    }, [fetchApiKeys]);
+const deleteApiKey = useCallback(async (id: string) => {
+    try {
+        await api.delete(`/api-keys/${id}`);
+        await fetchApiKeys();
+        return true;
+    } catch (error) {
+        console.error('Delete API key failed', error);
+        return false;
+    }
+}, [fetchApiKeys]);
 
-    // API 使用紀錄操作
-    const fetchApiUsage = useCallback(async (params?: Record<string, string | number | boolean>) => {
-        try {
-            const data = await api.get<{ logs: ApiUsageLog[]; stats: ApiStats }>('/api-usage', params);
-            setApiUsageLogs(data.logs || []);
-            setApiStats(data.stats);
-        } catch (error) {
-            console.error('Fetch API usage failed', error);
-        }
-    }, []);
+const toggleApiKey = useCallback(async (id: string) => {
+    try {
+        await api.put(`/api-keys/${id}/toggle`);
+        await fetchApiKeys();
+        return true;
+    } catch (error) {
+        console.error('Toggle API key failed', error);
+        return false;
+    }
+}, [fetchApiKeys]);
 
-    const toggleSidebar = useCallback(() => {
-        setSidebarCollapsed(prev => !prev);
-    }, []);
+const regenerateApiKey = useCallback(async (id: string): Promise<string | null> => {
+    try {
+        const data = await api.put<{ key: string }>(`/api-keys/${id}/regenerate`);
+        await fetchApiKeys();
+        return data.key;
+    } catch (error) {
+        console.error('Regenerate API key failed', error);
+        return null;
+    }
+}, [fetchApiKeys]);
 
-    // 登入後自動加載基本數據
-    // 這裡需要在認證狀態改變時獲取數據，這是合理的 useEffect 使用場景
-    /* eslint-disable react-hooks/set-state-in-effect */
-    useEffect(() => {
-        if (isAuthenticated) {
-            // 使用 void 表示我們不關心這些 Promise 的結果
-            void fetchChannels();
-            void fetchTemplates();
-            void fetchStats();
-        } else {
-            // 清空數據
-            setChannels([]);
-            setMessages([]);
-            setLogs([]);
-            setTemplates([]);
-            setStats(null);
-            setApiKeys([]);
-            setApiUsageLogs([]);
-            setApiStats(null);
-        }
-    }, [isAuthenticated, fetchChannels, fetchTemplates, fetchStats]);
-    /* eslint-enable react-hooks/set-state-in-effect */
+// API 使用紀錄操作
+const fetchApiUsage = useCallback(async (params?: Record<string, string | number | boolean>) => {
+    try {
+        const data = await api.get<{ logs: ApiUsageLog[]; stats: ApiStats }>('/api-usage', params);
+        setApiUsageLogs(data.logs || []);
+        setApiStats(data.stats);
+    } catch (error) {
+        console.error('Fetch API usage failed', error);
+    }
+}, []);
 
-    return (
-        <NotificationContext.Provider
-            value={{
-                channels,
-                fetchChannels,
-                addChannel,
-                updateChannel,
-                deleteChannel,
-                toggleChannel,
-                testChannel,
-                regenerateChannelWebhook,
-                getChannelUsers,
-                messages,
-                fetchMessages,
-                sendMessage,
-                deleteMessage,
-                logs,
-                templates,
-                fetchTemplates,
-                addTemplate,
-                updateTemplate,
-                deleteTemplate,
-                stats,
-                fetchStats,
-                apiKeys,
-                fetchApiKeys,
-                addApiKey,
-                updateApiKey,
-                deleteApiKey,
-                toggleApiKey,
-                regenerateApiKey,
-                apiUsageLogs,
-                apiStats,
-                fetchApiUsage,
-                isLoading,
-                sidebarCollapsed,
-                toggleSidebar
-            }}
-        >
-            {children}
-        </NotificationContext.Provider>
-    );
+const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => !prev);
+}, []);
+
+// 登入後自動加載基本數據
+// 這裡需要在認證狀態改變時獲取數據，這是合理的 useEffect 使用場景
+/* eslint-disable react-hooks/set-state-in-effect */
+useEffect(() => {
+    if (isAuthenticated) {
+        // 使用 void 表示我們不關心這些 Promise 的結果
+        void fetchChannels();
+        void fetchTemplates();
+        void fetchStats();
+    } else {
+        // 清空數據
+        setChannels([]);
+        setMessages([]);
+        setLogs([]);
+        setTemplates([]);
+        setStats(null);
+        setApiKeys([]);
+        setApiUsageLogs([]);
+        setApiStats(null);
+    }
+}, [isAuthenticated, fetchChannels, fetchTemplates, fetchStats]);
+/* eslint-enable react-hooks/set-state-in-effect */
+
+return (
+    <NotificationContext.Provider
+        value={{
+            channels,
+            fetchChannels,
+            addChannel,
+            updateChannel,
+            deleteChannel,
+            toggleChannel,
+            testChannel,
+            regenerateChannelWebhook,
+            getChannelUsers,
+            getChannelWebhookLogs,
+            messages,
+            fetchMessages,
+            sendMessage,
+            deleteMessage,
+            logs,
+            templates,
+            fetchTemplates,
+            addTemplate,
+            updateTemplate,
+            deleteTemplate,
+            stats,
+            fetchStats,
+            apiKeys,
+            fetchApiKeys,
+            addApiKey,
+            updateApiKey,
+            deleteApiKey,
+            toggleApiKey,
+            regenerateApiKey,
+            apiUsageLogs,
+            apiStats,
+            fetchApiUsage,
+            isLoading,
+            sidebarCollapsed,
+            toggleSidebar
+        }}
+    >
+        {children}
+    </NotificationContext.Provider>
+);
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

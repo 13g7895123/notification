@@ -26,27 +26,42 @@ class WebhookController extends BaseController
     {
         $key = $this->request->getGet('key');
 
+        $requestTime = date('Y-m-d H:i:s');
+        $headers = [];
+        foreach ($this->request->getHeaders() as $name => $header) {
+            $headers[$name] = $header->getValueLine();
+        }
+        $rawBody = $this->request->getBody();
+        $ip = $this->request->getIPAddress();
+
+        // Prepare to log
+        $webhookLogRepo = new \App\Repositories\WebhookLogRepository();
+
         if (!$key) {
+            $webhookLogRepo->log(null, 'POST', 'line', $headers, $rawBody, 400, json_encode(['error' => 'Missing key']), $ip);
             return $this->fail('Missing key', 400);
         }
 
         $channel = $this->channelRepository->findByWebhookKey($key);
         if (!$channel) {
+            $webhookLogRepo->log(null, 'POST', 'line', $headers, $rawBody, 404, json_encode(['error' => 'Channel not found']), $ip);
             return $this->failNotFound('Channel not found');
         }
 
         if (!$channel->enabled) {
+            $webhookLogRepo->log($channel->id, 'POST', 'line', $headers, $rawBody, 403, json_encode(['error' => 'Channel disabled']), $ip);
             return $this->failForbidden('Channel disabled');
         }
 
         // 驗證 LINE 簽章 (TBD: 需要 Secret)
         // $signature = $this->request->getHeaderLine('x-line-signature');
 
-        $body = $this->request->getBody();
-        $events = json_decode($body, true);
+        $events = json_decode($rawBody, true);
 
         if (!isset($events['events']) || !is_array($events['events'])) {
-            return $this->respond(['status' => 'ok']);
+            $response = ['status' => 'ok'];
+            $webhookLogRepo->log($channel->id, 'POST', 'line', $headers, $rawBody, 200, json_encode($response), $ip);
+            return $this->respond($response);
         }
 
         $channelUserRepo = new \App\Repositories\ChannelUserRepository();
@@ -84,6 +99,9 @@ class WebhookController extends BaseController
             $channelUserRepo->saveUser($channel->id, $userId, $displayName, $pictureUrl);
         }
 
-        return $this->respond(['status' => 'ok']);
+        $response = ['status' => 'ok'];
+        $webhookLogRepo->log($channel->id, 'POST', 'line', $headers, $rawBody, 200, json_encode($response), $ip);
+
+        return $this->respond($response);
     }
 }

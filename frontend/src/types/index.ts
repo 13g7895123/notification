@@ -158,6 +158,19 @@ export interface ChannelUser {
     updatedAt: string;
 }
 
+export interface WebhookLog {
+    id: number;
+    channelId: number;
+    method: string;
+    url: string;
+    headers: string | null;
+    payload: string | null;
+    responseStatus: number | null;
+    responseBody: string | null;
+    ipAddress: string;
+    createdAt: string;
+}
+
 // 用戶
 export interface User {
     id: string;

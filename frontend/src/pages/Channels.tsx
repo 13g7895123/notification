@@ -11,7 +11,8 @@ import {
     Check,
     Loader2,
     RefreshCw,
-    Users
+    Users,
+    Activity
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { NotificationChannel, ChannelType, LineConfig, TelegramConfig } from '../types';
@@ -27,6 +28,7 @@ export function Channels() {
     const [testingId, setTestingId] = useState<string | null>(null);
     const [testResult, setTestResult] = useState<{ id: string; success: boolean } | null>(null);
     const [showUsersModal, setShowUsersModal] = useState(false);
+    const [showLogsModal, setShowLogsModal] = useState(false);
     const [viewingChannelId, setViewingChannelId] = useState<string | null>(null);
 
     const handleAddChannel = () => {
@@ -198,6 +200,16 @@ export function Channels() {
                                         <Users size={18} />
                                     </button>
                                     <button
+                                        className="btn btn-ghost btn-icon"
+                                        onClick={() => {
+                                            setViewingChannelId(channel.id);
+                                            setShowLogsModal(true);
+                                        }}
+                                        title="Webhook 記錄"
+                                    >
+                                        <Activity size={18} />
+                                    </button>
+                                    <button
                                         className="btn btn-ghost btn-icon text-error"
                                         onClick={() => handleDeleteChannel(channel)}
                                         title="刪除"
@@ -231,6 +243,16 @@ export function Channels() {
                     channelId={viewingChannelId}
                     onClose={() => {
                         setShowUsersModal(false);
+                        setViewingChannelId(null);
+                    }}
+                />
+            )}
+
+            {showLogsModal && viewingChannelId && (
+                <ChannelLogsModal
+                    channelId={viewingChannelId}
+                    onClose={() => {
+                        setShowLogsModal(false);
                         setViewingChannelId(null);
                     }}
                 />
@@ -604,14 +626,133 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
                         </div>
                     )}
                 </div>
-                <div className="modal-footer p-md border-t border-light flex justify-end">
-                    <button className="btn btn-primary" onClick={onClose}>關閉</button>
+            </div>
+        </div>
+    );
+}
+
+function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: () => void }) {
+    const { getChannelWebhookLogs } = useNotification();
+    const [logs, setLogs] = useState<import('../types').WebhookLog[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedLog, setSelectedLog] = useState<import('../types').WebhookLog | null>(null);
+
+    useEffect(() => {
+        const loadLogs = async () => {
+            setLoading(true);
+            try {
+                const data = await getChannelWebhookLogs(channelId);
+                setLogs(data || []);
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+                toast.error('無法載入 Webhook 記錄');
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadLogs();
+    }, [channelId, getChannelWebhookLogs]);
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', width: '90%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+                <div className="modal-header">
+                    <h2>Webhook 呼叫記錄</h2>
+                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
+                        <X size={20} />
+                    </button>
+                </div>
+                <div className="modal-body" style={{ flex: 1, overflow: 'hidden', padding: 0, display: 'flex' }}>
+                    <div className="logs-list-pane" style={{ width: '40%', borderRight: '1px solid var(--border-color-light)', overflowY: 'auto' }}>
+                        {loading ? (
+                            <div className="flex items-center justify-center py-xl">
+                                <Loader2 size={32} className="animate-spin text-primary" />
+                            </div>
+                        ) : logs.length === 0 ? (
+                            <div className="empty-state py-lg">
+                                <h3 className="text-md font-semibold mb-2">尚無記錄</h3>
+                            </div>
+                        ) : (
+                            logs.map(log => (
+                                <div
+                                    key={log.id}
+                                    className={`log-item p-md border-b border-light cursor-pointer hover:bg-tertiary ${selectedLog?.id === log.id ? 'bg-tertiary' : ''}`}
+                                    onClick={() => setSelectedLog(log)}
+                                >
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${log.responseStatus === 200 ? 'bg-success/20 text-success' : 'bg-error/20 text-error'}`}>
+                                            {log.method} {log.responseStatus}
+                                        </span>
+                                        <span className="text-xs text-muted">{format(new Date(log.createdAt), 'MM/dd HH:mm:ss')}</span>
+                                    </div>
+                                    <div className="text-xs font-mono break-all text-secondary truncate">
+                                        {log.ipAddress}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    <div className="log-detail-pane" style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+                        {selectedLog ? (
+                            <div className="log-detail space-y-4">
+                                <div className="detail-section">
+                                    <h4 className="text-sm font-semibold text-secondary mb-2">Request Info</h4>
+                                    <div className="bg-tertiary p-3 rounded text-xs font-mono">
+                                        <div>Time: {format(new Date(selectedLog.createdAt), 'yyyy-MM-dd HH:mm:ss')}</div>
+                                        <div>IP: {selectedLog.ipAddress}</div>
+                                        <div>URL: {selectedLog.url}</div>
+                                    </div>
+                                </div>
+
+                                <div className="detail-section">
+                                    <h4 className="text-sm font-semibold text-secondary mb-2">Query/Key</h4>
+                                    <div className="bg-tertiary p-3 rounded text-xs font-mono break-all">
+                                        {selectedLog.url.split('?')[1] || '-'}
+                                    </div>
+                                </div>
+
+                                <div className="detail-section">
+                                    <h4 className="text-sm font-semibold text-secondary mb-2">Payload</h4>
+                                    <div className="bg-tertiary p-3 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto">
+                                        {tryFormatJson(selectedLog.payload)}
+                                    </div>
+                                </div>
+
+                                <div className="detail-section">
+                                    <h4 className="text-sm font-semibold text-secondary mb-2">Response ({selectedLog.responseStatus})</h4>
+                                    <div className="bg-tertiary p-3 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto">
+                                        {tryFormatJson(selectedLog.responseBody)}
+                                    </div>
+                                </div>
+
+                                <div className="detail-section">
+                                    <h4 className="text-sm font-semibold text-secondary mb-2">Headers</h4>
+                                    <div className="bg-tertiary p-3 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto">
+                                        {tryFormatJson(selectedLog.headers)}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-muted text-sm">
+                                請從左側選擇一筆記錄以查看詳情
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
 
+function tryFormatJson(str: string | null): string {
+    if (!str) return '-';
+    try {
+        const obj = JSON.parse(str);
+        return JSON.stringify(obj, null, 2);
+    } catch (e) {
+        return str;
+    }
+}
 function maskString(str: string, visibleChars: number = 8): string {
     if (str.length <= visibleChars) return str;
     return str.slice(0, visibleChars) + '••••••••';
