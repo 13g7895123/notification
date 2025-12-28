@@ -55,6 +55,12 @@ jobs:
         working-directory: backend
         run: composer install --no-progress --no-interaction --prefer-dist
 
+      - name: Setup writable directories
+        working-directory: backend
+        run: |
+          mkdir -p writable/cache writable/logs writable/session writable/debugbar build
+          chmod -R 777 writable build
+
       - name: Run PHPUnit
         working-directory: backend
         run: ./vendor/bin/phpunit
