@@ -62,6 +62,16 @@ build_version() {
     echo -e "${YELLOW}正在確保基礎服務運行 (Database, Backend, Proxy, phpMyAdmin)...${NC}"
     docker compose up -d mariadb backend frontend-proxy phpmyadmin
 
+    # 等待 backend 就緒
+    echo -e "${YELLOW}等待 Backend 服務就緒...${NC}"
+    sleep 5
+
+    # 執行資料庫遷移
+    echo -e "${YELLOW}正在執行資料庫遷移...${NC}"
+    docker compose exec -T backend php spark migrate --all || {
+        echo -e "${RED}警告: 資料庫遷移失敗，請手動檢查${NC}"
+    }
+
     echo -e "${YELLOW}正在建構並啟動 ${VERSION} 版本...${NC}"
     
     # 建構並啟動容器
