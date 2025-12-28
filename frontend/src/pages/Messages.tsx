@@ -131,7 +131,7 @@ export function Messages() {
                                                 {result.channelType.toUpperCase()}
                                                 {result.success ? <CheckCircle size={12} /> : <XCircle size={12} />}
                                             </span>
-                                        )) || message.channelIds.map(chId => (
+                                        )) || (message.channelIds || []).map(chId => (
                                             <span key={chId} className="channel-chip pending">
                                                 待發送
                                             </span>
