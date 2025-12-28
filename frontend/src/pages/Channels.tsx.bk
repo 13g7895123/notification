@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
     Settings2,
     Plus,
@@ -536,12 +536,12 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
     const [users, setUsers] = useState<import('../types').ChannelUser[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    useState(() => {
         const loadUsers = async () => {
             setLoading(true);
             try {
                 const data = await getChannelUsers(channelId);
-                setUsers(data || []);
+                setUsers(data);
             } catch (error) {
                 console.error('Failed to load users:', error);
                 toast.error('無法載入使用者列表');
@@ -550,7 +550,7 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
             }
         };
         loadUsers();
-    }, [channelId, getChannelUsers]);
+    });
 
     return (
         <div className="modal-overlay" onClick={onClose}>
