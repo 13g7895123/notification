@@ -1,20 +1,18 @@
 import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
-import { useNotification } from '../contexts/NotificationContext';
-import './Layout.css';
 
 interface LayoutProps {
     children: ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
-    const { sidebarCollapsed } = useNotification();
-
     return (
-        <div className="layout">
+        <div className="flex min-h-screen bg-bg-primary text-text-primary">
             <Sidebar />
-            <main className={`main-content ${sidebarCollapsed ? 'expanded' : ''}`}>
-                {children}
+            <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 md:p-8">
+                <div className="mx-auto max-w-7xl animate-fade-in">
+                    {children}
+                </div>
             </main>
         </div>
     );
