@@ -291,6 +291,8 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
         channel?.type === 'telegram' ? (channel.config as TelegramConfig).parseMode || 'HTML' : 'HTML'
     );
 
+    const apiUrl = import.meta.env.VITE_API_URL;
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -358,6 +360,36 @@ function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
                     {/* 渠道設定 */}
                     {type === 'line' ? (
                         <>
+                            {channel && (
+                                <div className="input-group">
+                                    <label className="input-label">Webhook URL (填寫至 LINE Developer 控制台)</label>
+                                    <div className="input-wrapper webhook-url-wrapper" style={{ display: 'flex', gap: '8px' }}>
+                                        <input
+                                            type="text"
+                                            className="input font-mono"
+                                            style={{ background: 'var(--bg-tertiary)', fontSize: '0.85rem' }}
+                                            value={`${apiUrl.replace('/api', '')}/api/webhook/line?key=${channel.webhookKey || '尚未生成'}`}
+                                            readOnly
+                                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={() => {
+                                                const url = `${apiUrl.replace('/api', '')}/api/webhook/line?key=${channel.webhookKey || ''}`;
+                                                navigator.clipboard.writeText(url);
+                                                toast.success('已複製 Webhook URL');
+                                            }}
+                                            disabled={!channel.webhookKey}
+                                        >
+                                            複製
+                                        </button>
+                                    </div>
+                                    <p className="input-hint" style={{ marginTop: '4px' }}>
+                                        * 此 URL 用於接收來自 LINE 的事件（如加入好友、自動回覆等）。
+                                    </p>
+                                </div>
+                            )}
                             <div className="input-group">
                                 <label className="input-label">Channel Access Token</label>
                                 <input
