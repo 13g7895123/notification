@@ -130,6 +130,7 @@ class ChannelRepository extends BaseRepository
             'name' => $data['name'],
             'enabled' => $data['enabled'] ?? true ? 1 : 0,
             'config' => json_encode($data['config']),
+            'webhook_key' => bin2hex(random_bytes(16)), // 生成 32 字元的隨機金鑰
             'created_at' => $now,
             'updated_at' => $now,
         ];

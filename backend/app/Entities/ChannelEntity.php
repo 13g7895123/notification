@@ -13,6 +13,7 @@ class ChannelEntity
     public string $name;
     public bool $enabled;
     public array $config;
+    public ?string $webhookKey;
     public string $createdAt;
     public string $updatedAt;
 
@@ -26,6 +27,7 @@ class ChannelEntity
         $this->config = is_string($data['config'] ?? null)
             ? json_decode($data['config'], true)
             : ($data['config'] ?? []);
+        $this->webhookKey = $data['webhook_key'] ?? $data['webhookKey'] ?? null;
         $this->createdAt = $data['created_at'] ?? date('Y-m-d H:i:s');
         $this->updatedAt = $data['updated_at'] ?? date('Y-m-d H:i:s');
     }
@@ -42,6 +44,7 @@ class ChannelEntity
             'name' => $this->name,
             'enabled' => $this->enabled,
             'config' => $this->config,
+            'webhookKey' => $this->webhookKey,
             'createdAt' => $this->createdAt,
             'updatedAt' => $this->updatedAt,
         ];

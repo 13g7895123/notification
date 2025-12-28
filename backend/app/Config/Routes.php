@@ -43,6 +43,9 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
     // =========================================
     $routes->post('auth/login', 'AuthController::login');
 
+    // Webhook API
+    $routes->post('webhook/line', 'WebhookController::line');
+
     // =========================================
     // 需要認證的 API
     // =========================================
