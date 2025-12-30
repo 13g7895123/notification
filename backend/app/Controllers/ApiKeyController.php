@@ -59,7 +59,6 @@ class ApiKeyController extends BaseController
             return $this->errorResponse('VALIDATION_ERROR', '請提供金鑰名稱', 400);
         }
 
-        $keyId = $this->generateUuid();
         $now = date('Y-m-d H:i:s');
 
         // 生成金鑰
@@ -67,8 +66,7 @@ class ApiKeyController extends BaseController
         $prefix = substr($fullKey, 0, 12) . '...' . substr($fullKey, -4);
 
         $apiKeyData = [
-            'id' => $keyId,
-            'user_id' => $user ? $user['id'] : '550e8400-e29b-41d4-a716-446655440001',
+            'user_id' => $user ? $user['id'] : 1,
             'name' => $json['name'],
             'key' => hash('sha256', $fullKey), // 儲存 hash
             'prefix' => $prefix,
@@ -82,6 +80,7 @@ class ApiKeyController extends BaseController
         ];
 
         $this->db->table('api_keys')->insert($apiKeyData);
+        $keyId = $this->db->insertID();
 
         return $this->successResponse([
             'id' => $keyId,
