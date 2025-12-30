@@ -8,15 +8,55 @@ import {
     Zap,
     ArrowUpRight,
     ArrowDownRight,
-    Monitor
+    Monitor,
+    RefreshCw,
+    Clock,
+    Activity
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
+import { useEffect, useState } from 'react';
 import './Dashboard.css';
+
+interface SystemStatus {
+    scheduler_running: boolean;
+    last_heartbeat: string | null;
+    heartbeat_diff: number | null;
+    server_time: string;
+    timezone: string;
+}
 
 export function Dashboard() {
     const { stats, messages, channels, logs, isLoading } = useNotification();
+    const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const fetchSystemStatus = async () => {
+        setIsRefreshing(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/system/status`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const result = await response.json();
+            if (result.success) {
+                setSystemStatus(result.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch system status:', error);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchSystemStatus();
+        const interval = setInterval(fetchSystemStatus, 30000); // 每 30 秒自動更新
+        return () => clearInterval(interval);
+    }, []);
 
     if (isLoading || !stats) {
         return (
@@ -44,6 +84,35 @@ export function Dashboard() {
                     <p className="page-description">
                         通知系統運作概況與統計數據
                     </p>
+                </div>
+
+                {/* 系統狀態檢查按鈕 */}
+                <div className="system-status-checks">
+                    {systemStatus && (
+                        <div className={`status-badge ${systemStatus.scheduler_running ? 'running' : 'stopped'}`}>
+                            <div className="status-badge-icon">
+                                <Activity size={14} />
+                            </div>
+                            <div className="status-badge-text">
+                                <span className="status-label">排程器:</span>
+                                <span className="status-value">
+                                    {systemStatus.scheduler_running ? '正在運行' : '已停止'}
+                                </span>
+                            </div>
+                            {systemStatus.last_heartbeat && (
+                                <div className="status-tooltip">
+                                    最後活動: {systemStatus.last_heartbeat}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <button
+                        className={`btn-refresh-status ${isRefreshing ? 'spinning' : ''}`}
+                        onClick={fetchSystemStatus}
+                        title="檢查系統狀態"
+                    >
+                        <RefreshCw size={16} />
+                    </button>
                 </div>
             </div>
 

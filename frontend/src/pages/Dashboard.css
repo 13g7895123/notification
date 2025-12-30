@@ -2,6 +2,107 @@
     animation: fadeIn 0.3s ease-out;
 }
 
+/* 系統狀態檢查 */
+.system-status-checks {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.status-badge {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    transition: all var(--transition-normal);
+}
+
+.status-badge-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-badge.running {
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--color-success);
+}
+
+.status-badge.running .status-badge-icon {
+    animation: pulse 2s infinite;
+}
+
+.status-badge.stopped {
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--color-error);
+}
+
+.status-badge-text {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: flex;
+    gap: 4px;
+}
+
+.status-label {
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+.status-tooltip {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: all var(--transition-fast);
+}
+
+.status-badge:hover .status-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.btn-refresh-status {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-refresh-status:hover {
+    background: var(--bg-input);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.btn-refresh-status.spinning svg {
+    animation: rotate 1s linear infinite;
+}
+
 /* 統計 Grid */
 .stats-grid {
     display: grid;

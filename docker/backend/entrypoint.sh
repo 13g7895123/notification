@@ -100,11 +100,23 @@ echo "Starting Task Scheduler Daemon..."
 # 建立 PID 檔案目錄
 mkdir -p writable/pids
 
-# 啟動 scheduler daemon 在背景
-nohup php spark tasks:run --daemon > writable/logs/scheduler.log 2>&1 &
+# 啟動 scheduler 迴圈在背景
+# 每分鐘執行一次 tasks:run，並更新 heartbeat 檔案供 API 檢查
+(
+    while true; do
+        # 紀錄心跳時間戳記
+        date +%s > writable/pids/scheduler_heartbeat
+        
+        # 執行排程
+        php spark tasks:run >> writable/logs/scheduler.log 2>&1
+        
+        # 等待一分鐘
+        sleep 60
+    done
+) &
 SCHEDULER_PID=$!
 echo $SCHEDULER_PID > writable/pids/scheduler.pid
-echo "  Scheduler started with PID: $SCHEDULER_PID"
+echo "  Scheduler loop started with PID: $SCHEDULER_PID"
 
 # 設定清理函數，當主程序結束時停止 scheduler
 cleanup() {
