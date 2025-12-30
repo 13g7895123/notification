@@ -55,6 +55,11 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
     $routes->post('webhook/line', 'WebhookController::line');
 
     // =========================================
+    // 系統狀態 API（無需認證，用於監控）
+    // =========================================
+    $routes->get('system/status', 'SystemController::status');
+
+    // =========================================
     // 需要認證的 API
     // =========================================
     $routes->group('', ['filter' => 'auth'], static function ($routes) {
@@ -128,8 +133,5 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
         $routes->patch('notifications/windows/(:segment)/status', 'WindowsNotificationController::updateStatus/$1');
         $routes->delete('notifications/windows/(:segment)', 'WindowsNotificationController::delete/$1');
         $routes->post('notifications/windows/expire', 'WindowsNotificationController::expire');
-
-        // 系統管理
-        $routes->get('system/status', 'SystemController::status');
     });
 });
