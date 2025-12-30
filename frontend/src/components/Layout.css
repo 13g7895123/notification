@@ -3,16 +3,22 @@
     display: flex;
 }
 
-.main-content {
+.main-wrapper {
     flex: 1;
     margin-left: var(--sidebar-width);
-    padding: var(--spacing-lg);
     transition: margin-left var(--transition-normal);
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-.main-content.expanded {
+.main-wrapper.expanded {
     margin-left: var(--sidebar-collapsed-width);
+}
+
+.main-content {
+    flex: 1;
+    padding: var(--spacing-lg);
 }
 
 /* 頁面標題區 */
@@ -90,13 +96,16 @@
 }
 
 @media (max-width: 768px) {
-    .main-content {
+    .main-wrapper {
         margin-left: 0;
-        padding: var(--spacing-md);
     }
 
-    .main-content.expanded {
+    .main-wrapper.expanded {
         margin-left: var(--sidebar-collapsed-width);
+    }
+
+    .main-content {
+        padding: var(--spacing-md);
     }
 
     .grid-cols-2,

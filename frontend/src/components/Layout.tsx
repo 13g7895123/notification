@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
+import { Footer } from './Footer';
 import { useNotification } from '../contexts/NotificationContext';
 import './Layout.css';
 
@@ -13,9 +14,12 @@ export function Layout({ children }: LayoutProps) {
     return (
         <div className="layout">
             <Sidebar />
-            <main className={`main-content ${sidebarCollapsed ? 'expanded' : ''}`}>
-                {children}
-            </main>
+            <div className={`main-wrapper ${sidebarCollapsed ? 'expanded' : ''}`}>
+                <main className="main-content">
+                    {children}
+                </main>
+                <Footer />
+            </div>
         </div>
     );
 }

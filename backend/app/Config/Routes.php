@@ -25,6 +25,14 @@ $routes->get('/health', static function () {
 });
 
 // ===========================================
+// 版本 API（無需認證）
+// ===========================================
+$routes->group('api/version', ['namespace' => 'App\Controllers'], static function ($routes) {
+    $routes->get('current', 'VersionController::current');
+    $routes->get('history', 'VersionController::history');
+});
+
+// ===========================================
 // API 路由
 // ===========================================
 $routes->group('api', ['namespace' => 'App\Controllers'], static function ($routes) {
