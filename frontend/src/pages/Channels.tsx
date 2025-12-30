@@ -390,15 +390,18 @@ function ChannelLogsModal({ channelId, onClose }: ChannelLogsModalProps) {
         return `${diffDay} 天前`;
     };
 
-    const successCount = logs.filter(l => l.responseStatus >= 200 && l.responseStatus < 300).length;
-    const errorCount = logs.filter(l => l.responseStatus >= 400).length;
+    const successCount = logs.filter(l => (l.responseStatus ?? 0) >= 200 && (l.responseStatus ?? 0) < 300).length;
+    const errorCount = logs.filter(l => (l.responseStatus ?? 0) >= 400).length;
+
+    // Helper to safely check status
+    const isSuccess = (status: number | null | undefined) => (status ?? 0) >= 200 && (status ?? 0) < 300;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-md backdrop-blur-md">
             <div className="absolute inset-0 bg-bg-overlay/80" onClick={onClose} />
             <div className="relative flex h-[90vh] w-[95vw] max-w-6xl overflow-hidden rounded-2xl border border-border-color bg-bg-secondary shadow-heavy animate-scale-in">
                 {/* List Pane */}
-                <div className="flex w-[340px] flex-col border-r border-border-color-light bg-bg-tertiary/20">
+                <div className="flex w-[340px] shrink-0 flex-col border-r border-border-color-light bg-bg-tertiary/20">
                     {/* Header with Stats */}
                     <div className="border-b border-border-color-light p-lg bg-bg-tertiary/30">
                         <div className="flex items-center justify-between mb-3">
@@ -449,7 +452,7 @@ function ChannelLogsModal({ channelId, onClose }: ChannelLogsModalProps) {
                         ) : (
                             <div className="p-2 space-y-1">
                                 {logs.map(log => {
-                                    const isSuccess = log.responseStatus >= 200 && log.responseStatus < 300;
+                                    const success = isSuccess(log.responseStatus);
                                     const isSelected = selectedLog?.id === log.id;
                                     return (
                                         <div
@@ -462,8 +465,8 @@ function ChannelLogsModal({ channelId, onClose }: ChannelLogsModalProps) {
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 {/* Status Icon */}
-                                                <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${isSuccess ? 'bg-success/20' : 'bg-error/20'}`}>
-                                                    {isSuccess ? (
+                                                <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${success ? 'bg-success/20' : 'bg-error/20'}`}>
+                                                    {success ? (
                                                         <Check size={20} className="text-color-success" />
                                                     ) : (
                                                         <X size={20} className="text-color-error" />
@@ -473,8 +476,8 @@ function ChannelLogsModal({ channelId, onClose }: ChannelLogsModalProps) {
                                                 {/* Info */}
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <span className={`px-2 py-0.5 rounded text-[0.65rem] font-900 ${isSuccess ? 'bg-success/20 text-color-success' : 'bg-error/20 text-color-error'}`}>
-                                                            {log.responseStatus}
+                                                        <span className={`px-2 py-0.5 rounded text-[0.65rem] font-900 ${success ? 'bg-success/20 text-color-success' : 'bg-error/20 text-color-error'}`}>
+                                                            {log.responseStatus ?? 'ERR'}
                                                         </span>
                                                         <span className="text-[0.65rem] font-800 text-text-muted uppercase">{log.method}</span>
                                                     </div>
@@ -499,15 +502,15 @@ function ChannelLogsModal({ channelId, onClose }: ChannelLogsModalProps) {
                 </div>
 
                 {/* Detail Pane */}
-                <div className="flex flex-1 flex-col overflow-hidden bg-bg-secondary/60">
+                <div className="flex flex-1 flex-col overflow-hidden bg-bg-secondary/60 min-w-0">
                     {selectedLog ? (
                         <>
                             {/* Detail Header */}
                             <div className="border-b border-border-color-light p-lg bg-bg-tertiary/10">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${selectedLog.responseStatus < 300 ? 'bg-success/20' : 'bg-error/20'}`}>
-                                            {selectedLog.responseStatus < 300 ? (
+                                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${isSuccess(selectedLog.responseStatus) ? 'bg-success/20' : 'bg-error/20'}`}>
+                                            {isSuccess(selectedLog.responseStatus) ? (
                                                 <Check size={28} className="text-color-success" />
                                             ) : (
                                                 <X size={28} className="text-color-error" />
@@ -515,10 +518,10 @@ function ChannelLogsModal({ channelId, onClose }: ChannelLogsModalProps) {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-3 mb-1">
-                                                <span className={`text-2xl font-900 ${selectedLog.responseStatus < 300 ? 'text-color-success' : 'text-color-error'}`}>
-                                                    {selectedLog.responseStatus}
+                                                <span className={`text-2xl font-900 ${isSuccess(selectedLog.responseStatus) ? 'text-color-success' : 'text-color-error'}`}>
+                                                    {selectedLog.responseStatus ?? 'ERR'}
                                                 </span>
-                                                <span className="text-lg font-700 text-text-primary">{selectedLog.responseStatus < 300 ? '請求成功' : '請求失敗'}</span>
+                                                <span className="text-lg font-700 text-text-primary">{isSuccess(selectedLog.responseStatus) ? '請求成功' : '請求失敗'}</span>
                                             </div>
                                             <div className="flex items-center gap-3 text-sm text-text-muted">
                                                 <span className="font-mono">{selectedLog.method}</span>
@@ -585,10 +588,10 @@ function ChannelLogsModal({ channelId, onClose }: ChannelLogsModalProps) {
                                     </div>
 
                                     {/* Response */}
-                                    <div className={`rounded-xl border overflow-hidden ${selectedLog.responseStatus < 300 ? 'border-color-success/30' : 'border-color-error/30'}`}>
-                                        <div className={`flex items-center justify-between p-4 border-b ${selectedLog.responseStatus < 300 ? 'bg-success/10 border-color-success/20' : 'bg-error/10 border-color-error/20'}`}>
+                                    <div className={`rounded-xl border overflow-hidden ${isSuccess(selectedLog.responseStatus) ? 'border-color-success/30' : 'border-color-error/30'}`}>
+                                        <div className={`flex items-center justify-between p-4 border-b ${isSuccess(selectedLog.responseStatus) ? 'bg-success/10 border-color-success/20' : 'bg-error/10 border-color-error/20'}`}>
                                             <div className="flex items-center gap-2">
-                                                <Activity size={16} className={selectedLog.responseStatus < 300 ? 'text-color-success' : 'text-color-error'} />
+                                                <Activity size={16} className={isSuccess(selectedLog.responseStatus) ? 'text-color-success' : 'text-color-error'} />
                                                 <span className="font-800 text-text-primary">系統回應 (Response)</span>
                                             </div>
                                             <button
