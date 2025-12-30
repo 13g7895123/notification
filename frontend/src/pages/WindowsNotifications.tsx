@@ -142,7 +142,7 @@ export function WindowsNotifications() {
                         <div className="page-title-icon">
                             <Monitor size={22} />
                         </div>
-                        Windows 通知 (v2.1)
+                        Windows 通知
                     </h1>
                     <p className="page-description">
                         查看和管理 CI/CD 發送的 Windows 桌面通知

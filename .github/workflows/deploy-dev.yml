@@ -95,10 +95,30 @@ jobs:
         if: success()
         run: |
           echo "✅ 開發環境部署成功"
-          echo "Commit: ${{ github.sha }}"
+          curl -X POST https://notify.try-8verything.com/api/notifications/windows \
+            -H "Content-Type: application/json" \
+            -H "X-API-Key: nk_live_ef560ae44181a2c65a805165a120fb1b1f78c02b9fbcab9a" \
+            -d '{
+              "title": "Dev Deploy Success",
+              "message": "開發環境部署成功！\nCommit: ${{ github.sha }}",
+              "repo": "${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "commit_sha": "${{ github.sha }}",
+              "action_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }'
 
       - name: 部署失敗通知
         if: failure()
         run: |
           echo "❌ 開發環境部署失敗"
-          echo "請檢查日誌"
+          curl -X POST https://notify.try-8verything.com/api/notifications/windows \
+            -H "Content-Type: application/json" \
+            -H "X-API-Key: nk_live_ef560ae44181a2c65a805165a120fb1b1f78c02b9fbcab9a" \
+            -d '{
+              "title": "Dev Deploy Failed",
+              "message": "開發環境部署失敗，請檢查日誌。",
+              "repo": "${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "commit_sha": "${{ github.sha }}",
+              "action_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }'
