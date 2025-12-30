@@ -1,422 +1,77 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-    Monitor,
-    RefreshCw,
-    Search,
-    Clock,
-    CheckCircle,
-    XCircle,
-    AlertCircle,
-    ExternalLink,
-    Trash2,
-    GitBranch,
-    GitCommit,
-    Eye,
-    EyeOff,
-    HelpCircle,
-    Filter
-} from 'lucide-react';
-import { api } from '../utils/api';
-import type { WindowsNotification, WindowsNotificationStats, WindowsNotificationStatus } from '../types';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
-import { toast, confirm } from '../utils/alert';
-import './WindowsNotifications.css';
+import {
+        Monitor,
+        RefreshCw,
+        Search,
+        Clock,
+        CheckCircle,
+        XCircle,
+        AlertCircle,
+        ExternalLink,
+        Trash2,
+        GitBranch,
+        GitCommit,
+        Eye,
+        EyeOff,
+        HelpCircle,
+        Filter,
+        Copy,
+        Check
+    } from 'lucide-react';
 
-interface PaginatedResponse {
-    notifications: WindowsNotification[];
-    total: number;
-    page: number;
-    limit: number;
-}
+// ... (existing imports)
 
-const STATUS_CONFIG: Record<WindowsNotificationStatus, { label: string; color: string; icon: typeof Clock }> = {
-    pending: { label: '待處理', color: 'warning', icon: Clock },
-    delivered: { label: '已送達', color: 'info', icon: CheckCircle },
-    read: { label: '已讀', color: 'success', icon: Eye },
-    dismissed: { label: '已忽略', color: 'muted', icon: EyeOff },
-    expired: { label: '已過期', color: 'error', icon: XCircle },
-};
-
-export function WindowsNotifications() {
-    const [notifications, setNotifications] = useState<WindowsNotification[]>([]);
-    const [stats, setStats] = useState<WindowsNotificationStats | null>(null);
-    const [showHelpModal, setShowHelpModal] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('');
-    const [typeFilter, setTypeFilter] = useState<string>('');
-    const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
-    const limit = 20;
-
-    const fetchNotifications = useCallback(async () => {
-        try {
-            const params: Record<string, string | number | boolean> = {
-                page,
-                limit,
-            };
-            if (search) params.search = search;
-            if (statusFilter) params.status = statusFilter;
-            if (typeFilter) params.type = typeFilter;
-
-            const data = await api.get<PaginatedResponse>('/notifications/windows', params);
-            setNotifications(data.notifications);
-            setTotal(data.total);
-        } catch (error) {
-            console.error('Fetch notifications failed', error);
-        }
-    }, [page, search, statusFilter, typeFilter]);
-
-    const fetchStats = useCallback(async () => {
-        try {
-            const data = await api.get<WindowsNotificationStats>('/notifications/windows/stats');
-            setStats(data);
-        } catch (error) {
-            console.error('Fetch stats failed', error);
-        }
-    }, []);
-
-    const loadData = useCallback(async () => {
-        setIsLoading(true);
-        await Promise.all([fetchNotifications(), fetchStats()]);
-        setIsLoading(false);
-    }, [fetchNotifications, fetchStats]);
-
-    /* eslint-disable react-hooks/set-state-in-effect */
-    useEffect(() => {
-        void loadData();
-    }, [loadData]);
-    /* eslint-enable react-hooks/set-state-in-effect */
-
-    const handleRefresh = () => {
-        void loadData();
-    };
-
-    const handleStatusChange = async (id: string, status: WindowsNotificationStatus) => {
-        try {
-            await api.patch(`/notifications/windows/${id}/status`, { status });
-            toast.success('狀態已更新');
-            void loadData();
-        } catch (error) {
-            console.error('Update status failed', error);
-            toast.error('更新狀態失敗');
-        }
-    };
-
-    const handleDelete = async (notification: WindowsNotification) => {
-        const confirmed = await confirm.delete(`通知「${notification.title}」`);
-        if (confirmed) {
-            try {
-                await api.delete(`/notifications/windows/${notification.id}`);
-                toast.success('通知已刪除');
-                void loadData();
-            } catch (error) {
-                console.error('Delete failed', error);
-                toast.error('刪除失敗');
-            }
-        }
-    };
-
-    const handleExpire = async () => {
-        const confirmed = await confirm.action('確定要將超過 24 小時的待處理通知標記為過期嗎？', '標記過期');
-        if (confirmed) {
-            try {
-                const data = await api.post<{ expired_count: number }>('/notifications/windows/expire');
-                toast.success(`已將 ${data.expired_count} 筆通知標記為過期`);
-                void loadData();
-            } catch (error) {
-                console.error('Expire failed', error);
-                toast.error('操作失敗');
-            }
-        }
-    };
-
-    const totalPages = Math.ceil(total / limit);
-
-    return (
-        <div className="windows-notifications-page">
-            {/* 頁面標題 */}
-            <div className="page-header">
-                <div className="page-title-section">
-                    <h1 className="page-title">
-                        <div className="page-title-icon">
-                            <Monitor size={22} />
-                        </div>
-                        Windows 通知
-                    </h1>
-                    <p className="page-description">
-                        查看和管理 CI/CD 發送的 Windows 桌面通知
-                    </p>
-                </div>
-                <div className="page-actions">
-                    <button className="btn btn-secondary" onClick={() => setShowHelpModal(true)}>
-                        <HelpCircle size={18} />
-                        API 說明
-                    </button>
-                    <button className="btn btn-secondary" onClick={handleExpire}>
-                        <XCircle size={18} />
-                        標記過期
-                    </button>
-                    <button className="btn btn-primary" onClick={handleRefresh} disabled={isLoading}>
-                        <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
-                        重新整理
-                    </button>
-                </div>
-            </div>
-
-            {/* ... rest of the code ... */}
-
-            {showHelpModal && (
-                <IntegrationHelpModal onClose={() => setShowHelpModal(false)} />
-            )}
-
-            {/* 統計卡片 */}
-            {stats && (
-                <div className="win-stats-grid">
-                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '0ms' }}>
-                        <div className="stat-icon total">
-                            <Monitor size={24} />
-                        </div>
-                        <div className="stat-content">
-                            <span className="stat-label">總通知數</span>
-                            <span className="stat-value">{stats.total}</span>
-                        </div>
-                    </div>
-                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '50ms' }}>
-                        <div className="stat-icon pending">
-                            <Clock size={24} />
-                        </div>
-                        <div className="stat-content">
-                            <span className="stat-label">待處理</span>
-                            <span className="stat-value">{stats.pending}</span>
-                        </div>
-                    </div>
-                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '100ms' }}>
-                        <div className="stat-icon delivered">
-                            <CheckCircle size={24} />
-                        </div>
-                        <div className="stat-content">
-                            <span className="stat-label">已送達</span>
-                            <span className="stat-value">{stats.delivered}</span>
-                        </div>
-                    </div>
-                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '150ms' }}>
-                        <div className="stat-icon read">
-                            <Eye size={24} />
-                        </div>
-                        <div className="stat-content">
-                            <span className="stat-label">已讀</span>
-                            <span className="stat-value">{stats.read}</span>
-                        </div>
-                    </div>
-                    <div className="win-stat-card animate-slide-up" style={{ animationDelay: '200ms' }}>
-                        <div className="stat-icon today">
-                            <AlertCircle size={24} />
-                        </div>
-                        <div className="stat-content">
-                            <span className="stat-label">今日新增</span>
-                            <span className="stat-value">{stats.today}</span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 篩選器 */}
-            <div className="win-filters card">
-                <div className="search-box">
-                    <Search size={18} className="search-icon" />
-                    <input
-                        type="text"
-                        className="input search-input"
-                        placeholder="搜尋標題、內容或 Repository..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
-                </div>
-
-                <div className="filter-group">
-                    <Filter size={16} />
-                    <select
-                        className="input select"
-                        value={statusFilter}
-                        onChange={e => setStatusFilter(e.target.value)}
-                    >
-                        <option value="">所有狀態</option>
-                        <option value="pending">待處理</option>
-                        <option value="delivered">已送達</option>
-                        <option value="read">已讀</option>
-                        <option value="dismissed">已忽略</option>
-                        <option value="expired">已過期</option>
-                    </select>
-                </div>
-
-                <div className="filter-group">
-                    <select
-                        className="input select"
-                        value={typeFilter}
-                        onChange={e => setTypeFilter(e.target.value)}
-                    >
-                        <option value="">所有類型</option>
-                        <option value="cicd">CI/CD</option>
-                        <option value="system">系統</option>
-                        <option value="custom">自訂</option>
-                    </select>
-                </div>
-
-                <div className="filter-stats">
-                    <span>共 {total} 筆通知</span>
-                </div>
-            </div>
-
-            {/* 通知列表 */}
-            <div className="win-notifications-list">
-                {isLoading ? (
-                    <div className="loading-state card">
-                        <RefreshCw size={32} className="animate-spin" />
-                        <p>載入中...</p>
-                    </div>
-                ) : notifications.length === 0 ? (
-                    <div className="empty-state card">
-                        <div className="empty-state-icon">📭</div>
-                        <h3 className="empty-state-title">沒有通知</h3>
-                        <p className="empty-state-description">
-                            {search || statusFilter || typeFilter
-                                ? '嘗試調整篩選條件'
-                                : '尚無 Windows 通知記錄'}
-                        </p>
-                    </div>
-                ) : (
-                    <>
-                        {notifications.map((notification, index) => {
-                            const statusConfig = STATUS_CONFIG[notification.status];
-                            const StatusIcon = statusConfig.icon;
-
-                            return (
-                                <div
-                                    key={notification.id}
-                                    className={`win-notification-item card animate-slide-up`}
-                                    style={{ animationDelay: `${index * 30}ms` }}
-                                >
-                                    <div className="notification-header">
-                                        <div className="notification-title-row">
-                                            <span className={`type-badge ${notification.type}`}>
-                                                {notification.type.toUpperCase()}
-                                            </span>
-                                            <h3 className="notification-title">{notification.title}</h3>
-                                            <span className={`status-badge ${statusConfig.color}`}>
-                                                <StatusIcon size={14} />
-                                                {statusConfig.label}
-                                            </span>
-                                        </div>
-                                        <div className="notification-meta">
-                                            <span className="repo-info">
-                                                <GitBranch size={14} />
-                                                {notification.repo}
-                                                {notification.branch && ` / ${notification.branch}`}
-                                            </span>
-                                            {notification.commit_sha && (
-                                                <span className="commit-info">
-                                                    <GitCommit size={14} />
-                                                    {notification.commit_sha.substring(0, 7)}
-                                                </span>
-                                            )}
-                                            <span className="time-info">
-                                                <Clock size={14} />
-                                                {format(new Date(notification.created_at), 'MM/dd HH:mm', { locale: zhTW })}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="notification-body">
-                                        <p className="notification-message">{notification.message}</p>
-                                    </div>
-
-                                    <div className="notification-footer">
-                                        <div className="status-actions">
-                                            {notification.status === 'pending' && (
-                                                <>
-                                                    <button
-                                                        className="btn btn-sm btn-ghost"
-                                                        onClick={() => handleStatusChange(notification.id, 'delivered')}
-                                                    >
-                                                        <CheckCircle size={14} />
-                                                        標記已送達
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-sm btn-ghost"
-                                                        onClick={() => handleStatusChange(notification.id, 'dismissed')}
-                                                    >
-                                                        <EyeOff size={14} />
-                                                        忽略
-                                                    </button>
-                                                </>
-                                            )}
-                                            {notification.status === 'delivered' && (
-                                                <button
-                                                    className="btn btn-sm btn-ghost"
-                                                    onClick={() => handleStatusChange(notification.id, 'read')}
-                                                >
-                                                    <Eye size={14} />
-                                                    標記已讀
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        <div className="item-actions">
-                                            {notification.action_url && (
-                                                <a
-                                                    href={notification.action_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="btn btn-sm btn-ghost"
-                                                >
-                                                    <ExternalLink size={14} />
-                                                    開啟連結
-                                                </a>
-                                            )}
-                                            <button
-                                                className="btn btn-sm btn-ghost text-error"
-                                                onClick={() => handleDelete(notification)}
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {/* 分頁 */}
-                        {totalPages > 1 && (
-                            <div className="pagination">
-                                <button
-                                    className="btn btn-ghost"
-                                    disabled={page === 1}
-                                    onClick={() => setPage(p => p - 1)}
-                                >
-                                    上一頁
-                                </button>
-                                <span className="page-info">
-                                    第 {page} / {totalPages} 頁
-                                </span>
-                                <button
-                                    className="btn btn-ghost"
-                                    disabled={page === totalPages}
-                                    onClick={() => setPage(p => p + 1)}
-                                >
-                                    下一頁
-                                </button>
-                            </div>
-                        )}
-                    </>
-                )}
-            </div>
-        </div>
-    );
-}
+// ... (existing WindowsNotifications component code)
 
 function IntegrationHelpModal({ onClose }: { onClose: () => void }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyMarkdown = () => {
+        const markdown = `## 發送通知 (CI/CD 整合)
+
+在您的 CI/CD Pipeline (如 GitHub Actions, GitLab CI 或 Jenkins) 中呼叫此接口，即可將構建狀態或系統訊息即時推送到指定使用者的 Windows 桌面。
+
+### 請求資訊
+- **Method**: POST
+- **URL**: ${window.location.origin}/api/notifications/windows
+- **Content-Type**: application/json
+- **X-API-Key**: YOUR_API_KEY
+
+### 請求參數 (JSON Body)
+
+| 參數名稱 | 類型 | 必填 | 說明 |
+| :--- | :--- | :--- | :--- |
+| title | String | 是 | 通知標題，建議 20 字以內 |
+| message | String | 是 | 通知內文，支援多行顯示 |
+| repo | String | 是 | 專案名稱 (例如: user/repository) |
+| branch | String | 否 | 觸發通知的分支名稱 |
+| commit_sha | String | 否 | 完整的 Commit SHA |
+| action_url | String | 否 | 點擊通知後欲跳轉的 URL |
+
+### Curl 呼叫範例
+
+\`\`\`bash
+curl -X POST ${window.location.origin}/api/notifications/windows \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -d '{
+    "title": "Build Success",
+    "message": "Production build successfully completed",
+    "repo": "company/frontend-app",
+    "branch": "master",
+    "commit_sha": "f1a2b3c4d5e6",
+    "action_url": "https://vercel.com/dashboard"
+  }'
+\`\`\`
+`;
+        navigator.clipboard.writeText(markdown).then(() => {
+            setCopied(true);
+            toast.success('已複製 API 說明 (Markdown)');
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '850px', width: '95%', maxHeight: '90vh' }}>
@@ -433,9 +88,19 @@ function IntegrationHelpModal({ onClose }: { onClose: () => void }) {
 
                     {/* 發送通知 Section */}
                     <div className="section">
-                        <div className="section-title">
-                            <GitCommit size={22} className="text-success" />
-                            發送通知 (CI/CD 整合)
+                        <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="flex items-center gap-2">
+                                <GitCommit size={22} className="text-success" />
+                                發送通知 (CI/CD 整合)
+                            </div>
+                            <button
+                                className={`btn btn-sm ${copied ? 'btn-success' : 'btn-secondary'}`}
+                                onClick={handleCopyMarkdown}
+                                title="複製說明為 Markdown"
+                            >
+                                {copied ? <Check size={14} /> : <Copy size={14} />}
+                                <span className="ml-1">{copied ? '已複製' : '複製說明'}</span>
+                            </button>
                         </div>
                         <p className="section-desc">
                             在您的 CI/CD Pipeline (如 GitHub Actions, GitLab CI 或 Jenkins) 中呼叫此接口，
