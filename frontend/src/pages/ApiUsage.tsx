@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Activity,
     Search,
@@ -9,7 +9,8 @@ import {
     TrendingUp,
     BarChart3,
     Eye,
-    X
+    X,
+    RefreshCw
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { ApiUsageLog } from '../types';
@@ -23,9 +24,16 @@ export function ApiUsage() {
     const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed'>('all');
     const [keyFilter, setKeyFilter] = useState<string>('all');
     const [selectedLog, setSelectedLog] = useState<ApiUsageLog | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
         fetchApiUsage();
+    }, [fetchApiUsage]);
+
+    const handleRefresh = useCallback(async () => {
+        setIsRefreshing(true);
+        await fetchApiUsage();
+        setTimeout(() => setIsRefreshing(false), 500);
     }, [fetchApiUsage]);
 
     if (isLoading || !apiStats) {
@@ -215,6 +223,16 @@ export function ApiUsage() {
                 <div className="filter-stats">
                     <span>顯示 {filteredLogs.length} 筆</span>
                 </div>
+
+                <button
+                    className={`btn btn-secondary refresh-btn ${isRefreshing ? 'refreshing' : ''}`}
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    title="重新整理"
+                >
+                    <RefreshCw size={16} className={isRefreshing ? 'spin' : ''} />
+                    重新整理
+                </button>
             </div>
 
             {/* 紀錄表格 */}
@@ -348,23 +366,27 @@ function LogDetailModal({ log, onClose }: { log: ApiUsageLog; onClose: () => voi
                         <span className="detail-value font-mono text-sm">{log.userAgent}</span>
                     </div>
 
-                    {log.requestBody && (
-                        <div className="detail-section">
-                            <span className="detail-label">請求內容</span>
+                    <div className="detail-section">
+                        <span className="detail-label">請求內容</span>
+                        {log.requestBody ? (
                             <pre className="code-block">
                                 {JSON.stringify(log.requestBody, null, 2)}
                             </pre>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="empty-content">無請求內容</div>
+                        )}
+                    </div>
 
-                    {log.responseBody && (
-                        <div className="detail-section">
-                            <span className="detail-label">回應內容</span>
+                    <div className="detail-section">
+                        <span className="detail-label">回應內容</span>
+                        {log.responseBody ? (
                             <pre className="code-block response-block">
                                 {JSON.stringify(log.responseBody, null, 2)}
                             </pre>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="empty-content">無回應內容</div>
+                        )}
+                    </div>
 
                     {log.errorMessage && (
                         <div className="detail-section error-section">

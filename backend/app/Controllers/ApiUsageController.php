@@ -65,7 +65,7 @@ class ApiUsageController extends BaseController
                 'statusCode' => (int) $log['status_code'],
                 'success' => (bool) $log['success'],
                 'responseTime' => (int) $log['response_time'],
-                'ip' => $log['ip'],
+                'ipAddress' => $log['ip'],
                 'userAgent' => $log['user_agent'],
                 'requestBody' => $log['request_body'] ? json_decode($log['request_body'], true) : null,
                 'responseBody' => isset($log['response_body']) && $log['response_body'] ? json_decode($log['response_body'], true) : null,
