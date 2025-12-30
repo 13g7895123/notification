@@ -605,11 +605,11 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
                         <div className="users-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                             {users.map((user) => (
                                 <div key={user.id} className="user-item-card flex items-center gap-md p-md border-b border-light last:border-0 hover:bg-tertiary transition-colors">
-                                    <div className="user-avatar-wrapper">
+                                    <div className="user-avatar-wrapper flex-shrink-0">
                                         {user.pictureUrl ? (
-                                            <img src={user.pictureUrl} alt={user.displayName || 'User'} className="w-10 h-10 rounded-full object-cover" />
+                                            <img src={user.pictureUrl} alt={user.displayName || 'User'} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
                                         ) : (
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold flex-shrink-0">
                                                 {user.displayName?.charAt(0) || '?'}
                                             </div>
                                         )}

@@ -829,3 +829,24 @@ select {
 .swal2-loader {
   border-color: var(--color-primary) transparent var(--color-primary) transparent !important;
 }
+
+/* 常用工具類別 */
+.w-10 {
+  width: 40px;
+}
+
+.h-10 {
+  height: 40px;
+}
+
+.rounded-full {
+  border-radius: 9999px;
+}
+
+.object-cover {
+  object-fit: cover;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
