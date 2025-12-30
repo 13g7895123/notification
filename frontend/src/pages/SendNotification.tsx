@@ -136,7 +136,7 @@ export function SendNotification() {
 
         // Prepare structure for backend
         // Backend expects: channelIds, and optional channelOptions map
-        const finalOptions: Record<string, any> = {};
+        const finalOptions: Record<string, { type: 'all' | 'selected'; users?: string[] }> = {};
         selectedChannels.forEach(cid => {
             const opt = channelOptions[cid];
             if (opt && opt.mode === 'selected') {

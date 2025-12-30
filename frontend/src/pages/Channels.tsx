@@ -771,7 +771,7 @@ function tryFormatJson(data: string | object | null | undefined): string {
     if (typeof data === 'object') {
         try {
             return JSON.stringify(data, null, 2);
-        } catch (e) {
+        } catch {
             return String(data);
         }
     }
@@ -781,7 +781,7 @@ function tryFormatJson(data: string | object | null | undefined): string {
         try {
             const obj = JSON.parse(data);
             return JSON.stringify(obj, null, 2);
-        } catch (e) {
+        } catch {
             return data;
         }
     }
@@ -795,7 +795,7 @@ function safeFormatDate(dateStr: string | null | undefined, formatStr: string): 
         const date = new Date(dateStr);
         if (isNaN(date.getTime())) return '-';
         return format(date, formatStr);
-    } catch (e) {
+    } catch {
         return '-';
     }
 }
