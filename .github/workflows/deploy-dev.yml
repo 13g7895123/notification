@@ -97,7 +97,7 @@ jobs:
           echo "✅ 開發環境部署成功"
           curl -X POST https://notify.try-8verything.com/api/notifications/windows \
             -H "Content-Type: application/json" \
-            -H "X-API-Key: nk_live_ef560ae44181a2c65a805165a120fb1b1f78c02b9fbcab9a" \
+            -H "X-API-Key: ${{ secrets.WINDOWS_NOTIFY_API_KEY }}" \
             -d '{
               "title": "Dev Deploy Success",
               "message": "開發環境部署成功！\nCommit: ${{ github.sha }}",
@@ -113,7 +113,7 @@ jobs:
           echo "❌ 開發環境部署失敗"
           curl -X POST https://notify.try-8verything.com/api/notifications/windows \
             -H "Content-Type: application/json" \
-            -H "X-API-Key: nk_live_ef560ae44181a2c65a805165a120fb1b1f78c02b9fbcab9a" \
+            -H "X-API-Key: ${{ secrets.WINDOWS_NOTIFY_API_KEY }}" \
             -d '{
               "title": "Dev Deploy Failed",
               "message": "開發環境部署失敗，請檢查日誌。",
