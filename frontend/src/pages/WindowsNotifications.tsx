@@ -86,8 +86,23 @@ export function WindowsNotifications() {
     }, [fetchNotifications, fetchStats]);
 
     useEffect(() => {
-        void loadData();
-    }, [loadData]);
+        let ignore = false;
+
+        const initData = async () => {
+            setIsLoading(true);
+            await Promise.all([fetchNotifications(), fetchStats()]);
+            if (!ignore) {
+                setIsLoading(false);
+            }
+        };
+
+        initData();
+
+        return () => {
+            ignore = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleRefresh = () => {
         void loadData();
