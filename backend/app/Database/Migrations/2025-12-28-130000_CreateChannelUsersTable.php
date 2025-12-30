@@ -49,8 +49,8 @@ class CreateChannelUsersTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addKey(['channel_id', 'provider_id']); // Unique constraint logic handling in code or here? Best to have unique index.
-        $this->forge->addUniqueKey(['channel_id', 'provider_id']);
+        // 使用唯一索引確保同一渠道內的 provider_id 不重複
+        $this->forge->addUniqueKey(['channel_id', 'provider_id'], 'unique_channel_provider');
         $this->forge->addForeignKey('channel_id', 'channels', 'id', 'CASCADE', 'CASCADE');
         $this->forge->createTable('channel_users');
     }
