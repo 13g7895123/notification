@@ -65,13 +65,17 @@ class MessageService
         // 判斷是否為排程發送
         $isScheduled = false;
         $scheduledAt = $data['scheduledAt'] ?? null;
-        
+
         if ($scheduledAt) {
-            $scheduledTime = strtotime($scheduledAt);
-            $now = time();
-            // 若排程時間在未來（允許 1 分鐘的誤差），則標記為排程
-            if ($scheduledTime && $scheduledTime > ($now + 60)) {
-                $isScheduled = true;
+            // 只要有提供排程時間，就標記為排程訊息，交由 Scheduler 處理
+            // 這樣可以避免伺服器與瀏覽器時差 (Clock Skew) 導致意外觸發即時發送
+            $isScheduled = true;
+
+            try {
+                $dt = new \DateTime($scheduledAt);
+                log_message('info', "Message scheduled for: " . $dt->format('Y-m-d H:i:s') . " (Server Time: " . date('Y-m-d H:i:s') . ")");
+            } catch (\Exception $e) {
+                log_message('error', "Invalid scheduledAt format: " . $scheduledAt);
             }
         }
 

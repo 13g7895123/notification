@@ -47,14 +47,19 @@ class MessageController extends BaseController
         $result = $this->messageService->sendMessage($json, (int) $user['id']);
 
         if (!$result['success']) {
-            return $this->errorResponse($result['error'], $result['message'], 400);
+            return $this->errorResponse($result['error'] ?? 'ERROR', $result['message'] ?? '發送失敗', 400);
         }
 
-        return $this->successResponse([
+        $responseData = [
             'messageId' => $result['messageId'],
             'status' => $result['status'],
-            'results' => $result['results'],
-        ]);
+        ];
+
+        if (isset($result['results'])) {
+            $responseData['results'] = $result['results'];
+        }
+
+        return $this->successResponse($responseData, $result['message'] ?? '操作成功');
     }
 
     /**
