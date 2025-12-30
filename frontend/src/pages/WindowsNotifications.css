@@ -338,3 +338,184 @@
         justify-content: center;
     }
 }
+
+/* API 整合說明 Modal 專屬樣式 */
+.help-modal-content {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.help-modal-content .section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.help-modal-content .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.help-modal-content .section-desc {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.5;
+}
+
+/* Endpoint 顯示 */
+.endpoint-box {
+    background: #000;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.method-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.method-badge.post {
+    background: #10b981;
+    color: white;
+}
+
+.method-badge.get {
+    background: #3b82f6;
+    color: white;
+}
+
+.method-badge.patch {
+    background: #f59e0b;
+    color: white;
+}
+
+.endpoint-url {
+    color: #fff;
+    word-break: break-all;
+}
+
+/* 參數表格 */
+.doc-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: var(--spacing-lg) 0;
+    font-size: 0.875rem;
+}
+
+.doc-table th {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: left;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.doc-table td {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color-light);
+    color: var(--text-secondary);
+}
+
+.doc-table tr:last-child td {
+    border-bottom: none;
+}
+
+.doc-table .param-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.doc-table .param-type {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.doc-table .param-required {
+    color: var(--error);
+    font-weight: 600;
+}
+
+/* 程式碼區塊 */
+.code-snippet-container {
+    background: #1e1e1e;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin: var(--spacing-lg) 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.code-snippet-header {
+    background: #252526;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.code-snippet-title {
+    font-size: 0.75rem;
+    color: #9cdcfe;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.code-snippet-body {
+    padding: 1rem;
+    margin: 0;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: #d4d4d4;
+}
+
+.code-snippet-body .json-key {
+    color: #9cdcfe;
+}
+
+.code-snippet-body .json-string {
+    color: #ce9178;
+}
+
+.code-snippet-body .json-number {
+    color: #b5cea8;
+}
+
+.code-snippet-body .json-boolean {
+    color: #569cd6;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

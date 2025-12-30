@@ -419,123 +419,155 @@ export function WindowsNotifications() {
 function IntegrationHelpModal({ onClose }: { onClose: () => void }) {
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '850px', width: '95%', maxHeight: '90vh' }}>
                 <div className="modal-header">
-                    <h2>Windows 通知 API 整合說明</h2>
+                    <div className="flex items-center gap-2">
+                        <Monitor size={24} className="text-primary" />
+                        <h2>Windows 通知 API 整合說明</h2>
+                    </div>
                     <button className="btn btn-ghost btn-icon" onClick={onClose}>
                         <XCircle size={20} />
                     </button>
                 </div>
-                <div className="modal-body space-y-6">
-                    {/* CI/CD Integration */}
-                    <div className="section">
-                        <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-                            <GitCommit size={20} />
-                            發送通知 (CI/CD)
-                        </h3>
-                        <p className="mb-2 text-sm text-secondary">在 CI/CD Pipeline 中呼叫此 API 來發送通知到 Windows 桌面。</p>
+                <div className="modal-body help-modal-content" style={{ overflowY: 'auto', padding: '24px' }}>
 
-                        <div className="bg-tertiary p-4 rounded-md mb-4 font-mono text-sm overflow-x-auto">
-                            <div className="text-success mb-2">POST {window.location.origin}/api/notifications/windows</div>
-                            <div className="text-muted mb-2">Headers:</div>
-                            <div className="pl-4 mb-2">Content-Type: application/json</div>
-                            <div className="pl-4 mb-2">X-API-Key: YOUR_API_KEY</div>
+                    {/* 發送通知 Section */}
+                    <div className="section">
+                        <div className="section-title">
+                            <GitCommit size={22} className="text-success" />
+                            發送通知 (CI/CD 整合)
+                        </div>
+                        <p className="section-desc">
+                            在您的 CI/CD Pipeline (如 GitHub Actions, GitLab CI 或 Jenkins) 中呼叫此接口，
+                            即可將構建狀態或系統訊息即時推送到指定使用者的 Windows 桌面。
+                        </p>
+
+                        <div className="endpoint-box">
+                            <span className="method-badge post">POST</span>
+                            <span className="endpoint-url">{window.location.origin}/api/notifications/windows</span>
                         </div>
 
-                        <h4 className="font-semibold mb-2 text-sm">參數說明</h4>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-tertiary">
+                        <div className="code-snippet-container">
+                            <div className="code-snippet-header">
+                                <span className="code-snippet-title">HTTP Headers</span>
+                            </div>
+                            <div className="code-snippet-body">
+                                <div><span className="json-key">Content-Type</span>: <span className="json-string">application/json</span></div>
+                                <div><span className="json-key">X-API-Key</span>: <span className="json-string">YOUR_API_KEY</span></div>
+                            </div>
+                        </div>
+
+                        <h4 className="font-bold text-sm mb-2 text-primary">請求參數 (JSON Body)</h4>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="doc-table">
+                                <thead>
                                     <tr>
-                                        <th className="p-2">參數</th>
-                                        <th className="p-2">類型</th>
-                                        <th className="p-2">必填</th>
-                                        <th className="p-2">說明</th>
+                                        <th>參數名稱</th>
+                                        <th>類型</th>
+                                        <th>必填</th>
+                                        <th>說明</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr className="border-b border-light">
-                                        <td className="p-2 font-mono">title</td>
-                                        <td className="p-2">String</td>
-                                        <td className="p-2 text-error">是</td>
-                                        <td className="p-2">通知標題 (例如: Build Success)</td>
-                                    </tr>
-                                    <tr className="border-b border-light">
-                                        <td className="p-2 font-mono">message</td>
-                                        <td className="p-2">String</td>
-                                        <td className="p-2 text-error">是</td>
-                                        <td className="p-2">通知內容</td>
-                                    </tr>
-                                    <tr className="border-b border-light">
-                                        <td className="p-2 font-mono">repo</td>
-                                        <td className="p-2">String</td>
-                                        <td className="p-2 text-error">是</td>
-                                        <td className="p-2">專案名稱 (例如: user/repo)</td>
-                                    </tr>
-                                    <tr className="border-b border-light">
-                                        <td className="p-2 font-mono">branch</td>
-                                        <td className="p-2">String</td>
-                                        <td className="p-2">否</td>
-                                        <td className="p-2">分支名稱</td>
-                                    </tr>
-                                    <tr className="border-b border-light">
-                                        <td className="p-2 font-mono">commit_sha</td>
-                                        <td className="p-2">String</td>
-                                        <td className="p-2">否</td>
-                                        <td className="p-2">Commit SHA</td>
+                                    <tr>
+                                        <td><span className="param-name">title</span></td>
+                                        <td><span className="param-type">String</span></td>
+                                        <td><span className="param-required">是</span></td>
+                                        <td>通知標題，建議 20 字以內</td>
                                     </tr>
                                     <tr>
-                                        <td className="p-2 font-mono">action_url</td>
-                                        <td className="p-2">String</td>
-                                        <td className="p-2">否</td>
-                                        <td className="p-2">點擊通知後開啟的連結</td>
+                                        <td><span className="param-name">message</span></td>
+                                        <td><span className="param-type">String</span></td>
+                                        <td><span className="param-required">是</span></td>
+                                        <td>通知內文，支援多行顯示</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span className="param-name">repo</span></td>
+                                        <td><span className="param-type">String</span></td>
+                                        <td><span className="param-required">是</span></td>
+                                        <td>專案名稱 (例如: user/repository)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span className="param-name">branch</span></td>
+                                        <td><span className="param-type">String</span></td>
+                                        <td>否</td>
+                                        <td>觸發通知的分支名稱</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span className="param-name">commit_sha</span></td>
+                                        <td><span className="param-type">String</span></td>
+                                        <td>否</td>
+                                        <td>完整的 Commit SHA</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span className="param-name">action_url</span></td>
+                                        <td><span className="param-type">String</span></td>
+                                        <td>否</td>
+                                        <td>點擊通知後欲跳轉的 URL</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <h4 className="font-semibold mt-4 mb-2 text-sm">Curl 範例</h4>
-                        <pre className="bg-tertiary p-4 rounded-md text-xs font-mono overflow-x-auto">
-                            {`curl -X POST ${window.location.origin}/api/notifications/windows \\
+                        <h4 className="font-bold text-sm mt-6 mb-2 text-primary">Curl 呼叫範例</h4>
+                        <div className="code-snippet-container">
+                            <div className="code-snippet-header">
+                                <span className="code-snippet-title">shell</span>
+                            </div>
+                            <pre className="code-snippet-body">
+                                {`curl -X POST ${window.location.origin}/api/notifications/windows \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: your_api_key" \\
+  -H "X-API-Key: YOUR_API_KEY" \\
   -d '{
-    "title": "Build Failed",
-    "message": "Unit tests failed on develop branch",
-    "repo": "jarvis/backend",
-    "branch": "develop",
-    "priority": "high",
-    "commit_sha": "a1b2c3d",
-    "action_url": "https://github.com/..."
+    "title": "Build Success",
+    "message": "Production build successfully completed",
+    "repo": "company/frontend-app",
+    "branch": "master",
+    "commit_sha": "f1a2b3c4d5e6",
+    "action_url": "https://vercel.com/dashboard"
   }'`}
-                        </pre>
+                            </pre>
+                        </div>
                     </div>
 
-                    <div className="divider my-4 border-t border-light"></div>
-
-                    {/* Windows Client Integration */}
+                    {/* 接收通知 Section */}
                     <div className="section">
-                        <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-                            <Monitor size={20} />
-                            接收通知 (Windows App)
-                        </h3>
-                        <p className="mb-2 text-sm text-secondary">Windows 客戶端應用程式應輪詢此 API 以獲取新通知。</p>
+                        <div className="section-title">
+                            <Monitor size={22} className="text-primary" />
+                            接收通知 (Windows Client 整合)
+                        </div>
+                        <p className="section-desc">
+                            Windows 客戶端應用程式應定期輪詢以下接口，以獲取並顯示新的通知訊息。
+                        </p>
 
-                        <div className="bg-tertiary p-4 rounded-md mb-4 font-mono text-sm overflow-x-auto">
-                            <div className="text-success mb-2">GET {window.location.origin}/api/notifications/windows/pending</div>
-                            <div className="text-muted mb-2">Parameters: limit=50 (Default)</div>
-                            <div className="text-muted">Response: {`{ "notifications": [...], "count": 10 }`}</div>
+                        <h4 className="font-bold text-sm mb-2 text-secondary">1. 獲取待處理通知</h4>
+                        <div className="endpoint-box">
+                            <span className="method-badge get">GET</span>
+                            <span className="endpoint-url">{window.location.origin}/api/notifications/windows/pending</span>
+                        </div>
+                        <div className="text-xs text-muted mb-4 pl-2 italic">
+                            註：需帶入 API Key，預設回傳最近 50 筆。
                         </div>
 
-                        <h4 className="font-semibold mb-2 text-sm">更新狀態 (標記已送達/已讀)</h4>
-                        <div className="bg-tertiary p-4 rounded-md font-mono text-sm overflow-x-auto">
-                            <div className="text-warning mb-2">PATCH {window.location.origin}/api/notifications/windows/:id/status</div>
-                            <div className="text-muted mb-2">Body: {`{ "status": "delivered" }`}</div>
+                        <h4 className="font-bold text-sm mb-2 text-secondary">2. 更新通知狀態</h4>
+                        <div className="endpoint-box">
+                            <span className="method-badge patch">PATCH</span>
+                            <span className="endpoint-url">{window.location.origin}/api/notifications/windows/:id/status</span>
+                        </div>
+                        <div className="code-snippet-container">
+                            <div className="code-snippet-header">
+                                <span className="code-snippet-title">Request Body</span>
+                            </div>
+                            <div className="code-snippet-body">
+                                <div><span className="json-key">"status"</span>: <span className="json-string">"delivered"</span> | <span className="json-string">"read"</span> | <span className="json-string">"dismissed"</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="modal-footer p-4 border-t border-light flex justify-end">
-                    <button className="btn btn-primary" onClick={onClose}>關閉</button>
+                <div className="modal-footer p-4 border-t border-light flex justify-center">
+                    <button className="btn btn-primary" style={{ width: '120px' }} onClick={onClose}>
+                        我知道了
+                    </button>
                 </div>
             </div>
         </div>
