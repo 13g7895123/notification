@@ -691,7 +691,7 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
                                         <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${log.responseStatus === 200 ? 'bg-success/20 text-success' : 'bg-error/20 text-error'}`}>
                                             {log.method} {log.responseStatus}
                                         </span>
-                                        <span className="text-xs text-muted">{format(new Date(log.createdAt), 'MM/dd HH:mm:ss')}</span>
+                                        <span className="text-xs text-muted">{safeFormatDate(log.createdAt, 'MM/dd HH:mm:ss')}</span>
                                     </div>
                                     <div className="text-xs font-mono break-all text-secondary truncate">
                                         {log.ipAddress}
@@ -706,7 +706,7 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
                                 <div className="detail-section">
                                     <h4 className="text-sm font-semibold text-secondary mb-2">Request Info</h4>
                                     <div className="bg-tertiary p-3 rounded text-xs font-mono">
-                                        <div>Time: {format(new Date(selectedLog.createdAt), 'yyyy-MM-dd HH:mm:ss')}</div>
+                                        <div>Time: {safeFormatDate(selectedLog.createdAt, 'yyyy-MM-dd HH:mm:ss')}</div>
                                         <div>IP: {selectedLog.ipAddress}</div>
                                         <div>URL: {selectedLog.url}</div>
                                     </div>
@@ -759,6 +759,17 @@ function tryFormatJson(str: string | null): string {
         return JSON.stringify(obj, null, 2);
     } catch (e) {
         return str;
+    }
+}
+
+function safeFormatDate(dateStr: string | null | undefined, formatStr: string): string {
+    if (!dateStr) return '-';
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '-';
+        return format(date, formatStr);
+    } catch (e) {
+        return '-';
     }
 }
 function maskString(str: string, visibleChars: number = 8): string {
