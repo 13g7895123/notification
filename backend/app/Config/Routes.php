@@ -60,6 +60,12 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
     $routes->get('system/status', 'SystemController::status');
 
     // =========================================
+    // Windows 通知發送 API（支援 API Key 認證）
+    // Controller 內部會驗證 X-API-Key 或 JWT
+    // =========================================
+    $routes->post('notifications/windows', 'WindowsNotificationController::create');
+
+    // =========================================
     // 需要認證的 API
     // =========================================
     $routes->group('', ['filter' => 'auth'], static function ($routes) {
