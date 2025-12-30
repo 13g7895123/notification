@@ -16,7 +16,6 @@ import {
 import { useNotification } from '../contexts/NotificationContext';
 import type { ApiKey, ApiPermission } from '../types';
 import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 
@@ -231,7 +230,7 @@ export function ApiKeys() {
             )}
 
             {/* Edit Modal */}
-            {showModal && <ApiKeyModal apiKey={editingKey} onClose={() => setShowModal(false)} onSave={async (data) => {
+            {showModal && <ApiKeyModal apiKey={editingKey} onClose={() => setShowModal(false)} onSave={async (data: any) => {
                 if (editingKey) { updateApiKey(editingKey.id, data); }
                 else { const newKey = await addApiKey(data as any); setNewlyCreatedKey(newKey); }
                 setShowModal(false);

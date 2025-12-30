@@ -8,15 +8,25 @@ import {
     Clock,
     TrendingUp,
     BarChart3,
+    Copy,
+    Check,
+    RefreshCw,
     Eye,
     X,
-    RefreshCw
+    Globe,
+    Monitor,
+    AlertCircle,
+    Terminal
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { ApiUsageLog } from '../types';
 import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { toast } from '../utils/alert';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+
+function Loader2({ className, size }: { className?: string, size?: number }) {
+    return <RefreshCw className={className} size={size} />;
+}
 
 export function ApiUsage() {
     const { apiUsageLogs, apiStats, apiKeys, fetchApiUsage, isLoading } = useNotification();
@@ -241,51 +251,141 @@ export function ApiUsage() {
     );
 }
 
-function Loader2({ className, size }: { className?: string, size?: number }) {
-    return <RefreshCw className={className} size={size} />;
-}
-
 function LogDetailModal({ log, onClose }: any) {
+    const [copying, setCopying] = useState<string | null>(null);
     const handleClose = useCallback(() => onClose(), [onClose]);
     useEscapeKey(handleClose);
+
+    const tryFormatJson = (data: any): string => {
+        if (!data) return '-';
+        try {
+            const obj = typeof data === 'string' ? JSON.parse(data) : data;
+            return JSON.stringify(obj, null, 2);
+        } catch { return String(data); }
+    };
+
+    const copyToClipboard = (text: string, type: string) => {
+        navigator.clipboard.writeText(text);
+        setCopying(type);
+        toast.success('已複製到剪貼簿');
+        setTimeout(() => setCopying(null), 2000);
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
             <div className="absolute inset-0 bg-bg-overlay/80" onClick={onClose} />
-            <div className="relative w-full max-w-3xl overflow-hidden rounded-xl border border-border-color bg-bg-secondary shadow-2xl animate-scale-in">
-                <div className="flex items-center justify-between border-b border-border-color-light p-lg">
-                    <h2 className="text-xl font-700 text-text-primary">請求詳情</h2>
-                    <button onClick={onClose}><X size={24} /></button>
+            <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-border-color bg-bg-secondary shadow-heavy animate-scale-in">
+                <div className="flex items-center justify-between border-b border-border-color-light p-lg bg-bg-tertiary/10">
+                    <div className="flex flex-col">
+                        <h2 className="text-xl font-900 text-text-primary uppercase tracking-tighter italic leading-none mb-1">API Request Trace</h2>
+                        <p className="text-[0.65rem] text-text-muted font-700 tracking-wider flex items-center gap-1 uppercase">
+                            <Activity size={10} className="text-color-primary" /> Session Intelligence Data
+                        </p>
+                    </div>
+                    <button
+                        className="bg-bg-tertiary/50 hover:bg-error/20 p-2 rounded-full transition-all text-text-muted hover:text-color-error"
+                        onClick={onClose}
+                    >
+                        <X size={24} />
+                    </button>
                 </div>
-                <div className="max-h-[80vh] overflow-y-auto p-lg space-y-8">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                        <div className="flex flex-col gap-1"><span className="text-[0.7rem] font-700 text-text-muted uppercase tracking-wider">時間</span><span className="font-mono text-sm text-text-secondary">{format(new Date(log.createdAt), 'yyyy/MM/dd HH:mm:ss')}</span></div>
-                        <div className="flex flex-col gap-1"><span className="text-[0.7rem] font-700 text-text-muted uppercase tracking-wider">API 金鑰</span><span className="text-sm font-600 text-text-primary">{log.apiKeyName}</span></div>
-                        <div className="flex flex-col gap-1"><span className="text-[0.7rem] font-700 text-text-muted uppercase tracking-wider">狀態碼</span><span className={`text-sm font-900 ${log.success ? 'text-color-success' : 'text-color-error'}`}>{log.statusCode}</span></div>
-                        <div className="flex flex-col gap-1"><span className="text-[0.7rem] font-700 text-text-muted uppercase tracking-wider">回應時間</span><span className="font-mono text-sm text-text-secondary">{log.responseTime}ms</span></div>
-                        <div className="flex flex-col gap-1"><span className="text-[0.7rem] font-700 text-text-muted uppercase tracking-wider">IP 位址</span><span className="font-mono text-sm text-text-secondary">{log.ipAddress}</span></div>
-                        <div className="flex flex-col gap-1 md:col-span-1"><span className="text-[0.7rem] font-700 text-text-muted uppercase tracking-wider">方法 & 端點</span><div className="flex items-center gap-1"><span className="text-[0.6rem] font-900 border border-border-color/30 px-1 rounded">{log.method}</span><code className="text-xs font-mono truncate">{log.endpoint}</code></div></div>
+
+                <div className="max-h-[85vh] overflow-y-auto p-lg custom-scrollbar bg-bg-secondary/40">
+                    <div className="space-y-8 animate-fade-in">
+                        {/* Meta Data Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
+                            <div className="p-lg rounded-xl bg-bg-tertiary/20 border border-border-color-light/30 shadow-sm col-span-1 md:col-span-2">
+                                <div className="flex items-center gap-2 mb-4 text-color-primary">
+                                    <Globe size={16} />
+                                    <span className="text-xs font-900 text-text-secondary uppercase tracking-widest leading-none">Transmission Interface</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[0.6rem] text-text-muted uppercase font-800">Endpoint</label>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="bg-bg-tertiary px-1.5 py-0.5 rounded text-[0.65rem] font-900 border border-border-color/30 leading-none">{log.method}</span>
+                                            <span className="text-sm font-700 text-text-primary truncate font-mono">{log.endpoint}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[0.6rem] text-text-muted uppercase font-800">Origin IP</label>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-sm font-700 text-text-primary font-mono">{log.ipAddress}</span>
+                                        </div>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-[0.6rem] text-text-muted uppercase font-800">Browser / Client Agent</label>
+                                        <div className="mt-1 flex items-center gap-2 bg-bg-tertiary/50 p-2 rounded-lg border border-border-color/20 overflow-hidden">
+                                            <Monitor size={12} className="shrink-0 text-text-muted" />
+                                            <span className="text-[0.65rem] font-600 text-text-muted truncate">{log.userAgent}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-lg rounded-xl bg-bg-tertiary/20 border border-border-color-light/30 shadow-sm flex flex-col justify-between">
+                                <div className="flex items-center gap-2 mb-4 text-color-accent">
+                                    <Activity size={16} />
+                                    <span className="text-xs font-900 text-text-secondary uppercase tracking-widest leading-none">Response Metrics</span>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[0.6rem] text-text-muted uppercase font-800">Status</label>
+                                        <span className={`text-md font-900 italic ${log.success ? 'text-color-success' : 'text-color-error'}`}>{log.statusCode}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[0.6rem] text-text-muted uppercase font-800">Latency</label>
+                                        <span className="text-md font-900 italic text-color-accent">{log.responseTime}ms</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[0.6rem] text-text-muted uppercase font-800">API Key Source</label>
+                                        <span className="text-sm font-700 text-text-primary">{log.apiKeyName}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Error Message if exists */}
+                        {log.errorMessage && (
+                            <div className="group relative overflow-hidden rounded-xl border border-error/30 bg-error/10 p-lg shadow-inner">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
+                                    <AlertCircle size={48} className="text-color-error" />
+                                </div>
+                                <label className="text-[0.6rem] text-color-error uppercase font-900 tracking-[0.2em] mb-2 block">Anomaly Detected</label>
+                                <p className="font-mono text-sm text-text-primary relative z-10">{log.errorMessage}</p>
+                            </div>
+                        )}
+
+                        {/* Payload & Response Blocks */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+                            {[
+                                { label: 'Request Payload', data: log.requestBody, id: 'req', icon: <Terminal size={12} /> },
+                                { label: 'Response Body', data: log.responseBody, id: 'res', icon: <Activity size={12} /> }
+                            ].map(block => (
+                                <div key={block.id} className="flex flex-col rounded-xl border border-border-color-light/30 bg-bg-tertiary/10 overflow-hidden shadow-sm">
+                                    <div className="flex items-center justify-between p-lg bg-bg-tertiary/20 border-b border-border-color-light/20">
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-text-muted">{block.icon}</div>
+                                            <span className="text-[0.65rem] font-900 text-text-primary uppercase tracking-widest italic">{block.label}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => copyToClipboard(tryFormatJson(block.data), block.id)}
+                                            className="flex items-center gap-2 rounded-lg bg-bg-secondary px-3 py-1.5 text-[0.65rem] font-800 text-text-secondary hover:text-color-primary transition-all border border-border-color hover:border-color-primary"
+                                        >
+                                            {copying === block.id ? <><Check size={10} className="text-color-success" /> COPIED</> : <><Copy size={10} /> COPY</>}
+                                        </button>
+                                    </div>
+                                    <div className="p-lg bg-bg-tertiary/5">
+                                        <pre className="custom-scrollbar h-[250px] overflow-auto font-mono text-[0.7rem] leading-relaxed text-text-secondary whitespace-pre opacity-90">
+                                            {block.data ? tryFormatJson(block.data) : (
+                                                <span className="italic opacity-40">-- EMPTY DATA SET --</span>
+                                            )}
+                                        </pre>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-
-                    <div className="flex flex-col gap-2"><label className="text-[0.7rem] font-700 text-text-muted uppercase tracking-wider">User Agent</label><div className="rounded bg-bg-tertiary/50 p-2 font-mono text-[0.7rem] text-text-muted line-clamp-1 hover:line-clamp-none transition-all">{log.userAgent}</div></div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
-                        <div className="flex flex-col gap-3">
-                            <label className="text-[0.7rem] font-700 text-text-muted uppercase tracking-wider">請求 Payload</label>
-                            <pre className="rounded-lg bg-bg-tertiary p-lg font-mono text-[0.75rem] text-text-secondary leading-relaxed overflow-x-auto h-[200px] border border-border-color/30">{log.requestBody ? JSON.stringify(log.requestBody, null, 2) : '無請求內容'}</pre>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <label className="text-[0.7rem] font-700 text-text-muted uppercase tracking-wider">回應 Response</label>
-                            <pre className="rounded-lg bg-bg-tertiary p-lg font-mono text-[0.75rem] text-text-secondary leading-relaxed overflow-x-auto h-[200px] border border-border-color/30">{log.responseBody ? JSON.stringify(log.responseBody, null, 2) : '無回應內容'}</pre>
-                        </div>
-                    </div>
-
-                    {log.errorMessage && (
-                        <div className="rounded-lg border border-error/20 bg-error/5 p-lg">
-                            <label className="text-[0.7rem] font-700 text-color-error uppercase tracking-wider mb-2 block">錯誤訊息</label>
-                            <p className="font-mono text-sm text-color-error-light">{log.errorMessage}</p>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

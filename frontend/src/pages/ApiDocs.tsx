@@ -5,8 +5,6 @@ import {
     Check,
     ChevronDown,
     ChevronRight,
-    Send as SendIcon,
-    List,
     Shield,
     Globe
 } from 'lucide-react';

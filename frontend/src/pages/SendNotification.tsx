@@ -4,11 +4,9 @@ import {
     Clock,
     Loader2,
     CheckCircle,
-    AlertCircle,
     FileText,
     Users,
-    ChevronUp,
-    ChevronDown
+    ChevronUp
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { ChannelUser } from '../types';
@@ -164,7 +162,7 @@ export function SendNotification() {
                         <div className="py-20 text-center opacity-50"><span className="text-4xl block mb-2">📡</span><p className="text-sm">尚無可用渠道</p></div>
                     ) : (
                         <div className="flex flex-col gap-sm overflow-y-auto max-h-[60vh] pr-2">
-                            {enabledChannels.map((channel, idx) => {
+                            {enabledChannels.map((channel) => {
                                 const selected = selectedChannels.includes(channel.id);
                                 const expanded = expandedChannelId === channel.id;
                                 const option = channelOptions[channel.id];

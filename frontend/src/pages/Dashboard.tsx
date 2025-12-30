@@ -197,7 +197,7 @@ export function Dashboard() {
                         </h2>
                     </div>
                     <div className="flex h-48 items-end justify-between gap-md px-md py-md">
-                        {stats.recentActivity.map((day, index) => {
+                        {stats.recentActivity.map((day) => {
                             const maxSent = Math.max(...stats.recentActivity.map(d => d.sent), 1);
                             const successHeight = (day.success / maxSent) * 100;
                             const failedHeight = (day.failed / maxSent) * 100;

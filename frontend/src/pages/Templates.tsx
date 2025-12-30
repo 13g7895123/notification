@@ -162,7 +162,7 @@ export function Templates() {
                 <TemplateModal
                     template={editingTemplate}
                     onClose={() => setShowModal(false)}
-                    onSave={(data) => {
+                    onSave={(data: any) => {
                         if (editingTemplate) {
                             updateTemplate(editingTemplate.id, data);
                         } else {
@@ -202,8 +202,8 @@ function TemplateModal({ template, onClose, onSave }: any) {
         e.preventDefault();
         const variables = variablesInput
             .split(',')
-            .map(v => v.trim())
-            .filter(v => v.length > 0);
+            .map((v: string) => v.trim())
+            .filter((v: string) => v.length > 0);
 
         onSave({
             name,
@@ -217,7 +217,7 @@ function TemplateModal({ template, onClose, onSave }: any) {
     const extractVariables = () => {
         const matches = content.match(/\{\{(\w+)\}\}/g);
         if (matches) {
-            const vars = matches.map(m => m.replace(/\{\{|\}\}/g, ''));
+            const vars = matches.map((m: string) => m.replace(/\{\{|\}\}/g, ''));
             const uniqueVars = [...new Set(vars)];
             setVariablesInput(uniqueVars.join(', '));
             toast.success('已自動提取變數');
