@@ -357,6 +357,15 @@ function LogDetailModal({ log, onClose }: { log: ApiUsageLog; onClose: () => voi
                         </div>
                     )}
 
+                    {log.responseBody && (
+                        <div className="detail-section">
+                            <span className="detail-label">回應內容</span>
+                            <pre className="code-block response-block">
+                                {JSON.stringify(log.responseBody, null, 2)}
+                            </pre>
+                        </div>
+                    )}
+
                     {log.errorMessage && (
                         <div className="detail-section error-section">
                             <span className="detail-label">錯誤訊息</span>

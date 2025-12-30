@@ -373,6 +373,13 @@
     line-height: 1.5;
     overflow-x: auto;
     margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.code-block.response-block {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .error-section {
