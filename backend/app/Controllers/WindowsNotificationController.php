@@ -235,10 +235,32 @@ class WindowsNotificationController extends BaseController
      */
     private function checkAuth(): bool
     {
-        // 優先檢查 JWT
+        // 優先檢查 JWT（已由 AuthFilter 設定）
         $user = $this->getCurrentUser();
         if ($user) {
             return true;
+        }
+
+        // 如果沒經過 AuthFilter，嘗試自己解析 JWT
+        $authHeader = $this->request->getHeaderLine('Authorization');
+        if (!empty($authHeader) && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+            $token = $matches[1];
+            $jwtSecret = getenv('JWT_SECRET') ?: 'default-secret-key';
+
+            try {
+                $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($jwtSecret, 'HS256'));
+                $user = $this->db->table('users')
+                    ->where('id', $decoded->sub)
+                    ->get()
+                    ->getRowArray();
+
+                if ($user && $user['status'] === 'active') {
+                    $this->request->user = $user;
+                    return true;
+                }
+            } catch (\Exception $e) {
+                // JWT 驗證失敗，繼續嘗試 API Key
+            }
         }
 
         // 檢查 API Key
