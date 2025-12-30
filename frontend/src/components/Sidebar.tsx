@@ -18,7 +18,8 @@ import {
     ChevronDown,
     Users,
     Shield,
-    Monitor
+    Monitor,
+    ClipboardList
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,6 +43,7 @@ const menuItems: MenuItem[] = [
     { path: '/api-keys', icon: Key, label: 'API 金鑰' },
     { path: '/api-usage', icon: Activity, label: 'API 使用紀錄' },
     { path: '/api-docs', icon: Book, label: 'API 文件' },
+    { path: '/changelog', icon: ClipboardList, label: '更新日誌' },
     { path: '/users', icon: Users, label: '使用者管理', adminOnly: true },
 ];
 

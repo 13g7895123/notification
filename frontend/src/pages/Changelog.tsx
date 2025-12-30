@@ -94,7 +94,10 @@ export function Changelog() {
     };
 
     const formatRelativeDate = (dateStr: string): string => {
+        if (!dateStr || dateStr === 'unknown') return '未知時間';
         const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '未知時間';
+
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
         const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -125,7 +128,16 @@ export function Changelog() {
         : commits.filter(c => c.type === filter);
 
     const groupedCommits = filteredCommits.reduce((groups, commit) => {
-        const date = new Date(commit.date).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+        let date = '未知日期';
+        try {
+            if (commit.date) {
+                const d = new Date(commit.date);
+                if (!isNaN(d.getTime())) {
+                    date = d.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+                }
+            }
+        } catch { /* ignore */ }
+
         if (!groups[date]) groups[date] = [];
         groups[date].push(commit);
         return groups;
@@ -141,7 +153,7 @@ export function Changelog() {
     }
 
     return (
-        <div className="flex flex-col gap-lg animate-fade-in">
+        <div className="flex flex-col gap-lg animate-fade-in min-w-0">
             {/* Header */}
             <div className="flex flex-col gap-md">
                 <h1 className="flex items-center gap-md text-2xl font-700 text-text-primary">
@@ -163,12 +175,12 @@ export function Changelog() {
                         <div className="flex flex-col gap-2">
                             <span className="text-[0.65rem] font-900 text-color-primary uppercase tracking-[0.3em]">Current Release</span>
                             <div className="flex items-baseline gap-3">
-                                <h2 className="text-4xl font-900 text-text-primary tracking-tighter tabular-nums">v{version.version}</h2>
-                                <span className="rounded bg-bg-secondary px-2 py-1 font-mono text-xs text-text-muted border border-border-color/50">{version.shortHash}</span>
+                                <h2 className="text-4xl font-900 text-text-primary tracking-tighter tabular-nums">v{version.version || 'Dev'}</h2>
+                                <span className="rounded bg-bg-secondary px-2 py-1 font-mono text-xs text-text-muted border border-border-color/50">{version.shortHash || 'HEAD'}</span>
                             </div>
                             <div className="flex items-center gap-3 mt-2 text-sm text-text-secondary bg-bg-secondary/50 rounded-full px-4 py-1 self-start border border-border-color/20">
                                 <CheckCircle2 size={14} className="text-color-success" />
-                                <span>{version.lastCommitMessage}</span>
+                                <span>{version.lastCommitMessage || 'No recent commits'}</span>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4 border-l border-border-color-light/20 pl-0 md:pl-8">
@@ -177,7 +189,7 @@ export function Changelog() {
                                 <span className="text-[0.6rem] font-700 text-text-muted uppercase tracking-wider">總提交次數</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-xl font-800 text-text-primary truncate max-w-[120px]">{version.branch}</span>
+                                <span className="text-xl font-800 text-text-primary truncate max-w-[120px]">{version.branch || 'unknown'}</span>
                                 <span className="text-[0.6rem] font-700 text-text-muted uppercase tracking-wider">活動分支</span>
                             </div>
                             <div className="flex flex-col col-span-2 lg:col-span-1">
