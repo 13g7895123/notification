@@ -586,6 +586,9 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
             <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
                 <div className="modal-header">
                     <h2>渠道使用者列表</h2>
+                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
+                        <X size={20} />
+                    </button>
                 </div>
                 <div className="modal-body">
                     {loading ? (
