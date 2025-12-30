@@ -19,7 +19,7 @@ import {
     Users
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
-import type { NotificationChannel, ChannelType, LineConfig, TelegramConfig } from '../types';
+import type { NotificationChannel, ChannelType, LineConfig, TelegramConfig, ChannelUser, WebhookLog } from '../types';
 import { format } from 'date-fns';
 import { toast, confirm } from '../utils/alert';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -135,11 +135,7 @@ export function Channels() {
                             <div className="flex-1 p-lg">
                                 <h3 className="mb-md text-xl font-700 text-text-primary">{channel.name}</h3>
                                 <div className="space-y-3">
-                                    {channel.type === 'line' ? (
-                                        <LineConfigDisplay config={channel.config as LineConfig} />
-                                    ) : (
-                                        <TelegramConfigDisplay config={channel.config as TelegramConfig} />
-                                    )}
+                                    {channel.type === 'line' ? <LineConfigDisplay config={channel.config as LineConfig} /> : <TelegramConfigDisplay config={channel.config as TelegramConfig} />}
                                 </div>
                             </div>
 
@@ -185,7 +181,7 @@ export function Channels() {
             </div>
 
             {/* Modals */}
-            {showModal && <ChannelModal channel={editingChannel} onClose={() => setShowModal(false)} onSave={(data: NotificationChannel) => { editingChannel ? updateChannel(editingChannel.id, data) : addChannel(data); setShowModal(false); }} />}
+            {showModal && <ChannelModal channel={editingChannel} onClose={() => setShowModal(false)} onSave={(data: Partial<NotificationChannel>) => { editingChannel ? updateChannel(editingChannel.id, data) : addChannel(data as NotificationChannel); setShowModal(false); }} />}
             {showUsersModal && viewingChannelId && <ChannelUsersModal channelId={viewingChannelId} onClose={() => { setShowUsersModal(false); setViewingChannelId(null); }} />}
             {showLogsModal && viewingChannelId && <ChannelLogsModal channelId={viewingChannelId} onClose={() => { setShowLogsModal(false); setViewingChannelId(null); }} />}
         </div>
@@ -201,7 +197,11 @@ function LineConfigDisplay({ config }: { config: LineConfig }) {
     );
 }
 
-function TelegramConfigDisplay({ config }: { config: TelegramConfig }) {
+interface TelegramConfigDisplayProps {
+    config: TelegramConfig;
+}
+
+function TelegramConfigDisplay({ config }: TelegramConfigDisplayProps) {
     return (
         <div className="space-y-2 text-[0.8rem]">
             <div className="flex justify-between font-500"><span className="text-text-muted">Token:</span><span className="font-mono text-text-secondary">{maskString(config.botToken)}</span></div>
@@ -210,7 +210,13 @@ function TelegramConfigDisplay({ config }: { config: TelegramConfig }) {
     );
 }
 
-function ChannelModal({ channel, onClose, onSave }: any) {
+interface ChannelModalProps {
+    channel: NotificationChannel | null;
+    onClose: () => void;
+    onSave: (data: Partial<NotificationChannel>) => void;
+}
+
+function ChannelModal({ channel, onClose, onSave }: ChannelModalProps) {
     const [type, setType] = useState<ChannelType>(channel?.type || 'line');
     const [name, setName] = useState(channel?.name || '');
     const [enabled, setEnabled] = useState(channel?.enabled ?? true);
@@ -233,7 +239,15 @@ function ChannelModal({ channel, onClose, onSave }: any) {
                     <h2 className="text-xl font-700 text-text-primary">{channel ? '編輯渠道' : '新增渠道'}</h2>
                     <button className="text-text-muted hover:text-text-primary" onClick={onClose}><X size={24} /></button>
                 </div>
-                <form className="max-h-[80vh] overflow-y-auto p-lg" onSubmit={(e) => { e.preventDefault(); onSave({ type, name, enabled, config: type === 'line' ? { channelAccessToken, channelSecret } : { botToken, chatId, parseMode } }); }}>
+                <form className="max-h-[80vh] overflow-y-auto p-lg" onSubmit={(e) => {
+                    e.preventDefault();
+                    onSave({
+                        type,
+                        name,
+                        enabled,
+                        config: type === 'line' ? { channelAccessToken, channelSecret } : { botToken, chatId, parseMode }
+                    });
+                }}>
                     <div className="space-y-6">
                         <div className="flex flex-col gap-2">
                             <label className="text-[0.875rem] font-600 text-text-secondary">渠道類型</label>
@@ -277,17 +291,22 @@ function ChannelModal({ channel, onClose, onSave }: any) {
     );
 }
 
-function ChannelUsersModal({ channelId, onClose }: any) {
+interface ChannelUsersModalProps {
+    channelId: string;
+    onClose: () => void;
+}
+
+function ChannelUsersModal({ channelId, onClose }: ChannelUsersModalProps) {
     const { getChannelUsers } = useNotification();
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<ChannelUser[]>([]);
     const [loading, setLoading] = useState(true);
 
     const handleClose = useCallback(() => onClose(), [onClose]);
     useEscapeKey(handleClose);
 
     useEffect(() => {
-        getChannelUsers(channelId).then((data: any) => { setUsers(data || []); setLoading(false); });
-    }, [channelId]);
+        getChannelUsers(channelId).then((data) => { setUsers(data || []); setLoading(false); });
+    }, [channelId, getChannelUsers]);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
@@ -323,10 +342,15 @@ function ChannelUsersModal({ channelId, onClose }: any) {
     );
 }
 
-function ChannelLogsModal({ channelId, onClose }: any) {
+interface ChannelLogsModalProps {
+    channelId: string;
+    onClose: () => void;
+}
+
+function ChannelLogsModal({ channelId, onClose }: ChannelLogsModalProps) {
     const { getChannelWebhookLogs } = useNotification();
-    const [logs, setLogs] = useState<any[]>([]);
-    const [selectedLog, setSelectedLog] = useState<any>(null);
+    const [logs, setLogs] = useState<WebhookLog[]>([]);
+    const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
     const [loading, setLoading] = useState(true);
     const [copying, setCopying] = useState<string | null>(null);
 
@@ -334,15 +358,15 @@ function ChannelLogsModal({ channelId, onClose }: any) {
     useEscapeKey(handleClose);
 
     useEffect(() => {
-        getChannelWebhookLogs(channelId).then((data: any) => {
-            const sortedLogs = (data || []).sort((a: any, b: any) =>
+        getChannelWebhookLogs(channelId).then((data) => {
+            const sortedLogs = (data || []).sort((a, b) =>
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
             setLogs(sortedLogs);
             setLoading(false);
             if (sortedLogs[0]) setSelectedLog(sortedLogs[0]);
         });
-    }, [channelId]);
+    }, [channelId, getChannelWebhookLogs]);
 
     const copyToClipboard = (text: string, type: string) => {
         navigator.clipboard.writeText(text);
@@ -598,13 +622,13 @@ function ChannelLogsModal({ channelId, onClose }: any) {
     );
 }
 
-function maskString(s: any) {
+function maskString(s: unknown) {
     if (typeof s !== 'string') return '-';
     if (s.length <= 10) return s;
     return `${s.substring(0, 6)}...${s.substring(s.length - 4)}`;
 }
 
-function tryFormatJson(data: any): string {
+function tryFormatJson(data: unknown): string {
     if (!data) return '-';
     try {
         const obj = typeof data === 'string' ? JSON.parse(data) : data;

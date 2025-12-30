@@ -165,7 +165,7 @@ export interface WebhookLog {
     url: string;
     headers: string | null;
     payload: string | null;
-    responseStatus: number | null;
+    responseStatus: number;
     responseBody: string | null;
     ipAddress: string;
     createdAt: string;
