@@ -60,10 +60,16 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
     $routes->get('system/status', 'SystemController::status');
 
     // =========================================
-    // Windows 通知發送 API（支援 API Key 認證）
+    // Windows 通知 API（支援 API Key 認證）
     // Controller 內部會驗證 X-API-Key 或 JWT
     // =========================================
+    $routes->get('notifications/windows', 'WindowsNotificationController::index');
+    $routes->get('notifications/windows/pending', 'WindowsNotificationController::pending');
+    $routes->get('notifications/windows/stats', 'WindowsNotificationController::stats');
     $routes->post('notifications/windows', 'WindowsNotificationController::create');
+    $routes->get('notifications/windows/(:segment)', 'WindowsNotificationController::show/$1');
+    $routes->patch('notifications/windows/(:segment)/status', 'WindowsNotificationController::updateStatus/$1');
+    $routes->post('notifications/windows/expire', 'WindowsNotificationController::expire');
 
     // =========================================
     // 需要認證的 API
@@ -132,15 +138,8 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
         });
 
         // =========================================
-        // Windows 通知 API
+        // Windows 通知 API（僅刪除需要登入）
         // =========================================
-        $routes->get('notifications/windows', 'WindowsNotificationController::index');
-        $routes->get('notifications/windows/pending', 'WindowsNotificationController::pending');
-        $routes->get('notifications/windows/stats', 'WindowsNotificationController::stats');
-        $routes->post('notifications/windows', 'WindowsNotificationController::create');
-        $routes->get('notifications/windows/(:segment)', 'WindowsNotificationController::show/$1');
-        $routes->patch('notifications/windows/(:segment)/status', 'WindowsNotificationController::updateStatus/$1');
         $routes->delete('notifications/windows/(:segment)', 'WindowsNotificationController::delete/$1');
-        $routes->post('notifications/windows/expire', 'WindowsNotificationController::expire');
     });
 });
