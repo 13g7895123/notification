@@ -84,6 +84,12 @@
   --sidebar-width: 280px;
   --sidebar-collapsed-width: 72px;
 
+  /* 側邊欄 margin-left utilities */
+  --ml-sidebar-width: 280px;
+  --ml-sidebar-collapsed-width: 72px;
+  --w-sidebar-width: 280px;
+  --w-sidebar-collapsed-width: 72px;
+
   /* 字體權重 */
   --font-weight-700: 700;
   --font-weight-800: 800;
