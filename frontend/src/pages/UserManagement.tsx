@@ -16,13 +16,11 @@ import {
     RefreshCw,
     AlertTriangle,
     CheckCircle,
-    XCircle,
-    Loader2
+    XCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserWithAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
 
 export function UserManagement() {
@@ -98,7 +96,7 @@ export function UserManagement() {
     return (
         <div className="flex flex-col gap-lg animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-md md:flex-row md:items-center md:justify-between mb-4">
                 <div>
                     <h1 className="flex items-center gap-md text-2xl font-700 text-text-primary">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-color-primary/20 text-color-primary-light">

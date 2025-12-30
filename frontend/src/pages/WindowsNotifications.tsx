@@ -25,7 +25,6 @@ import {
 import { api } from '../utils/api';
 import type { WindowsNotification, WindowsNotificationStats, WindowsNotificationStatus } from '../types';
 import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
 
 interface PaginatedResponse {
@@ -285,7 +284,7 @@ function IntegrationHelpModal({ onClose }: any) {
             <div className="absolute inset-0 bg-bg-overlay/60" onClick={onClose} />
             <div className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border border-color-primary/30 bg-bg-secondary shadow-glow animate-scale-in flex flex-col">
                 <div className="flex items-center justify-between border-b border-border-color-light p-lg bg-bg-tertiary/10">
-                    <h2 className="text-xl font-900 text-text-primary uppercase tracking-tighter">Windows 通知集成指南</h2>
+                    <h2 className="text-xl font-900 text-text-primary uppercase tracking-tighter">Windows 通知 API 整合說明</h2>
                     <button className="text-text-muted hover:text-text-primary" onClick={onClose}><X size={28} /></button>
                 </div>
                 <div className="overflow-y-auto p-lg space-y-10 custom-scrollbar">
@@ -370,9 +369,6 @@ function IntegrationHelpModal({ onClose }: any) {
                             </div>
                         </div>
                     </div>
-                </div>
-                <div className="p-lg border-t border-border-color-light/30 flex justify-center bg-bg-tertiary/10">
-                    <button className="btn btn-primary h-12 w-full max-w-[200px] text-md font-900 italic shadow-glow uppercase" onClick={onClose}>Understood</button>
                 </div>
             </div>
         </div>
