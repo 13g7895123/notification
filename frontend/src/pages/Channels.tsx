@@ -752,14 +752,29 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
     );
 }
 
-function tryFormatJson(str: string | null): string {
-    if (!str) return '-';
-    try {
-        const obj = JSON.parse(str);
-        return JSON.stringify(obj, null, 2);
-    } catch (e) {
-        return str;
+function tryFormatJson(data: string | object | null | undefined): string {
+    if (data === null || data === undefined) return '-';
+
+    // 如果已經是物件，直接格式化
+    if (typeof data === 'object') {
+        try {
+            return JSON.stringify(data, null, 2);
+        } catch (e) {
+            return String(data);
+        }
     }
+
+    // 如果是字串，嘗試解析為 JSON
+    if (typeof data === 'string') {
+        try {
+            const obj = JSON.parse(data);
+            return JSON.stringify(obj, null, 2);
+        } catch (e) {
+            return data;
+        }
+    }
+
+    return String(data);
 }
 
 function safeFormatDate(dateStr: string | null | undefined, formatStr: string): string {
