@@ -28,7 +28,7 @@ interface SystemStatus {
 }
 
 export function Dashboard() {
-    const { stats, messages, channels, logs, isLoading } = useNotification();
+    const { stats, messages, channels, logs, apiUsageLogs, isLoading } = useNotification();
     const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -60,6 +60,7 @@ export function Dashboard() {
     }
 
     const recentMessages = messages.slice(0, 5);
+    const recentApiLogs = apiUsageLogs.slice(0, 6);
     const recentLogs = logs.slice(0, 6);
 
     return (
@@ -275,31 +276,86 @@ export function Dashboard() {
                         </h2>
                     </div>
                     <div className="recent-list">
-                        {recentMessages.map((msg, index) => (
-                            <div
-                                key={msg.id}
-                                className="recent-item animate-slide-up"
-                                style={{ animationDelay: `${index * 50}ms` }}
-                            >
-                                <div className="recent-item-content">
-                                    <h4 className="recent-item-title">{msg.title}</h4>
-                                    <p className="recent-item-desc">{msg.content}</p>
+                        {recentMessages.length === 0 ? (
+                            <div className="empty-state">暫無發送紀錄</div>
+                        ) : (
+                            recentMessages.map((msg, index) => (
+                                <div
+                                    key={msg.id}
+                                    className="recent-item animate-slide-up"
+                                    style={{ animationDelay: `${index * 50}ms` }}
+                                >
+                                    <div className="recent-item-content">
+                                        <h4 className="recent-item-title">{msg.title}</h4>
+                                        <p className="recent-item-desc">{msg.content}</p>
+                                    </div>
+                                    <div className="recent-item-meta">
+                                        <span className={`badge badge-${getStatusBadge(msg.status)}`}>
+                                            {getStatusText(msg.status)}
+                                        </span>
+                                        <span className="recent-item-time">
+                                            {msg.sentAt
+                                                ? format(new Date(msg.sentAt), 'MM/dd HH:mm', { locale: zhTW })
+                                                : msg.scheduledAt
+                                                    ? `預定 ${format(new Date(msg.scheduledAt), 'MM/dd HH:mm', { locale: zhTW })}`
+                                                    : '-'
+                                            }
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="recent-item-meta">
-                                    <span className={`badge badge-${getStatusBadge(msg.status)}`}>
-                                        {getStatusText(msg.status)}
-                                    </span>
-                                    <span className="recent-item-time">
-                                        {msg.sentAt
-                                            ? format(new Date(msg.sentAt), 'MM/dd HH:mm', { locale: zhTW })
-                                            : msg.scheduledAt
-                                                ? `預定 ${format(new Date(msg.scheduledAt), 'MM/dd HH:mm', { locale: zhTW })}`
-                                                : '-'
-                                        }
-                                    </span>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* API 使用紀錄 */}
+                <div className="card logs-card">
+                    <div className="card-header">
+                        <h2 className="card-title">
+                            <Activity size={18} />
+                            API 使用紀錄
+                        </h2>
+                    </div>
+                    <div className="logs-list">
+                        {recentApiLogs.length === 0 ? (
+                            <div className="empty-state">暫無使用紀錄</div>
+                        ) : (
+                            recentApiLogs.map((log, index) => (
+                                <div
+                                    key={log.id}
+                                    className="log-item animate-slide-up"
+                                    style={{ animationDelay: `${index * 50}ms` }}
+                                >
+                                    <div className={`log-status-indicator ${log.success ? 'success' : 'failed'}`} />
+                                    <div className="log-content">
+                                        <div className="log-header">
+                                            <span className={`badge badge-sm ${log.method === 'GET' ? 'badge-info' : 'badge-primary'}`}>
+                                                {log.method}
+                                            </span>
+                                            <span className="log-channel-name">
+                                                {log.apiKeyName || 'Unknown Key'}
+                                            </span>
+                                        </div>
+                                        <div className="log-title" title={log.endpoint}>
+                                            {log.endpoint}
+                                        </div>
+                                    </div>
+                                    <div className="log-meta">
+                                        <span className={`badge badge-sm ${log.success ? 'badge-success' : 'badge-error'}`}>
+                                            {log.statusCode}
+                                        </span>
+                                        <div className="log-bottom-meta" style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
+                                            <span className="log-response-time">
+                                                {log.responseTime}ms
+                                            </span>
+                                            <span className="log-time">
+                                                {format(new Date(log.createdAt), 'HH:mm:ss', { locale: zhTW })}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
 

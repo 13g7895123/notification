@@ -362,9 +362,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // API 使用紀錄操作
     const fetchApiUsage = useCallback(async (params?: Record<string, string | number | boolean>) => {
         try {
-            const data = await api.get<{ logs: ApiUsageLog[]; stats: ApiStats }>('/api-usage', params);
-            setApiUsageLogs(data.logs || []);
-            setApiStats(data.stats);
+            const [logsData, statsData] = await Promise.all([
+                api.get<{ logs: ApiUsageLog[]; total: number }>('/api-usage/logs', params),
+                api.get<ApiStats>('/api-usage/stats', params)
+            ]);
+
+            setApiUsageLogs(logsData.logs || []);
+            setApiStats(statsData);
         } catch (error) {
             console.error('Fetch API usage failed', error);
         }
@@ -383,6 +387,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             void fetchChannels();
             void fetchTemplates();
             void fetchStats();
+            void fetchApiUsage();
         } else {
             // 清空數據
             setChannels([]);
