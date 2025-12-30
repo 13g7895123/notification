@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use CodeIgniter\Tasks\Config\Tasks as BaseTasks;
 use CodeIgniter\Tasks\Scheduler;
 
 /**
@@ -14,7 +15,7 @@ use CodeIgniter\Tasks\Scheduler;
  * 2. 或使用 CI4 內建的 Daemon 模式：
  *    php spark tasks:run --daemon
  */
-class Tasks extends \CodeIgniter\Config\Tasks
+class Tasks extends BaseTasks
 {
     /**
      * 註冊排程任務

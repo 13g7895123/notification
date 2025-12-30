@@ -38,7 +38,9 @@ class Autoload extends AutoloadConfig
      * @var array<string, list<string>|string>
      */
     public $psr4 = [
-        APP_NAMESPACE => APPPATH,
+        APP_NAMESPACE         => APPPATH,
+        'CodeIgniter\Tasks'    => __DIR__ . '/../../vendor/codeigniter4/tasks/src',
+        'CodeIgniter\Settings' => __DIR__ . '/../../vendor/codeigniter4/settings/src',
     ];
 
     /**
