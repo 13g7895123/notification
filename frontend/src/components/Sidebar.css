@@ -172,9 +172,20 @@
 }
 
 .nav-item.admin-item {
-    border-top: 1px solid var(--border-color-light);
-    margin-top: var(--spacing-sm);
+    position: relative;
+    margin-top: var(--spacing-md);
     padding-top: var(--spacing-md);
+}
+
+.nav-item.admin-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-color-light);
+    border-radius: 0;
 }
 
 .sidebar.collapsed .nav-item {
