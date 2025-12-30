@@ -10,13 +10,15 @@ import {
     ArrowDownRight,
     Monitor,
     RefreshCw,
-    Activity
+    Activity,
+    Play
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { api } from '../utils/api';
+import { toast } from '../utils/alert';
 import './Dashboard.css';
 
 interface SystemStatus {
@@ -40,6 +42,20 @@ export function Dashboard() {
         } catch (error) {
             console.error('Failed to fetch system status:', error);
         } finally {
+            setIsRefreshing(false);
+        }
+    };
+
+    const handleStartScheduler = async () => {
+        setIsRefreshing(true);
+        try {
+            await api.post('/system/scheduler/start');
+            toast.success('啟動指令已發送');
+            // 延遲 3 秒後重新檢查狀態
+            setTimeout(fetchSystemStatus, 3000);
+        } catch (error) {
+            console.error('Start scheduler failed:', error);
+            toast.error('啟動失敗，請查看後端日誌');
             setIsRefreshing(false);
         }
     };
@@ -87,6 +103,17 @@ export function Dashboard() {
 
                 {/* 系統狀態檢查按鈕 */}
                 <div className="system-status-checks">
+                    {systemStatus && !systemStatus.scheduler_running && (
+                        <button
+                            className="btn-start-scheduler"
+                            onClick={handleStartScheduler}
+                            disabled={isRefreshing}
+                        >
+                            <Play size={14} />
+                            啟動排程
+                        </button>
+                    )}
+
                     {systemStatus ? (
                         <div className={`status-badge ${systemStatus.scheduler_running ? 'running' : 'stopped'}`} onClick={fetchSystemStatus} title="點擊立即重新整理">
                             <div className="status-badge-icon">

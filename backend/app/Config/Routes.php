@@ -76,6 +76,9 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
         $routes->put('auth/profile', 'AuthController::updateProfile');
         $routes->put('auth/password', 'AuthController::changePassword');
 
+        // 系統管理
+        $routes->post('system/scheduler/start', 'SystemController::startScheduler');
+
         // 統計數據
         $routes->get('stats/dashboard', 'StatsController::dashboard');
 

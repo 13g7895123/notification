@@ -79,6 +79,36 @@
     transform: translateY(0);
 }
 
+transform: translateY(0);
+}
+
+.btn-start-scheduler {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    height: 32px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-start-scheduler:hover {
+    background: var(--bg-input);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.btn-start-scheduler:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .btn-refresh-status {
     width: 32px;
     height: 32px;
