@@ -10,13 +10,13 @@ import {
     ArrowDownRight,
     Monitor,
     RefreshCw,
-    Clock,
     Activity
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
+import { api } from '../utils/api';
 import './Dashboard.css';
 
 interface SystemStatus {
@@ -35,16 +35,8 @@ export function Dashboard() {
     const fetchSystemStatus = async () => {
         setIsRefreshing(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/system/status`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const result = await response.json();
-            if (result.success) {
-                setSystemStatus(result.data);
-            }
+            const data = await api.get<SystemStatus>('/system/status');
+            setSystemStatus(data);
         } catch (error) {
             console.error('Failed to fetch system status:', error);
         } finally {
@@ -80,6 +72,12 @@ export function Dashboard() {
                             <LayoutDashboard size={22} />
                         </div>
                         儀表板
+                        {systemStatus && (
+                            <div className={`status-badge-mini ${systemStatus.scheduler_running ? 'running' : 'stopped'}`}>
+                                <Activity size={12} />
+                                <span>{systemStatus.scheduler_running ? '系統排程運作中' : '系統排程已停止'}</span>
+                            </div>
+                        )}
                     </h1>
                     <p className="page-description">
                         通知系統運作概況與統計數據
@@ -88,8 +86,8 @@ export function Dashboard() {
 
                 {/* 系統狀態檢查按鈕 */}
                 <div className="system-status-checks">
-                    {systemStatus && (
-                        <div className={`status-badge ${systemStatus.scheduler_running ? 'running' : 'stopped'}`}>
+                    {systemStatus ? (
+                        <div className={`status-badge ${systemStatus.scheduler_running ? 'running' : 'stopped'}`} onClick={fetchSystemStatus} title="點擊立即重新整理">
                             <div className="status-badge-icon">
                                 <Activity size={14} />
                             </div>
@@ -101,15 +99,22 @@ export function Dashboard() {
                             </div>
                             {systemStatus.last_heartbeat && (
                                 <div className="status-tooltip">
-                                    最後活動: {systemStatus.last_heartbeat}
+                                    最後心跳: {systemStatus.last_heartbeat}
                                 </div>
                             )}
+                        </div>
+                    ) : (
+                        <div className="status-badge unknown" onClick={fetchSystemStatus} style={{ cursor: 'pointer' }}>
+                            <Activity size={14} />
+                            <div className="status-badge-text">
+                                <span className="status-value">點擊檢查狀態</span>
+                            </div>
                         </div>
                     )}
                     <button
                         className={`btn-refresh-status ${isRefreshing ? 'spinning' : ''}`}
                         onClick={fetchSystemStatus}
-                        title="檢查系統狀態"
+                        title="立即檢查系統狀態"
                     >
                         <RefreshCw size={16} />
                     </button>
