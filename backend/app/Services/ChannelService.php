@@ -293,6 +293,23 @@ class ChannelService
     }
 
     /**
+     * 取得渠道使用者
+     */
+    public function getChannelUsers(int $channelId, int $userId): array
+    {
+        // 驗證渠道權限
+        $channel = $this->channelRepository->find($channelId, $userId);
+        if (!$channel) {
+            return [];
+        }
+
+        $userRepo = new \App\Repositories\ChannelUserRepository();
+        $users = $userRepo->findByChannelId($channelId);
+
+        return array_map(fn($u) => $u->toArray(), $users);
+    }
+
+    /**
      * 取得渠道 Webhook 記錄
      */
     public function getWebhookLogs(int $channelId, int $userId, int $limit = 50, int $offset = 0): array
