@@ -136,6 +136,7 @@ export function Login() {
                 </form>
 
                 {/* Demo 帳號 */}
+                {/* Demo 帳號 (隱藏)
                 <div className="demo-accounts">
                     <p className="demo-title">快速填入測試帳號</p>
                     <div className="demo-buttons">
@@ -155,6 +156,7 @@ export function Login() {
                         </button>
                     </div>
                 </div>
+                */}
 
                 {/* 頁腳 */}
                 <div className="login-footer">
