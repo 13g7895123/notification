@@ -39,6 +39,7 @@ class Filters extends BaseFilters
         'auth'          => \App\Filters\AuthFilter::class,
         'admin'         => \App\Filters\AdminFilter::class,
         'apicors'       => \App\Filters\CorsFilter::class,
+        'api_log'       => \App\Filters\ApiLogFilter::class,
     ];
 
     /**
@@ -78,12 +79,14 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             'apicors', // CORS for API
+            'api_log', // 記錄 API 使用時間
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
         ],
         'after' => [
             'apicors', // CORS for API
+            'api_log', // 寫入 API 使用日誌
             // 'honeypot',
             // 'secureheaders',
         ],

@@ -261,6 +261,9 @@ class WindowsNotificationController extends BaseController
         // 更新最後使用時間
         $this->apiKeyRepo->updateLastUsed((int) $key['id']);
 
+        // 將 API Key ID 存入 request 以供 Log 使用
+        $this->request->apiKeyId = (int) $key['id'];
+
         return true;
     }
 }
