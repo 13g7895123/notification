@@ -3,7 +3,8 @@
     "description": "NotifyHub API Backend - CodeIgniter 4",
     "type": "project",
     "license": "MIT",
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
         "php": "^8.1",
         "codeigniter4/framework": "^4.4",
