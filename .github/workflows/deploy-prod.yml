@@ -128,8 +128,8 @@ jobs:
             -H "Content-Type: application/json" \
             -H "X-API-Key: ${{ secrets.WINDOWS_NOTIFY_API_KEY }}" \
             -d '{
-              "title": "Prod Deploy Success",
-              "message": "生產環境部署成功！\nCommit: ${{ github.sha }}",
+              "title": "✅ Prod Deploy Success",
+              "message": "生產環境部署成功！\n${{ github.event.head_commit.message }}",
               "repo": "${{ github.repository }}",
               "branch": "${{ github.ref_name }}",
               "commit_sha": "${{ github.sha }}",
@@ -144,8 +144,8 @@ jobs:
             -H "Content-Type: application/json" \
             -H "X-API-Key: ${{ secrets.WINDOWS_NOTIFY_API_KEY }}" \
             -d '{
-              "title": "Prod Deploy Failed",
-              "message": "生產環境部署失敗，請檢查日誌。",
+              "title": "❌ Prod Deploy Failed",
+              "message": "生產環境部署失敗！\n${{ github.event.head_commit.message }}",
               "repo": "${{ github.repository }}",
               "branch": "${{ github.ref_name }}",
               "commit_sha": "${{ github.sha }}",
