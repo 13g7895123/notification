@@ -46,16 +46,18 @@ class ApiLogFilter implements FilterInterface
         $success = ($statusCode >= 200 && $statusCode < 300);
 
         // 取得 Request Body (如果是 POST/PUT)
-        $body = null;
+        $requestBody = null;
         if ($request->getMethod() !== 'get') {
-            $body = $request->getBody();
+            $requestBody = $request->getBody();
             // 如果 body 太長可能需要截斷或過濾敏感資訊，目前先簡化
         }
+
+        // 取得 Response Body
+        $responseBody = $response->getBody();
 
         // 取得錯誤訊息（從 Response JSON 中嘗試解析）
         $errorMessage = null;
         if (!$success) {
-            $responseBody = $response->getBody();
             $json = json_decode($responseBody, true);
             if (isset($json['error']['message'])) {
                 $errorMessage = $json['error']['message'];
@@ -72,7 +74,8 @@ class ApiLogFilter implements FilterInterface
             'response_time' => $duration,
             'ip' => $request->getIPAddress(),
             'user_agent' => $request->getUserAgent() ? (string)$request->getUserAgent() : null,
-            'request_body' => $body,
+            'request_body' => $requestBody,
+            'response_body' => $responseBody,
             'error_message' => $errorMessage,
             'created_at' => date('Y-m-d H:i:s'),
         ]);
