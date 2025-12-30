@@ -425,9 +425,9 @@ export function WindowsNotifications() {
 }
 
 function IntegrationHelpModal({ onClose }: { onClose: () => void }) {
-    const [copied, setCopied] = useState(false);
+    const [copiedSection, setCopiedSection] = useState<string | null>(null);
 
-    const handleCopyMarkdown = () => {
+    const handleCopyPublisherMarkdown = () => {
         const markdown = `## 發送通知 (CI/CD 整合)
 
 在您的 CI/CD Pipeline (如 GitHub Actions, GitLab CI 或 Jenkins) 中呼叫此接口，即可將構建狀態或系統訊息即時推送到指定使用者的 Windows 桌面。
@@ -466,9 +466,39 @@ curl -X POST ${window.location.origin}/api/notifications/windows \\
 \`\`\`
 `;
         navigator.clipboard.writeText(markdown).then(() => {
-            setCopied(true);
+            setCopiedSection('publisher');
             toast.success('已複製 API 說明 (Markdown)');
-            setTimeout(() => setCopied(false), 2000);
+            setTimeout(() => setCopiedSection(null), 2000);
+        });
+    };
+
+    const handleCopySubscriberMarkdown = () => {
+        const markdown = `## 接收通知 (Windows Client 整合)
+
+Windows 客戶端應用程式應定期輪詢以下接口，以獲取並顯示新的通知訊息。
+
+### 1. 獲取待處理通知
+- **Method**: GET
+- **URL**: ${window.location.origin}/api/notifications/windows/pending
+- **Header**: X-API-Key: YOUR_API_KEY
+- **說明**: 預設回傳最近 50 筆待處理通知。
+
+### 2. 更新通知狀態
+- **Method**: PATCH
+- **URL**: ${window.location.origin}/api/notifications/windows/:id/status
+- **Content-Type**: application/json
+- **Body**:
+\`\`\`json
+{
+  "status": "delivered"
+}
+\`\`\`
+狀態可選值: delivered (已送達), read (已讀), dismissed (忽略)
+`;
+        navigator.clipboard.writeText(markdown).then(() => {
+            setCopiedSection('subscriber');
+            toast.success('已複製 API 說明 (Markdown)');
+            setTimeout(() => setCopiedSection(null), 2000);
         });
     };
 
@@ -494,12 +524,12 @@ curl -X POST ${window.location.origin}/api/notifications/windows \\
                                 發送通知 (CI/CD 整合)
                             </div>
                             <button
-                                className={`btn btn-sm ${copied ? 'btn-success' : 'btn-secondary'}`}
-                                onClick={handleCopyMarkdown}
+                                className={`btn btn-sm ${copiedSection === 'publisher' ? 'btn-success' : 'btn-secondary'}`}
+                                onClick={handleCopyPublisherMarkdown}
                                 title="複製說明為 Markdown"
                             >
-                                {copied ? <Check size={14} /> : <Copy size={14} />}
-                                <span className="ml-1">{copied ? '已複製' : '複製說明'}</span>
+                                {copiedSection === 'publisher' ? <Check size={14} /> : <Copy size={14} />}
+                                <span className="ml-1">{copiedSection === 'publisher' ? '已複製' : '複製說明'}</span>
                             </button>
                         </div>
                         <p className="section-desc">
@@ -597,9 +627,19 @@ curl -X POST ${window.location.origin}/api/notifications/windows \\
 
                     {/* 接收通知 Section */}
                     <div className="section">
-                        <div className="section-title">
-                            <Monitor size={22} className="text-primary" />
-                            接收通知 (Windows Client 整合)
+                        <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="flex items-center gap-2">
+                                <Monitor size={22} className="text-primary" />
+                                接收通知 (Windows Client 整合)
+                            </div>
+                            <button
+                                className={`btn btn-sm ${copiedSection === 'subscriber' ? 'btn-success' : 'btn-secondary'}`}
+                                onClick={handleCopySubscriberMarkdown}
+                                title="複製說明為 Markdown"
+                            >
+                                {copiedSection === 'subscriber' ? <Check size={14} /> : <Copy size={14} />}
+                                <span className="ml-1">{copiedSection === 'subscriber' ? '已複製' : '複製說明'}</span>
+                            </button>
                         </div>
                         <p className="section-desc">
                             Windows 客戶端應用程式應定期輪詢以下接口，以獲取並顯示新的通知訊息。
