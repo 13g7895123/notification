@@ -16,14 +16,14 @@ import {
     RefreshCw,
     AlertTriangle,
     CheckCircle,
-    XCircle
+    XCircle,
+    Loader2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserWithAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
-import './UserManagement.css';
 
 export function UserManagement() {
     const { user, isAdmin, users, fetchUsers, addUser, updateUser, deleteUser, toggleUserStatus, resetUserPassword } = useAuth();
@@ -34,14 +34,12 @@ export function UserManagement() {
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [showPasswordModal, setShowPasswordModal] = useState<UserWithAuth | null>(null);
 
-    // 初始化獲取使用者資料
     useEffect(() => {
         if (isAdmin) {
             fetchUsers();
         }
     }, [isAdmin, fetchUsers]);
 
-    // 非管理員無法存取
     if (!isAdmin) {
         return <Navigate to="/" replace />;
     }
@@ -82,15 +80,15 @@ export function UserManagement() {
             toast.warning('無法停用自己的帳號');
             return;
         }
-        const newStatus = u.status === 'active' ? '停用' : '啟用';
+        const newStatusText = u.status === 'active' ? '停用' : '啟用';
         const confirmed = await confirm.action(
-            `確定要${newStatus}「${u.username}」嗎？`,
-            `${newStatus}使用者`
+            `確定要${newStatusText}「${u.username}」嗎？`,
+            `${newStatusText}使用者`
         );
         if (confirmed) {
             const nextStatus = u.status === 'active' ? 'inactive' : 'active';
             toggleUserStatus(u.id, nextStatus);
-            toast.success(`已${newStatus}「${u.username}」`);
+            toast.success(`已${newStatusText}「${u.username}」`);
         }
     };
 
@@ -98,198 +96,154 @@ export function UserManagement() {
     const activeCount = users.filter(u => u.status === 'active').length;
 
     return (
-        <div className="user-management-page">
-            {/* 頁面標題 */}
-            <div className="page-header">
-                <div className="page-title-section">
-                    <h1 className="page-title">
-                        <div className="page-title-icon">
+        <div className="flex flex-col gap-lg animate-fade-in">
+            {/* Header */}
+            <div className="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 className="flex items-center gap-md text-2xl font-700 text-text-primary">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-color-primary/20 text-color-primary-light">
                             <Users size={22} />
                         </div>
                         使用者管理
                     </h1>
-                    <p className="page-description">
-                        管理系統使用者帳號和權限
-                    </p>
+                    <p className="mt-1 text-text-muted">管理系統使用者帳號與權限分配</p>
                 </div>
-                <div className="page-actions">
-                    <button className="btn btn-primary btn-lg" onClick={handleAddUser}>
-                        <Plus size={18} />
-                        新增使用者
-                    </button>
-                </div>
+                <button
+                    className="btn btn-primary flex items-center gap-2"
+                    onClick={handleAddUser}
+                >
+                    <Plus size={18} />
+                    新增使用者
+                </button>
             </div>
 
-            {/* 統計卡片 */}
-            <div className="user-stats">
-                <div className="user-stat-card">
-                    <div className="stat-icon total">
-                        <Users size={20} />
+            {/* Stats Summary */}
+            <div className="grid grid-cols-2 gap-md md:grid-cols-4">
+                {[
+                    { label: '總使用者', value: users.length, icon: Users, color: 'primary' },
+                    { label: '管理員', value: adminCount, icon: Shield, color: 'accent' },
+                    { label: '啟用中', value: activeCount, icon: CheckCircle, color: 'success' },
+                    { label: '已停用', value: users.length - activeCount, icon: XCircle, color: 'error' }
+                ].map((item, i) => (
+                    <div key={i} className="card flex items-center gap-md border border-border-color bg-bg-card p-md shadow-lg">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-color-${item.color}/20 text-color-${item.color}`}>
+                            <item.icon size={20} />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xl font-700 text-text-primary leading-tight">{item.value}</span>
+                            <span className="text-[0.7rem] font-600 text-text-muted uppercase tracking-wider">{item.label}</span>
+                        </div>
                     </div>
-                    <div className="stat-content">
-                        <span className="stat-value">{users.length}</span>
-                        <span className="stat-label">總使用者數</span>
-                    </div>
-                </div>
-                <div className="user-stat-card">
-                    <div className="stat-icon admin">
-                        <Shield size={20} />
-                    </div>
-                    <div className="stat-content">
-                        <span className="stat-value">{adminCount}</span>
-                        <span className="stat-label">管理員</span>
-                    </div>
-                </div>
-                <div className="user-stat-card">
-                    <div className="stat-icon active">
-                        <CheckCircle size={20} />
-                    </div>
-                    <div className="stat-content">
-                        <span className="stat-value">{activeCount}</span>
-                        <span className="stat-label">啟用中</span>
-                    </div>
-                </div>
-                <div className="user-stat-card">
-                    <div className="stat-icon inactive">
-                        <XCircle size={20} />
-                    </div>
-                    <div className="stat-content">
-                        <span className="stat-value">{users.length - activeCount}</span>
-                        <span className="stat-label">已停用</span>
-                    </div>
-                </div>
+                ))}
             </div>
 
-            {/* 篩選器 */}
-            <div className="user-filters card">
-                <div className="search-box">
-                    <Search size={18} className="search-icon" />
+            {/* Filters */}
+            <div className="card flex flex-col gap-md lg:flex-row lg:items-center border border-border-color bg-bg-card p-md shadow-lg">
+                <div className="relative flex-1">
+                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
                     <input
                         type="text"
-                        className="input search-input"
+                        className="input pl-12"
                         placeholder="搜尋使用者名稱或 Email..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-
-                <div className="filter-group">
-                    <select
-                        className="input select"
-                        value={roleFilter}
-                        onChange={e => setRoleFilter(e.target.value as 'all' | 'admin' | 'user')}
-                    >
-                        <option value="all">所有角色</option>
-                        <option value="admin">管理員</option>
-                        <option value="user">一般使用者</option>
-                    </select>
-                </div>
-
-                <div className="filter-group">
-                    <select
-                        className="input select"
-                        value={statusFilter}
-                        onChange={e => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-                    >
-                        <option value="all">所有狀態</option>
-                        <option value="active">啟用中</option>
-                        <option value="inactive">已停用</option>
-                    </select>
-                </div>
-
-                <div className="filter-stats">
-                    <span>顯示 {filteredUsers.length} 位使用者</span>
+                <div className="flex gap-md">
+                    <div className="flex items-center gap-md rounded-lg border border-border-color bg-bg-tertiary/20 p-1 px-3">
+                        <select
+                            className="bg-transparent py-2 text-[0.875rem] font-600 text-text-secondary focus:outline-none"
+                            value={roleFilter}
+                            onChange={e => setRoleFilter(e.target.value as any)}
+                        >
+                            <option value="all">所有角色</option>
+                            <option value="admin">管理員</option>
+                            <option value="user">一般使用者</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-md rounded-lg border border-border-color bg-bg-tertiary/20 p-1 px-3">
+                        <select
+                            className="bg-transparent py-2 text-[0.875rem] font-600 text-text-secondary focus:outline-none"
+                            value={statusFilter}
+                            onChange={e => setStatusFilter(e.target.value as any)}
+                        >
+                            <option value="all">所有狀態</option>
+                            <option value="active">啟用中</option>
+                            <option value="inactive">已停用</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            {/* 使用者列表 */}
-            <div className="users-list">
-                {filteredUsers.length === 0 ? (
-                    <div className="empty-state card">
-                        <div className="empty-state-icon">👤</div>
-                        <h3 className="empty-state-title">沒有找到使用者</h3>
-                        <p className="empty-state-description">
-                            {search || roleFilter !== 'all' || statusFilter !== 'all'
-                                ? '嘗試調整篩選條件'
-                                : '尚無使用者資料'}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="table-container card">
-                        <table className="table users-table">
+            {/* User List Table */}
+            <div className="card h-full min-h-[400px] border border-border-color bg-bg-card p-0 shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                    {filteredUsers.length === 0 ? (
+                        <div className="py-20 text-center opacity-50">
+                            <span className="text-4xl block mb-2">👤</span>
+                            <p>找不符合條件的使用者</p>
+                        </div>
+                    ) : (
+                        <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr>
-                                    <th>使用者</th>
-                                    <th>角色</th>
-                                    <th>狀態</th>
-                                    <th>建立時間</th>
-                                    <th>最後登入</th>
-                                    <th></th>
+                                <tr className="border-b border-border-color bg-bg-tertiary/20">
+                                    <th className="px-lg py-md text-[0.7rem] font-800 text-text-muted uppercase tracking-widest whitespace-nowrap">使用者資訊</th>
+                                    <th className="px-lg py-md text-[0.7rem] font-800 text-text-muted uppercase tracking-widest whitespace-nowrap">角色</th>
+                                    <th className="px-lg py-md text-[0.7rem] font-800 text-text-muted uppercase tracking-widest whitespace-nowrap">狀態</th>
+                                    <th className="px-lg py-md text-[0.7rem] font-800 text-text-muted uppercase tracking-widest whitespace-nowrap">建立日期</th>
+                                    <th className="px-lg py-md text-[0.7rem] font-800 text-text-muted uppercase tracking-widest whitespace-nowrap">最後登入</th>
+                                    <th className="px-lg py-md w-0"></th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {filteredUsers.map((u, index) => (
-                                    <tr key={u.id} className={`animate-slide-up ${u.id === user?.id ? 'current-user' : ''}`} style={{ animationDelay: `${index * 30}ms` }}>
-                                        <td>
-                                            <div className="user-cell">
-                                                <div className="user-avatar-sm">
-                                                    {u.username.charAt(0).toUpperCase()}
+                            <tbody className="divide-y divide-border-color-light/50">
+                                {filteredUsers.map((u, idx) => (
+                                    <tr
+                                        key={u.id}
+                                        className={`hover:bg-bg-tertiary/10 transition-colors animate-slide-up ${u.id === user?.id ? 'bg-color-primary/[0.03]' : ''}`}
+                                        style={{ animationDelay: `${idx * 20}ms` }}
+                                    >
+                                        <td className="px-lg py-md">
+                                            <div className="flex items-center gap-md">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-color-primary to-color-accent text-white font-900 shadow-lg uppercase">
+                                                    {u.username.charAt(0)}
                                                 </div>
-                                                <div className="user-info-cell">
-                                                    <span className="user-name-cell">
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-sm font-700 text-text-primary flex items-center gap-2 truncate">
                                                         {u.username}
-                                                        {u.id === user?.id && <span className="current-badge">( 目前使用者 )</span>}
+                                                        {u.id === user?.id && <span className="rounded bg-color-primary/20 px-1.5 py-0.5 text-[0.6rem] text-color-primary-light font-900 uppercase">You</span>}
                                                     </span>
-                                                    <span className="user-email-cell">{u.email}</span>
+                                                    <span className="text-xs text-text-muted truncate">{u.email}</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
-                                            <span className={`role-badge ${u.role}`}>
-                                                {u.role === 'admin' ? (
-                                                    <><Shield size={12} /> 管理員</>
-                                                ) : (
-                                                    <><User size={12} /> 使用者</>
-                                                )}
+                                        <td className="px-lg py-md">
+                                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.7rem] font-800 border ${u.role === 'admin' ? 'border-color-accent/30 bg-color-accent/10 text-color-accent' : 'border-text-secondary/30 bg-bg-tertiary text-text-secondary'}`}>
+                                                {u.role === 'admin' ? <Shield size={12} /> : <User size={12} />}
+                                                {u.role === 'admin' ? '管理員' : '一般使用者'}
                                             </span>
                                         </td>
-                                        <td>
+                                        <td className="px-lg py-md">
                                             <button
-                                                className={`status-toggle ${u.status}`}
+                                                className={`flex items-center gap-2 rounded-full border px-2.5 py-0.5 text-[0.7rem] font-800 transition-all ${u.status === 'active' ? 'border-success/30 bg-success/10 text-color-success' : 'border-error/30 bg-error/10 text-color-error'} ${u.id === user?.id ? 'cursor-not-allowed opacity-80' : 'hover:scale-105 active:scale-95'}`}
                                                 onClick={() => handleToggleStatus(u)}
                                                 disabled={u.id === user?.id}
                                             >
-                                                <span className="status-dot" />
-                                                {u.status === 'active' ? '啟用中' : '已停用'}
+                                                <span className={`h-1.5 w-1.5 rounded-full ${u.status === 'active' ? 'bg-color-success shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-color-error shadow-[0_0_8px_rgba(239,68,68,0.8)]'}`} />
+                                                {u.status === 'active' ? '運作中' : '已停用'}
                                             </button>
                                         </td>
-                                        <td className="date-cell">
-                                            {format(new Date(u.createdAt), 'yyyy/MM/dd', { locale: zhTW })}
+                                        <td className="px-lg py-md whitespace-nowrap text-[0.75rem] text-text-muted font-mono">
+                                            {format(new Date(u.createdAt), 'yyyy/MM/dd')}
                                         </td>
-                                        <td className="date-cell">
-                                            {u.lastLoginAt
-                                                ? format(new Date(u.lastLoginAt), 'MM/dd HH:mm', { locale: zhTW })
-                                                : '-'
-                                            }
+                                        <td className="px-lg py-md whitespace-nowrap text-[0.75rem] text-text-muted font-mono">
+                                            {u.lastLoginAt ? format(new Date(u.lastLoginAt), 'MM/dd HH:mm') : '-'}
                                         </td>
-                                        <td>
-                                            <div className="action-buttons">
+                                        <td className="px-lg py-md">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <button className="btn h-8 w-8 p-0 text-text-muted hover:bg-bg-tertiary hover:text-text-primary" onClick={() => setShowPasswordModal(u)} title="重設密碼"><RefreshCw size={16} /></button>
+                                                <button className="btn h-8 w-8 p-0 text-text-muted hover:bg-bg-tertiary hover:text-text-primary" onClick={() => handleEditUser(u)} title="編輯"><Edit2 size={16} /></button>
                                                 <button
-                                                    className="btn btn-ghost btn-icon"
-                                                    onClick={() => setShowPasswordModal(u)}
-                                                    title="重設密碼"
-                                                >
-                                                    <RefreshCw size={16} />
-                                                </button>
-                                                <button
-                                                    className="btn btn-ghost btn-icon"
-                                                    onClick={() => handleEditUser(u)}
-                                                    title="編輯"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    className="btn btn-ghost btn-icon text-error"
+                                                    className="btn h-8 w-8 p-0 text-color-error/60 hover:bg-error/10 hover:text-color-error disabled:opacity-30 disabled:cursor-not-allowed"
                                                     onClick={() => handleDeleteUser(u)}
                                                     disabled={u.id === user?.id}
                                                     title="刪除"
@@ -302,48 +256,25 @@ export function UserManagement() {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
-            {/* 新增/編輯 Modal */}
-            {showModal && (
-                <UserModal
-                    user={editingUser}
-                    onClose={() => setShowModal(false)}
-                    onSave={(data) => {
-                        if (editingUser) {
-                            updateUser(editingUser.id, data);
-                        } else {
-                            addUser(data as Omit<UserWithAuth, 'id' | 'createdAt' | 'lastLoginAt'> & { password: string });
-                        }
-                        setShowModal(false);
-                    }}
-                />
-            )}
+            {/* Modals */}
+            {showModal && <UserModal user={editingUser} onClose={() => setShowModal(false)} onSave={(data: any) => {
+                editingUser ? updateUser(editingUser.id, data) : addUser(data);
+                setShowModal(false);
+            }} />}
 
-            {/* 重設密碼 Modal */}
-            {showPasswordModal && (
-                <PasswordModal
-                    user={showPasswordModal}
-                    onClose={() => setShowPasswordModal(null)}
-                    onSave={(newPassword) => {
-                        resetUserPassword(showPasswordModal.id, newPassword);
-                        setShowPasswordModal(null);
-                    }}
-                />
-            )}
+            {showPasswordModal && <PasswordModal user={showPasswordModal} onClose={() => setShowPasswordModal(null)} onSave={(newPassword: string) => {
+                resetUserPassword(showPasswordModal.id, newPassword);
+                setShowPasswordModal(null);
+            }} />}
         </div>
     );
 }
 
-interface UserModalProps {
-    user: UserWithAuth | null;
-    onClose: () => void;
-    onSave: (data: Partial<UserWithAuth>) => void;
-}
-
-function UserModal({ user, onClose, onSave }: UserModalProps) {
+function UserModal({ user, onClose, onSave }: any) {
     const [username, setUsername] = useState(user?.username || '');
     const [email, setEmail] = useState(user?.email || '');
     const [password, setPassword] = useState('');
@@ -351,154 +282,73 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
     const [status, setStatus] = useState<'active' | 'inactive'>(user?.status || 'active');
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        const data: Partial<UserWithAuth> & { password?: string } = {
-            username,
-            email,
-            role,
-            status
-        };
-
-        if (!user || password) {
-            data.password = password;
-        }
-
-        onSave(data);
-    };
-
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal user-modal" onClick={e => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2>{user ? '編輯使用者' : '新增使用者'}</h2>
-                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
-                        <X size={20} />
-                    </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
+            <div className="absolute inset-0 bg-bg-overlay/80" onClick={onClose} />
+            <div className="relative w-full max-w-lg overflow-hidden rounded-xl border border-border-color bg-bg-secondary shadow-2xl animate-scale-in">
+                <div className="flex items-center justify-between border-b border-border-color-light p-lg">
+                    <h2 className="text-xl font-700 text-text-primary">{user ? '編輯使用者' : '新增使用者'}</h2>
+                    <button onClick={onClose}><X size={24} /></button>
                 </div>
-
-                <form onSubmit={handleSubmit} className="modal-body">
-                    {/* 使用者名稱 */}
-                    <div className="input-group">
-                        <label className="input-label">
-                            <User size={14} />
-                            使用者名稱
-                        </label>
-                        <input
-                            type="text"
-                            className="input"
-                            value={username}
-                            onChange={e => setUsername(e.target.value)}
-                            placeholder="輸入使用者名稱"
-                            required
-                        />
+                <form className="p-lg space-y-6" onSubmit={(e) => { e.preventDefault(); onSave({ username, email, password, role, status }); }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+                        <div className="input-group">
+                            <label className="input-label font-600 flex items-center gap-2"><User size={14} /> 使用者名稱</label>
+                            <input className="input" value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" required />
+                        </div>
+                        <div className="input-group">
+                            <label className="input-label font-600 flex items-center gap-2"><Mail size={14} /> 電子郵件</label>
+                            <input type="email" className="input" value={email} onChange={e => setEmail(e.target.value)} placeholder="example@mail.com" required />
+                        </div>
                     </div>
 
-                    {/* Email */}
                     <div className="input-group">
-                        <label className="input-label">
-                            <Mail size={14} />
-                            電子郵件
-                        </label>
-                        <input
-                            type="email"
-                            className="input"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            placeholder="輸入電子郵件"
-                            required
-                        />
-                    </div>
-
-                    {/* 密碼 */}
-                    <div className="input-group">
-                        <label className="input-label">
-                            <Lock size={14} />
-                            {user ? '密碼（留空則不變更）' : '密碼'}
-                        </label>
-                        <div className="password-input-wrapper">
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                className="input"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                placeholder={user ? '留空則不變更' : '輸入密碼'}
-                                required={!user}
-                            />
-                            <button
-                                type="button"
-                                className="password-toggle-btn"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        <label className="input-label font-600 flex items-center gap-2"><Lock size={14} /> {user ? '重設密碼 (留空則不變更)' : '登入密碼'}</label>
+                        <div className="relative">
+                            <input type={showPassword ? 'text' : 'password'} className="input pr-12" value={password} onChange={e => setPassword(e.target.value)} placeholder={user ? '••••••••' : 'Password'} required={!user} />
+                            <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary" onClick={() => setShowPassword(!showPassword)}>
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                         </div>
                     </div>
 
-                    {/* 角色 */}
                     <div className="input-group">
-                        <label className="input-label">
-                            <Shield size={14} />
-                            角色
-                        </label>
-                        <div className="role-selector">
-                            <label className={`role-option ${role === 'user' ? 'selected' : ''}`}>
-                                <input
-                                    type="radio"
-                                    name="role"
-                                    value="user"
-                                    checked={role === 'user'}
-                                    onChange={() => setRole('user')}
-                                />
-                                <User size={18} />
-                                <div>
-                                    <span className="role-title">一般使用者</span>
-                                    <span className="role-desc">可使用通知發送功能</span>
-                                </div>
-                            </label>
-                            <label className={`role-option ${role === 'admin' ? 'selected' : ''}`}>
-                                <input
-                                    type="radio"
-                                    name="role"
-                                    value="admin"
-                                    checked={role === 'admin'}
-                                    onChange={() => setRole('admin')}
-                                />
-                                <Shield size={18} />
-                                <div>
-                                    <span className="role-title">管理員</span>
-                                    <span className="role-desc">完整系統管理權限</span>
-                                </div>
-                            </label>
+                        <label className="input-label font-600 mb-3">權限角色設定</label>
+                        <div className="flex gap-md">
+                            {[
+                                { val: 'user', label: '一般使用者', desc: '可發送通知', icon: User },
+                                { val: 'admin', label: '管理員', desc: '完全控制權', icon: Shield }
+                            ].map((r: any) => (
+                                <button
+                                    key={r.val}
+                                    type="button"
+                                    className={`flex flex-1 items-start gap-md rounded-lg border p-4 text-left transition-all ${role === r.val ? 'border-color-primary bg-color-primary/10' : 'border-border-color bg-bg-tertiary/20 opacity-50'}`}
+                                    onClick={() => setRole(r.val)}
+                                >
+                                    <div className={`mt-0.5 rounded p-1.5 ${role === r.val ? 'bg-color-primary text-white' : 'bg-bg-tertiary text-text-muted'}`}>
+                                        <r.icon size={18} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className={`text-sm font-800 ${role === r.val ? 'text-color-primary-light' : 'text-text-secondary'}`}>{r.label}</span>
+                                        <span className="text-[0.7rem] text-text-muted leading-tight">{r.desc}</span>
+                                    </div>
+                                </button>
+                            ))}
                         </div>
                     </div>
 
-                    {/* 狀態 */}
-                    <div className="input-group">
-                        <label className="input-label">啟用狀態</label>
+                    <div className="flex items-center justify-between border-t border-border-color-light/50 pt-4">
                         <div className="flex items-center gap-md">
-                            <label className="switch">
-                                <input
-                                    type="checkbox"
-                                    checked={status === 'active'}
-                                    onChange={e => setStatus(e.target.checked ? 'active' : 'inactive')}
-                                />
-                                <span className="switch-slider" />
+                            <label className="relative inline-flex cursor-pointer items-center">
+                                <input type="checkbox" className="peer sr-only" checked={status === 'active'} onChange={e => setStatus(e.target.checked ? 'active' : 'inactive')} />
+                                <div className="h-6 w-11 rounded-full bg-border-color transition-all peer-checked:bg-color-primary after:absolute after:top-[2px] after:left-[2px] after:h-5 after:after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
                             </label>
-                            <span className={`status-text ${status}`}>
-                                {status === 'active' ? '啟用' : '停用'}
-                            </span>
+                            <span className="text-sm font-700 text-text-secondary">帳號啟用狀態</span>
                         </div>
-                    </div>
-
-                    <div className="modal-actions">
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>
-                            取消
-                        </button>
-                        <button type="submit" className="btn btn-primary">
-                            {user ? '儲存變更' : '建立使用者'}
-                        </button>
+                        <div className="flex gap-3">
+                            <button type="button" className="btn btn-secondary px-8" onClick={onClose}>取消</button>
+                            <button type="submit" className="btn btn-primary px-8">{user ? '更新' : '創建'}</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -506,13 +356,7 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
     );
 }
 
-interface PasswordModalProps {
-    user: UserWithAuth;
-    onClose: () => void;
-    onSave: (newPassword: string) => void;
-}
-
-function PasswordModal({ user, onClose, onSave }: PasswordModalProps) {
+function PasswordModal({ user, onClose, onSave }: any) {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -520,94 +364,41 @@ function PasswordModal({ user, onClose, onSave }: PasswordModalProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (newPassword.length < 6) {
-            setError('密碼長度至少需要 6 個字元');
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            setError('兩次輸入的密碼不一致');
-            return;
-        }
-
+        if (newPassword.length < 6) return setError('密碼長度至少需要 6 個字元');
+        if (newPassword !== confirmPassword) return setError('兩次使用的密碼不一致');
         onSave(newPassword);
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal password-modal" onClick={e => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2>重設密碼</h2>
-                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
-                        <X size={20} />
-                    </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
+            <div className="absolute inset-0 bg-bg-overlay/80" onClick={onClose} />
+            <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border-color bg-bg-secondary shadow-2xl animate-scale-in">
+                <div className="flex items-center justify-between border-b border-border-color-light p-lg">
+                    <h2 className="text-xl font-700 text-text-primary">重設使用者密碼</h2>
+                    <button onClick={onClose}><X size={24} /></button>
                 </div>
-
-                <form onSubmit={handleSubmit} className="modal-body">
-                    <div className="password-user-info">
-                        <div className="user-avatar-sm">
-                            {user.username.charAt(0).toUpperCase()}
+                <form className="p-lg space-y-6" onSubmit={handleSubmit}>
+                    <div className="flex items-center gap-md rounded-lg bg-bg-tertiary/50 p-4 border border-border-color/30">
+                        <div className="h-12 w-12 rounded-full bg-color-primary/20 flex items-center justify-center font-900 text-color-primary">{user.username.charAt(0)}</div>
+                        <div className="flex flex-col"><span className="font-800 text-text-primary">{user.username}</span><span className="text-xs text-text-muted">{user.email}</span></div>
+                    </div>
+                    {error && <div className="flex items-center gap-2 rounded border border-error/30 bg-error/10 p-3 text-xs text-color-error font-700"><AlertTriangle size={14} />{error}</div>}
+                    <div className="space-y-4">
+                        <div className="input-group">
+                            <label className="input-label font-600">新密碼</label>
+                            <div className="relative">
+                                <input type={showPassword ? 'text' : 'password'} className="input pr-12" value={newPassword} onChange={e => { setNewPassword(e.target.value); setError(''); }} placeholder="New Password" required />
+                                <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                            </div>
                         </div>
-                        <div>
-                            <span className="user-name">{user.username}</span>
-                            <span className="user-email">{user.email}</span>
+                        <div className="input-group">
+                            <label className="input-label font-600">確認新密碼</label>
+                            <input type={showPassword ? 'text' : 'password'} className="input" value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setError(''); }} placeholder="Confirm Password" required />
                         </div>
                     </div>
-
-                    {error && (
-                        <div className="error-message">
-                            <AlertTriangle size={16} />
-                            {error}
-                        </div>
-                    )}
-
-                    <div className="input-group">
-                        <label className="input-label">新密碼</label>
-                        <div className="password-input-wrapper">
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                className="input"
-                                value={newPassword}
-                                onChange={e => {
-                                    setNewPassword(e.target.value);
-                                    setError('');
-                                }}
-                                placeholder="輸入新密碼"
-                                required
-                            />
-                            <button
-                                type="button"
-                                className="password-toggle-btn"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="input-group">
-                        <label className="input-label">確認新密碼</label>
-                        <input
-                            type={showPassword ? 'text' : 'password'}
-                            className="input"
-                            value={confirmPassword}
-                            onChange={e => {
-                                setConfirmPassword(e.target.value);
-                                setError('');
-                            }}
-                            placeholder="再次輸入新密碼"
-                            required
-                        />
-                    </div>
-
-                    <div className="modal-actions">
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>
-                            取消
-                        </button>
-                        <button type="submit" className="btn btn-primary">
-                            重設密碼
-                        </button>
+                    <div className="flex gap-md pt-4">
+                        <button type="button" className="btn btn-secondary flex-1" onClick={onClose}>取消</button>
+                        <button type="submit" className="btn btn-primary flex-1">重設密碼</button>
                     </div>
                 </form>
             </div>

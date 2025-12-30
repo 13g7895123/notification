@@ -6,9 +6,10 @@ import {
     ChevronDown,
     ChevronRight,
     Send as SendIcon,
-    List
+    List,
+    Shield,
+    Globe
 } from 'lucide-react';
-import './ApiDocs.css';
 
 interface ApiEndpoint {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -134,160 +135,144 @@ export function ApiDocs() {
         setTimeout(() => setCopiedSection(null), 2000);
     };
 
-    const getMethodIcon = (method: string) => {
-        switch (method) {
-            case 'POST': return <SendIcon size={14} />;
-            case 'GET': return <List size={14} />;
-            default: return null;
-        }
-    };
-
     return (
-        <div className="api-docs-page">
-            {/* 頁面標題 */}
-            <div className="page-header">
-                <div className="page-title-section">
-                    <h1 className="page-title">
-                        <div className="page-title-icon">
+        <div className="flex flex-col gap-lg animate-fade-in">
+            {/* Header */}
+            <div className="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 className="flex items-center gap-md text-2xl font-700 text-text-primary">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-color-primary/20 text-color-primary-light">
                             <Book size={22} />
                         </div>
-                        API 文件
+                        API 文件開發指南
                     </h1>
-                    <p className="page-description">
-                        透過 API 程式化發送通知
-                    </p>
+                    <p className="mt-1 text-text-muted">透過 API 程式化發送通知、讀取數據</p>
                 </div>
             </div>
 
-            {/* 快速開始 */}
-            <div className="card quick-start-card">
-                <h2 className="section-title">🚀 快速開始</h2>
-                <div className="quick-start-steps">
-                    <div className="step">
-                        <div className="step-number">1</div>
-                        <div className="step-content">
-                            <h4>取得 API 金鑰</h4>
-                            <p>在「API 金鑰」頁面建立新的金鑰</p>
+            {/* Quick Start Card */}
+            <div className="card border border-border-color bg-bg-card shadow-lg p-lg overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-8 opacity-5 text-color-primary">
+                    <Globe size={120} />
+                </div>
+                <h2 className="text-xl font-800 text-text-primary mb-8 flex items-center gap-2">
+                    <span className="text-color-primary">🚀</span> 快速集成步驟
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-lg mb-10">
+                    {[
+                        { step: '1', title: '獲取金鑰', desc: '在 API 金鑰頁面建立 Access Key' },
+                        { step: '2', title: '設定 Header', desc: 'Header 加入 X-API-Key: YOUR_KEY' },
+                        { step: '3', title: '發送請求', desc: '發送 JSON 格式請求到 API' }
+                    ].map((s, i) => (
+                        <div key={i} className="flex gap-md group">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-color-primary/10 text-lg font-900 text-color-primary border border-color-primary/20 group-hover:scale-110 transition-transform">
+                                {s.step}
+                            </div>
+                            <div className="flex flex-col">
+                                <h4 className="font-800 text-text-primary">{s.title}</h4>
+                                <p className="text-sm text-text-muted">{s.desc}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div className="step">
-                        <div className="step-number">2</div>
-                        <div className="step-content">
-                            <h4>設定認證標頭</h4>
-                            <p>在請求中加入 Authorization: Bearer YOUR_API_KEY</p>
-                        </div>
-                    </div>
-                    <div className="step">
-                        <div className="step-number">3</div>
-                        <div className="step-content">
-                            <h4>發送請求</h4>
-                            <p>呼叫 API 端點發送通知</p>
-                        </div>
-                    </div>
+                    ))}
                 </div>
 
-                <div className="auth-example">
-                    <div className="example-header">
-                        <span>認證範例</span>
+                <div className="rounded-xl bg-bg-secondary p-lg border border-border-color/30 relative overflow-hidden group">
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-[0.65rem] font-900 text-color-primary uppercase tracking-[0.2em]">CURL 認證範例</span>
                         <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => handleCopy(`curl -X POST https://your-domain.com/api/v1/send \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
+                            className="flex items-center gap-2 rounded bg-bg-tertiary px-3 py-1.5 text-xs font-700 text-text-secondary hover:text-white transition-colors"
+                            onClick={() => handleCopy(`curl -X POST https://${window.location.host}/api/v1/send \\
+  -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"title": "測試", "content": "測試訊息"}'`, 'auth')}
+  -d '{"title": "測試", "content": "Hello World"}'`, 'auth')}
                         >
-                            {copiedSection === 'auth' ? <Check size={14} /> : <Copy size={14} />}
-                            {copiedSection === 'auth' ? '已複製' : '複製'}
+                            {copiedSection === 'auth' ? <Check size={14} className="text-color-success" /> : <Copy size={14} />}
+                            {copiedSection === 'auth' ? '已複製' : '點擊複製'}
                         </button>
                     </div>
-                    <pre className="code-block">{`curl -X POST https://your-domain.com/api/v1/send \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
+                    <pre className="font-mono text-sm leading-relaxed text-text-secondary overflow-x-auto whitespace-pre">
+                        {`curl -X POST https://${window.location.host}/api/v1/send \\
+  -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"title": "測試", "content": "測試訊息"}'`}</pre>
+  -d '{"title": "測試", "content": "Hello World"}'`}
+                    </pre>
                 </div>
             </div>
 
-            {/* API 端點 */}
-            <div className="card endpoints-card">
-                <h2 className="section-title">📡 API 端點</h2>
-                <div className="endpoints-list">
+            {/* Endpoints */}
+            <div className="card border border-border-color bg-bg-card p-0 shadow-lg overflow-hidden">
+                <div className="px-lg py-md border-b border-border-color-light flex items-center justify-between bg-bg-tertiary/20">
+                    <h2 className="text-lg font-800 text-text-primary flex items-center gap-2 uppercase tracking-wider">
+                        <Shield size={20} className="text-color-primary" /> API 端點詳解
+                    </h2>
+                </div>
+                <div className="divide-y divide-border-color-light/50">
                     {endpoints.map(endpoint => (
-                        <div key={endpoint.path} className="endpoint-section">
+                        <div key={endpoint.path} className="flex flex-col">
                             <button
-                                className={`endpoint-header ${expandedEndpoint === endpoint.path ? 'expanded' : ''}`}
-                                onClick={() => setExpandedEndpoint(
-                                    expandedEndpoint === endpoint.path ? null : endpoint.path
-                                )}
+                                className={`flex items-center justify-between p-lg text-left transition-all hover:bg-bg-tertiary/10 ${expandedEndpoint === endpoint.path ? 'bg-bg-tertiary/20' : ''}`}
+                                onClick={() => setExpandedEndpoint(expandedEndpoint === endpoint.path ? null : endpoint.path)}
                             >
-                                <div className="endpoint-info">
-                                    <span className={`method-tag ${endpoint.method.toLowerCase()}`}>
-                                        {getMethodIcon(endpoint.method)}
+                                <div className="flex items-center gap-lg">
+                                    <div className={`rounded-sm px-2 py-0.5 text-[0.7rem] font-900 border ${endpoint.method === 'POST' ? 'border-color-primary/40 text-color-primary bg-color-primary/5' : 'border-color-accent/40 text-color-accent bg-color-accent/5'}`}>
                                         {endpoint.method}
-                                    </span>
-                                    <code className="endpoint-path">{endpoint.path}</code>
-                                    <span className="endpoint-desc">{endpoint.description}</span>
+                                    </div>
+                                    <code className="text-sm font-mono text-text-primary bg-bg-tertiary/50 px-2 py-0.5 rounded">{endpoint.path}</code>
+                                    <span className="text-sm text-text-secondary hidden md:block">{endpoint.description}</span>
                                 </div>
-                                {expandedEndpoint === endpoint.path ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                {expandedEndpoint === endpoint.path ? <ChevronDown size={20} className="text-text-muted" /> : <ChevronRight size={20} className="text-text-muted" />}
                             </button>
 
                             {expandedEndpoint === endpoint.path && (
-                                <div className="endpoint-body">
-                                    <div className="info-row">
-                                        <span className="info-label">所需權限</span>
-                                        <span className="permission-badge">{endpoint.permission}</span>
+                                <div className="px-lg pb-lg bg-bg-tertiary/5 space-y-8 animate-slide-down">
+                                    <div className="flex items-center gap-md border-t border-border-color-light/30 pt-md">
+                                        <span className="text-[0.7rem] font-800 text-text-muted uppercase">所需權限:</span>
+                                        <span className="rounded bg-bg-tertiary px-2 py-0.5 text-xs font-700 text-color-primary-light border border-border-color/30">{endpoint.permission}</span>
                                     </div>
 
                                     {endpoint.requestBody && (
-                                        <div className="section">
-                                            <h4>請求參數</h4>
-                                            <table className="params-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>參數</th>
-                                                        <th>類型</th>
-                                                        <th>必填</th>
-                                                        <th>說明</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {endpoint.requestBody.fields.map(field => (
-                                                        <tr key={field.name}>
-                                                            <td><code>{field.name}</code></td>
-                                                            <td><code>{field.type}</code></td>
-                                                            <td>{field.required ? '✓' : '-'}</td>
-                                                            <td>{field.description}</td>
+                                        <div className="space-y-4">
+                                            <h4 className="text-[0.7rem] font-900 text-text-muted uppercase tracking-[0.2em] border-l-2 border-color-primary pl-2">請求參數</h4>
+                                            <div className="overflow-x-auto rounded-lg border border-border-color-light/50">
+                                                <table className="w-full text-left text-sm">
+                                                    <thead className="bg-bg-tertiary/30">
+                                                        <tr className="text-[0.65rem] font-800 uppercase text-text-muted border-b border-border-color-light/50">
+                                                            <th className="px-md py-2">參數</th>
+                                                            <th className="px-md py-2">類型</th>
+                                                            <th className="px-md py-2">必填</th>
+                                                            <th className="px-md py-2">說明</th>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-
-                                            <div className="example-block">
-                                                <div className="example-header">
-                                                    <span>請求範例</span>
-                                                    <button
-                                                        className="btn btn-ghost btn-sm"
-                                                        onClick={() => handleCopy(endpoint.requestBody!.example, `req-${endpoint.path}`)}
-                                                    >
-                                                        {copiedSection === `req-${endpoint.path}` ? <Check size={14} /> : <Copy size={14} />}
-                                                    </button>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-border-color-light/30 text-xs">
+                                                        {endpoint.requestBody.fields.map(field => (
+                                                            <tr key={field.name} className="hover:bg-white/5 transition-colors">
+                                                                <td className="px-md py-2 font-mono text-color-primary-light">{field.name}</td>
+                                                                <td className="px-md py-2 text-text-muted italic">{field.type}</td>
+                                                                <td className="px-md py-2">{field.required ? '✓' : '-'}</td>
+                                                                <td className="px-md py-2 text-text-secondary">{field.description}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div className="mt-4 rounded-lg bg-bg-secondary p-lg border border-border-color/30 overflow-hidden">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <span className="text-[0.65rem] font-800 text-text-muted italic">Payload 範例</span>
+                                                    <button onClick={() => handleCopy(endpoint.requestBody!.example, `req-${endpoint.path}`)}>{copiedSection === `req-${endpoint.path}` ? <Check size={14} className="text-color-success" /> : <Copy size={14} className="text-text-muted hover:text-white transition-colors" />}</button>
                                                 </div>
-                                                <pre className="code-block">{endpoint.requestBody.example}</pre>
+                                                <pre className="font-mono text-xs leading-relaxed text-text-secondary">{endpoint.requestBody.example}</pre>
                                             </div>
                                         </div>
                                     )}
 
-                                    <div className="section">
-                                        <div className="example-block">
-                                            <div className="example-header">
-                                                <span>回應範例</span>
-                                                <button
-                                                    className="btn btn-ghost btn-sm"
-                                                    onClick={() => handleCopy(endpoint.responseExample, `res-${endpoint.path}`)}
-                                                >
-                                                    {copiedSection === `res-${endpoint.path}` ? <Check size={14} /> : <Copy size={14} />}
-                                                </button>
+                                    <div className="space-y-4">
+                                        <h4 className="text-[0.7rem] font-900 text-text-muted uppercase tracking-[0.2em] border-l-2 border-color-accent pl-2">回應格式</h4>
+                                        <div className="rounded-lg bg-bg-secondary p-lg border border-border-color/30 overflow-hidden">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <span className="text-[0.65rem] font-800 text-text-muted italic">JSON 範例</span>
+                                                <button onClick={() => handleCopy(endpoint.responseExample, `res-${endpoint.path}`)}>{copiedSection === `res-${endpoint.path}` ? <Check size={14} className="text-color-success" /> : <Copy size={14} className="text-text-muted hover:text-white transition-colors" />}</button>
                                             </div>
-                                            <pre className="code-block">{endpoint.responseExample}</pre>
+                                            <pre className="font-mono text-xs leading-relaxed text-text-secondary">{endpoint.responseExample}</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -297,50 +282,37 @@ export function ApiDocs() {
                 </div>
             </div>
 
-            {/* 錯誤碼 */}
-            <div className="card error-codes-card">
-                <h2 className="section-title">⚠️ 錯誤碼說明</h2>
-                <table className="error-codes-table">
-                    <thead>
-                        <tr>
-                            <th>狀態碼</th>
-                            <th>說明</th>
-                            <th>處理方式</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code className="status-2xx">200</code></td>
-                            <td>請求成功</td>
-                            <td>-</td>
-                        </tr>
-                        <tr>
-                            <td><code className="status-4xx">400</code></td>
-                            <td>請求參數錯誤</td>
-                            <td>檢查請求內容是否符合格式</td>
-                        </tr>
-                        <tr>
-                            <td><code className="status-4xx">401</code></td>
-                            <td>認證失敗</td>
-                            <td>檢查 API 金鑰是否正確且未過期</td>
-                        </tr>
-                        <tr>
-                            <td><code className="status-4xx">403</code></td>
-                            <td>權限不足</td>
-                            <td>確認 API 金鑰具有所需的權限</td>
-                        </tr>
-                        <tr>
-                            <td><code className="status-4xx">429</code></td>
-                            <td>請求過於頻繁</td>
-                            <td>降低請求頻率或提高速率限制</td>
-                        </tr>
-                        <tr>
-                            <td><code className="status-5xx">500</code></td>
-                            <td>伺服器錯誤</td>
-                            <td>稍後重試，若持續發生請聯繫支援</td>
-                        </tr>
-                    </tbody>
-                </table>
+            {/* Error Table */}
+            <div className="card border border-border-color bg-bg-card p-0 shadow-lg overflow-hidden">
+                <div className="px-lg py-md border-b border-border-color-light bg-bg-tertiary/20">
+                    <h2 className="text-lg font-800 text-text-primary uppercase tracking-wider italic">⚠️ 狀態碼說明彙總</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr className="bg-bg-tertiary/10 text-[0.7rem] font-800 uppercase text-text-muted border-b border-border-color-light/50">
+                                <th className="px-lg py-3">Code</th>
+                                <th className="px-lg py-3">狀態說明</th>
+                                <th className="px-lg py-3">後續處理建議</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border-color-light/30">
+                            {[
+                                { code: '200', desc: '請求成功', action: '-', color: 'color-success' },
+                                { code: '400', desc: '參數錯誤', action: '檢查 JSON 格式或欄位缺失', color: 'color-warning' },
+                                { code: '401', desc: '認證失敗', action: '金鑰無效或 Header 缺失', color: 'color-error' },
+                                { code: '403', desc: '權限不足', action: '金鑰未授予對應存取權限', color: 'color-error' },
+                                { code: '429', desc: '超出限額', action: '稍後再試或提高速率限制', color: 'color-accent' }
+                            ].map((err, i) => (
+                                <tr key={i} className="hover:bg-white/5">
+                                    <td className={`px-lg py-4 font-mono font-900 text-${err.color}`}>{err.code}</td>
+                                    <td className="px-lg py-4 font-700 text-text-primary">{err.desc}</td>
+                                    <td className="px-lg py-4 text-text-secondary italic">{err.action}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

@@ -19,7 +19,6 @@ import { zhTW } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { api } from '../utils/api';
 import { toast } from '../utils/alert';
-import './Dashboard.css';
 
 interface SystemStatus {
     scheduler_running: boolean;
@@ -51,7 +50,6 @@ export function Dashboard() {
         try {
             await api.post('/system/scheduler/start');
             toast.success('啟動指令已發送');
-            // 延遲 3 秒後重新檢查狀態
             setTimeout(fetchSystemStatus, 3000);
         } catch (error) {
             console.error('Start scheduler failed:', error);
@@ -62,15 +60,15 @@ export function Dashboard() {
 
     useEffect(() => {
         fetchSystemStatus();
-        const interval = setInterval(fetchSystemStatus, 30000); // 每 30 秒自動更新
+        const interval = setInterval(fetchSystemStatus, 30000);
         return () => clearInterval(interval);
     }, []);
 
     if (isLoading || !stats) {
         return (
-            <div className="dashboard-loading">
-                <div className="loader"></div>
-                <p>正在載入統計數據...</p>
+            <div className="flex h-[60vh] flex-col items-center justify-center gap-md">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-color-primary border-t-transparent"></div>
+                <p className="text-text-secondary">正在載入統計數據...</p>
             </div>
         );
     }
@@ -80,32 +78,29 @@ export function Dashboard() {
     const recentLogs = logs.slice(0, 6);
 
     return (
-        <div className="dashboard">
-            {/* 頁面標題 */}
-            <div className="page-header">
-                <div className="page-title-section">
-                    <h1 className="page-title">
-                        <div className="page-title-icon">
+        <div className="flex flex-col gap-lg animate-fade-in">
+            {/* Header */}
+            <div className="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 className="flex items-center gap-md text-2xl font-700 text-text-primary">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-color-primary/20 text-color-primary-light">
                             <LayoutDashboard size={22} />
                         </div>
                         儀表板
                         {systemStatus && (
-                            <div className={`status-badge-mini ${systemStatus.scheduler_running ? 'running' : 'stopped'}`}>
-                                <Activity size={12} />
+                            <div className={`flex items-center gap-xs rounded-full px-3 py-1 text-[0.7rem] font-600 ${systemStatus.scheduler_running ? 'bg-success/20 text-color-success-light' : 'bg-error/20 text-color-error-light'}`}>
+                                <Activity size={12} className={systemStatus.scheduler_running ? 'animate-pulse' : ''} />
                                 <span>{systemStatus.scheduler_running ? '系統排程運作中' : '系統排程已停止'}</span>
                             </div>
                         )}
                     </h1>
-                    <p className="page-description">
-                        通知系統運作概況與統計數據
-                    </p>
+                    <p className="mt-1 text-text-muted">通知系統運作概況與統計數據</p>
                 </div>
 
-                {/* 系統狀態檢查按鈕 */}
-                <div className="system-status-checks">
+                <div className="flex items-center gap-md">
                     {systemStatus && !systemStatus.scheduler_running && (
                         <button
-                            className="btn-start-scheduler"
+                            className="btn bg-linear-to-br from-color-primary to-color-primary-dark text-white hover:shadow-glow"
                             onClick={handleStartScheduler}
                             disabled={isRefreshing}
                         >
@@ -114,124 +109,78 @@ export function Dashboard() {
                         </button>
                     )}
 
-                    {systemStatus ? (
-                        <div className={`status-badge ${systemStatus.scheduler_running ? 'running' : 'stopped'}`} onClick={fetchSystemStatus} title="點擊立即重新整理">
-                            <div className="status-badge-icon">
-                                <Activity size={14} />
-                            </div>
-                            <div className="status-badge-text">
-                                <span className="status-label">排程器:</span>
-                                <span className="status-value">
-                                    {systemStatus.scheduler_running ? '正在運行' : '已停止'}
+                    <div className="flex items-center gap-md rounded-lg border border-border-color bg-bg-secondary p-1">
+                        {systemStatus ? (
+                            <div className="flex items-center gap-sm px-3 py-1 cursor-pointer" onClick={fetchSystemStatus}>
+                                <Activity size={14} className={systemStatus.scheduler_running ? 'text-color-success' : 'text-color-error'} />
+                                <span className="text-[0.85rem] font-500 text-text-secondary">
+                                    排程器: <span className={systemStatus.scheduler_running ? 'text-color-success-light' : 'text-color-error-light'}>{systemStatus.scheduler_running ? '正在運行' : '已停止'}</span>
                                 </span>
                             </div>
-                            {systemStatus.last_heartbeat && (
-                                <div className="status-tooltip">
-                                    最後心跳: {systemStatus.last_heartbeat}
+                        ) : (
+                            <div className="flex items-center gap-sm px-3 py-1 cursor-pointer" onClick={fetchSystemStatus}>
+                                <Activity size={14} className="text-text-muted" />
+                                <span className="text-[0.85rem] text-text-muted">檢查中...</span>
+                            </div>
+                        )}
+                        <button
+                            className={`flex h-8 w-8 items-center justify-center rounded-md text-text-secondary hover:bg-bg-tertiary ${isRefreshing ? 'animate-spin' : ''}`}
+                            onClick={fetchSystemStatus}
+                        >
+                            <RefreshCw size={16} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                    { label: '總發送數', value: stats.totalSent, icon: Send, color: 'primary', trend: '+12.5%', pos: true },
+                    { label: '成功發送', value: stats.totalSuccess, icon: CheckCircle, color: 'success', trend: '+2.3%', pos: true },
+                    { label: '發送失敗', value: stats.totalFailed, icon: XCircle, color: 'error', trend: '-8.1%', pos: false },
+                    { label: '桌面通知數', value: stats.windowsStats?.total || 0, icon: Monitor, color: 'accent', meta: `今日: ${stats.windowsStats?.today || 0}` }
+                ].map((item, i) => (
+                    <div key={i} className="card group flex flex-col gap-sm overflow-hidden border border-border-color bg-bg-card p-lg backdrop-blur-md transition-all hover:border-color-primary hover:shadow-glow translate-y-0 hover:-translate-y-1">
+                        <div className="flex items-center justify-between">
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-md bg-color-${item.color}/20 text-color-${item.color}`}>
+                                <item.icon size={20} />
+                            </div>
+                            {item.trend && (
+                                <div className={`flex items-center gap-xs text-[0.75rem] font-600 ${item.pos ? 'text-color-success' : 'text-color-error'}`}>
+                                    {item.pos ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                                    <span>{item.trend}</span>
                                 </div>
                             )}
                         </div>
-                    ) : (
-                        <div className="status-badge unknown" onClick={fetchSystemStatus} style={{ cursor: 'pointer' }}>
-                            <Activity size={14} />
-                            <div className="status-badge-text">
-                                <span className="status-value">點擊檢查狀態</span>
-                            </div>
-                        </div>
-                    )}
-                    <button
-                        className={`btn-refresh-status ${isRefreshing ? 'spinning' : ''}`}
-                        onClick={fetchSystemStatus}
-                        title="立即檢查系統狀態"
-                    >
-                        <RefreshCw size={16} />
-                    </button>
-                </div>
+                        <div className="text-3xl font-700 text-text-primary">{item.value.toLocaleString()}</div>
+                        <div className="text-[0.875rem] text-text-secondary">{item.label}</div>
+                        {item.meta && <div className="text-[0.75rem] text-text-muted">{item.meta}</div>}
+                    </div>
+                ))}
             </div>
 
-            {/* 統計卡片 */}
-            <div className="stats-grid dashboard-stats-grid">
-                <div className="card stat-card">
-                    <div className="stat-header">
-                        <div className="stat-icon sent">
-                            <Send size={20} />
-                        </div>
-                        <div className="stat-change positive">
-                            <ArrowUpRight size={14} />
-                            <span>+12.5%</span>
-                        </div>
-                    </div>
-                    <div className="stat-value">{stats.totalSent.toLocaleString()}</div>
-                    <div className="stat-label">總發送數</div>
-                </div>
-
-                <div className="card stat-card">
-                    <div className="stat-header">
-                        <div className="stat-icon success">
-                            <CheckCircle size={20} />
-                        </div>
-                        <div className="stat-change positive">
-                            <ArrowUpRight size={14} />
-                            <span>+2.3%</span>
-                        </div>
-                    </div>
-                    <div className="stat-value">{stats.totalSuccess.toLocaleString()}</div>
-                    <div className="stat-label">成功發送</div>
-                </div>
-
-                <div className="card stat-card">
-                    <div className="stat-header">
-                        <div className="stat-icon failed">
-                            <XCircle size={20} />
-                        </div>
-                        <div className="stat-change negative">
-                            <ArrowDownRight size={14} />
-                            <span>-8.1%</span>
-                        </div>
-                    </div>
-                    <div className="stat-value">{stats.totalFailed}</div>
-                    <div className="stat-label">發送失敗</div>
-                </div>
-
-                <div className="card stat-card">
-                    <div className="stat-header">
-                        <div className="stat-icon windows">
-                            <Monitor size={20} />
-                        </div>
-                    </div>
-                    <div className="stat-value">{stats.windowsStats?.total || 0}</div>
-                    <div className="stat-label">桌面通知數</div>
-                    <div className="stat-meta">
-                        今日新增: {stats.windowsStats?.today || 0}
-                    </div>
-                </div>
-            </div>
-
-            {/* 主內容區 */}
-            <div className="dashboard-content">
+            {/* Content Mid */}
+            <div className="grid grid-cols-1 gap-lg lg:grid-cols-5">
                 {/* 渠道狀態 */}
-                <div className="card channel-status-card">
-                    <div className="card-header">
-                        <h2 className="card-title">
-                            <Zap size={18} />
+                <div className="card lg:col-span-2">
+                    <div className="mb-md flex items-center justify-between border-b border-border-color-light pb-md">
+                        <h2 className="flex items-center gap-md text-lg font-600 text-text-primary">
+                            <Zap size={18} className="text-color-warning" />
                             渠道狀態
                         </h2>
                     </div>
-                    <div className="channel-list">
+                    <div className="flex flex-col gap-sm">
                         {channels.map((channel, index) => (
-                            <div
-                                key={channel.id}
-                                className="channel-item animate-slide-up"
-                                style={{ animationDelay: `${index * 50}ms` }}
-                            >
-                                <div className="channel-info">
-                                    <div className={`channel-type-badge ${channel.type}`}>
+                            <div key={channel.id} className="flex items-center justify-between rounded-md border border-border-color/50 bg-bg-tertiary/30 p-md animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
+                                <div className="flex items-center gap-md">
+                                    <div className={`rounded-sm px-2 py-0.5 text-[0.65rem] font-700 tracking-wider ${channel.type === 'line' ? 'bg-color-line/20 text-color-line' : 'bg-color-telegram/20 text-color-telegram'}`}>
                                         {channel.type.toUpperCase()}
                                     </div>
-                                    <span className="channel-name">{channel.name}</span>
+                                    <span className="text-[0.9rem] font-500 text-text-primary">{channel.name}</span>
                                 </div>
-                                <div className={`channel-status ${channel.enabled ? 'online' : 'offline'}`}>
-                                    <span className="status-dot" />
+                                <div className={`flex items-center gap-sm text-[0.8rem] ${channel.enabled ? 'text-color-success' : 'text-text-muted'}`}>
+                                    <div className={`h-2 w-2 rounded-full ${channel.enabled ? 'bg-color-success animate-pulse shadow-[0_0_8px_var(--color-success)]' : 'bg-text-muted opacity-50'}`} />
                                     {channel.enabled ? '運作中' : '已停用'}
                                 </div>
                             </div>
@@ -239,95 +188,72 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* 近期活動圖表 */}
-                <div className="card activity-chart-card">
-                    <div className="card-header">
-                        <h2 className="card-title">
-                            <TrendingUp size={18} />
+                {/* 發送趨勢 */}
+                <div className="card lg:col-span-3">
+                    <div className="mb-md flex items-center justify-between border-b border-border-color-light pb-md">
+                        <h2 className="flex items-center gap-md text-lg font-600 text-text-primary">
+                            <TrendingUp size={18} className="text-color-primary-light" />
                             近 7 日發送趨勢
                         </h2>
                     </div>
-                    <div className="activity-chart">
+                    <div className="flex h-48 items-end justify-between gap-md px-md py-md">
                         {stats.recentActivity.map((day, index) => {
                             const maxSent = Math.max(...stats.recentActivity.map(d => d.sent), 1);
-                            const successHeight = maxSent > 0 ? (day.success / maxSent) * 100 : 0;
-                            const failedHeight = maxSent > 0 ? (day.failed / maxSent) * 100 : 0;
+                            const successHeight = (day.success / maxSent) * 100;
+                            const failedHeight = (day.failed / maxSent) * 100;
                             return (
-                                <div
-                                    key={day.date}
-                                    className="chart-bar-container"
-                                    style={{ animationDelay: `${index * 100}ms` }}
-                                >
-                                    <div className="chart-bar-wrapper">
-                                        <div
-                                            className="chart-bar success-bar"
-                                            style={{ height: `${successHeight}%` }}
-                                        />
-                                        <div
-                                            className="chart-bar failed-bar"
-                                            style={{
-                                                height: `${failedHeight}%`,
-                                                bottom: `${successHeight}%`
-                                            }}
-                                        />
+                                <div key={day.date} className="group relative flex flex-1 flex-col items-center gap-sm">
+                                    <div className="relative w-8 flex-1 overflow-hidden rounded-t-sm bg-bg-tertiary">
+                                        <div className="absolute bottom-0 w-full bg-color-success transition-all duration-500" style={{ height: `${successHeight}%` }} />
+                                        <div className="absolute w-full bg-color-error transition-all duration-500" style={{ height: `${failedHeight}%`, bottom: `${successHeight}%` }} />
+                                        {/* Tooltip */}
+                                        <div className="absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 flex-col items-center rounded-md bg-bg-secondary p-2 shadow-lg group-hover:flex z-10 w-24">
+                                            <span className="text-[0.7rem] text-text-muted">{day.date}</span>
+                                            <span className="text-[0.8rem] font-600 text-color-success-light">成功: {day.success}</span>
+                                            <span className="text-[0.8rem] font-600 text-color-error-light">失敗: {day.failed}</span>
+                                        </div>
                                     </div>
-                                    <span className="chart-label">
-                                        {format(new Date(day.date), 'MM/dd')}
-                                    </span>
-                                    <span className="chart-value">{day.sent}</span>
+                                    <span className="text-[0.7rem] text-text-muted">{format(new Date(day.date), 'MM/dd')}</span>
                                 </div>
                             );
                         })}
                     </div>
-                    <div className="chart-legend">
-                        <div className="legend-item">
-                            <span className="legend-dot success" />
-                            成功
+                    <div className="mt-md flex justify-center gap-lg border-t border-border-color-light pt-md">
+                        <div className="flex items-center gap-sm text-[0.75rem] text-text-muted">
+                            <div className="h-2.5 w-2.5 rounded-full bg-color-success" /> 成功
                         </div>
-                        <div className="legend-item">
-                            <span className="legend-dot failed" />
-                            失敗
+                        <div className="flex items-center gap-sm text-[0.75rem] text-text-muted">
+                            <div className="h-2.5 w-2.5 rounded-full bg-color-error" /> 失敗
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* 最近發送 & 日誌 */}
-            <div className="dashboard-bottom">
-                {/* 最近訊息 */}
-                <div className="card recent-messages-card">
-                    <div className="card-header">
-                        <h2 className="card-title">
-                            <MessageSquare size={18} />
+            {/* Bottom Grid */}
+            <div className="grid grid-cols-1 gap-lg xl:grid-cols-3">
+                {/* 最近發送 */}
+                <div className="card">
+                    <div className="mb-md flex items-center justify-between border-b border-border-color-light pb-md">
+                        <h2 className="flex items-center gap-md text-lg font-600 text-text-primary">
+                            <MessageSquare size={18} className="text-color-accent" />
                             最近發送
                         </h2>
                     </div>
-                    <div className="recent-list">
+                    <div className="flex flex-col gap-md">
                         {recentMessages.length === 0 ? (
-                            <div className="empty-state">暫無發送紀錄</div>
+                            <div className="flex h-32 flex-col items-center justify-center text-text-muted italic">暫無發送紀錄</div>
                         ) : (
                             recentMessages.map((msg, index) => (
-                                <div
-                                    key={msg.id}
-                                    className="recent-item animate-slide-up"
-                                    style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                    <div className="recent-item-content">
-                                        <h4 className="recent-item-title">{msg.title}</h4>
-                                        <p className="recent-item-desc">{msg.content}</p>
-                                    </div>
-                                    <div className="recent-item-meta">
-                                        <span className={`badge badge-${getStatusBadge(msg.status)}`}>
+                                <div key={msg.id} className="flex flex-col gap-2 animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="truncate text-sm font-600 text-text-primary">{msg.title}</h4>
+                                        <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-600 ${getStatusClass(msg.status)}`}>
                                             {getStatusText(msg.status)}
                                         </span>
-                                        <span className="recent-item-time">
-                                            {msg.sentAt
-                                                ? format(new Date(msg.sentAt), 'MM/dd HH:mm', { locale: zhTW })
-                                                : msg.scheduledAt
-                                                    ? `預定 ${format(new Date(msg.scheduledAt), 'MM/dd HH:mm', { locale: zhTW })}`
-                                                    : '-'
-                                            }
-                                        </span>
+                                    </div>
+                                    <p className="line-clamp-2 text-[0.8rem] text-text-secondary leading-relaxed">{msg.content}</p>
+                                    <div className="text-[0.7rem] text-text-muted">
+                                        {msg.sentAt ? format(new Date(msg.sentAt), 'MM/dd HH:mm', { locale: zhTW }) : '待發送'}
                                     </div>
                                 </div>
                             ))
@@ -335,50 +261,31 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* API 使用紀錄 */}
-                <div className="card logs-card">
-                    <div className="card-header">
-                        <h2 className="card-title">
-                            <Activity size={18} />
+                {/* API Logs */}
+                <div className="card">
+                    <div className="mb-md flex items-center justify-between border-b border-border-color-light pb-md">
+                        <h2 className="flex items-center gap-md text-lg font-600 text-text-primary">
+                            <Activity size={18} className="text-color-primary-light" />
                             API 使用紀錄
                         </h2>
                     </div>
-                    <div className="logs-list">
+                    <div className="flex flex-col gap-sm">
                         {recentApiLogs.length === 0 ? (
-                            <div className="empty-state">暫無使用紀錄</div>
+                            <div className="flex h-32 flex-col items-center justify-center text-text-muted italic">暫無紀錄</div>
                         ) : (
                             recentApiLogs.map((log, index) => (
-                                <div
-                                    key={log.id}
-                                    className="log-item animate-slide-up"
-                                    style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                    <div className={`log-status-indicator ${log.success ? 'success' : 'failed'}`} />
-                                    <div className="log-content">
-                                        <div className="log-header">
-                                            <span className={`badge badge-sm ${log.method === 'GET' ? 'badge-info' : 'badge-primary'}`}>
-                                                {log.method}
-                                            </span>
-                                            <span className="log-channel-name">
-                                                {log.apiKeyName || 'Unknown Key'}
-                                            </span>
+                                <div key={log.id} className="flex items-center gap-md rounded-md bg-bg-tertiary/20 p-sm border border-border-color/30 animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
+                                    <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${log.success ? 'bg-color-success' : 'bg-color-error'}`} />
+                                    <div className="flex flex-1 flex-col gap-1 overflow-hidden">
+                                        <div className="flex items-center gap-sm">
+                                            <span className={`rounded-sm px-1.5 py-0.5 text-[0.6rem] font-800 ${log.method === 'GET' ? 'bg-color-info/20 text-color-info-light' : 'bg-color-primary/20 text-color-primary-light'}`}>{log.method}</span>
+                                            <span className="truncate text-[0.75rem] font-600 text-text-secondary">{log.apiKeyName}</span>
                                         </div>
-                                        <div className="log-title" title={log.endpoint}>
-                                            {log.endpoint}
-                                        </div>
+                                        <span className="truncate text-[0.7rem] font-mono text-text-muted" title={log.endpoint}>{log.endpoint}</span>
                                     </div>
-                                    <div className="log-meta">
-                                        <span className={`badge badge-sm ${log.success ? 'badge-success' : 'badge-error'}`}>
-                                            {log.statusCode}
-                                        </span>
-                                        <div className="log-bottom-meta" style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
-                                            <span className="log-response-time">
-                                                {log.responseTime}ms
-                                            </span>
-                                            <span className="log-time">
-                                                {format(new Date(log.createdAt), 'HH:mm:ss', { locale: zhTW })}
-                                            </span>
-                                        </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className={`text-[0.7rem] font-700 ${log.success ? 'text-color-success' : 'text-color-error'}`}>{log.statusCode}</span>
+                                        <span className="text-[0.65rem] text-text-muted">{log.responseTime}ms</span>
                                     </div>
                                 </div>
                             ))
@@ -386,38 +293,28 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* 發送日誌 */}
-                <div className="card logs-card">
-                    <div className="card-header">
-                        <h2 className="card-title">
-                            <Zap size={18} />
-                            最新日誌
+                {/* 通知日誌 */}
+                <div className="card">
+                    <div className="mb-md flex items-center justify-between border-b border-border-color-light pb-md">
+                        <h2 className="flex items-center gap-md text-lg font-600 text-text-primary">
+                            <Zap size={18} className="text-color-warning" />
+                            最新發送日誌
                         </h2>
                     </div>
-                    <div className="logs-list">
+                    <div className="flex flex-col gap-sm">
                         {recentLogs.map((log, index) => (
-                            <div
-                                key={log.id}
-                                className="log-item animate-slide-up"
-                                style={{ animationDelay: `${index * 50}ms` }}
-                            >
-                                <div className={`log-status-indicator ${log.status}`} />
-                                <div className="log-content">
-                                    <div className="log-header">
-                                        <span className={`badge badge-${log.channelType}`}>
-                                            {log.channelType.toUpperCase()}
-                                        </span>
-                                        <span className="log-channel-name">{log.channelName}</span>
+                            <div key={log.id} className="flex items-center gap-md rounded-md bg-bg-tertiary/20 p-sm border border-border-color/30 animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
+                                <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${log.status === 'success' ? 'bg-color-success' : 'bg-color-error'}`} />
+                                <div className="flex flex-1 flex-col gap-1 overflow-hidden">
+                                    <div className="flex items-center gap-sm">
+                                        <span className={`rounded-sm px-1.5 py-0.5 text-[0.6rem] font-800 ${log.channelType === 'line' ? 'bg-color-line/20 text-color-line' : 'bg-color-telegram/20 text-color-telegram'}`}>{log.channelType.toUpperCase()}</span>
+                                        <span className="truncate text-[0.75rem] font-600 text-text-secondary">{log.channelName}</span>
                                     </div>
-                                    <p className="log-title">{log.title}</p>
+                                    <span className="truncate text-[0.7rem] text-text-muted">{log.title}</span>
                                 </div>
-                                <div className="log-meta">
-                                    <span className="log-time">
-                                        {format(new Date(log.sentAt), 'HH:mm:ss')}
-                                    </span>
-                                    {log.responseTime && (
-                                        <span className="log-response-time">{log.responseTime}ms</span>
-                                    )}
+                                <div className="flex flex-col items-end gap-1 text-[0.65rem] text-text-muted">
+                                    <span>{format(new Date(log.sentAt), 'HH:mm:ss')}</span>
+                                    {log.responseTime && <span>{log.responseTime}ms</span>}
                                 </div>
                             </div>
                         ))}
@@ -428,25 +325,19 @@ export function Dashboard() {
     );
 }
 
-function getStatusBadge(status: string): string {
+function getStatusClass(status: string): string {
     switch (status) {
-        case 'sent': return 'success';
-        case 'failed': return 'error';
-        case 'partial': return 'warning';
-        case 'scheduled': return 'info';
-        case 'sending': return 'info';
-        default: return 'info';
+        case 'sent': return 'bg-success/20 text-color-success-light';
+        case 'failed': return 'bg-error/20 text-color-error-light';
+        case 'partial': return 'bg-warning/20 text-color-warning-light';
+        default: return 'bg-info/20 text-color-info-light';
     }
 }
 
 function getStatusText(status: string): string {
-    switch (status) {
-        case 'sent': return '已發送';
-        case 'failed': return '失敗';
-        case 'partial': return '部分成功';
-        case 'scheduled': return '已排程';
-        case 'sending': return '發送中';
-        case 'pending': return '待發送';
-        default: return status;
-    }
+    const texts: Record<string, string> = {
+        sent: '已發送', failed: '失敗', partial: '部分成功',
+        scheduled: '已排程', sending: '發送中', pending: '待發送'
+    };
+    return texts[status] || status;
 }

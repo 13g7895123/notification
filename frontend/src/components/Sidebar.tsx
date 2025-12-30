@@ -23,7 +23,6 @@ import {
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { confirm } from '../utils/alert';
-import './Sidebar.css';
 
 interface MenuItem {
     path: string;
@@ -65,98 +64,102 @@ export function Sidebar() {
     };
 
     return (
-        <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-            {/* Logo */}
-            <div className="sidebar-header">
-                <div className="sidebar-logo">
-                    <div className="logo-icon">
-                        <img src="/icon.png" alt="NotifyHub" className="logo-img" />
+        <aside className={`fixed left-0 top-0 bottom-0 z-100 flex flex-col border-r border-border-color bg-bg-secondary transition-all duration-250 ease-out max-md:-translate-x-full ${sidebarCollapsed ? 'w-sidebar-collapsed-width max-md:translate-x-0' : 'w-sidebar-width'}`}>
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border-color-light p-lg">
+                <div className="flex items-center gap-md">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-color-primary to-color-accent text-white shadow-glow">
+                        <img src="/icon.png" alt="NotifyHub" className="h-full w-full rounded-md object-contain" />
                     </div>
                     {!sidebarCollapsed && (
-                        <div className="logo-text">
-                            <span className="logo-title">NotifyHub</span>
-                            <span className="logo-subtitle">通知管理中心</span>
+                        <div className="flex flex-col">
+                            <span className="bg-linear-to-br from-color-primary-light to-color-accent bg-clip-text text-[1.125rem] font-700 text-transparent">NotifyHub</span>
+                            <span className="text-[0.7rem] text-text-muted">通知管理中心</span>
                         </div>
                     )}
                 </div>
-                <button className="sidebar-toggle" onClick={toggleSidebar}>
+                <button
+                    className="flex h-7 w-7 items-center justify-center rounded-sm border border-border-color bg-bg-tertiary text-text-secondary transition-all duration-150 hover:border-color-primary hover:bg-color-primary hover:text-white"
+                    onClick={toggleSidebar}
+                >
                     {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
             </div>
 
-            {/* 狀態指示 */}
+            {/* Status */}
             {!sidebarCollapsed && (
-                <div className="sidebar-status">
-                    <Zap size={14} className="status-icon" />
+                <div className="mx-md mt-md flex items-center gap-sm border border-success/20 bg-success/10 px-lg py-sm text-[0.75rem] text-color-success-light rounded-md">
+                    <Zap size={14} className="animate-pulse" />
                     <span>{enabledChannels} 個渠道運作中</span>
                 </div>
             )}
 
-            {/* 導航選單 */}
-            <nav className="sidebar-nav">
-                {visibleMenuItems.map(item => (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                            `nav-item ${isActive ? 'active' : ''} ${item.adminOnly ? 'admin-item' : ''}`
-                        }
-                        title={sidebarCollapsed ? item.label : undefined}
-                    >
-                        <item.icon size={20} className="nav-icon" />
-                        {!sidebarCollapsed && <span className="nav-label">{item.label}</span>}
-                        {!sidebarCollapsed && item.adminOnly && (
-                            <Shield size={12} className="admin-badge" />
-                        )}
-                        {!sidebarCollapsed && location.pathname === item.path && (
-                            <div className="nav-indicator" />
-                        )}
-                    </NavLink>
-                ))}
+            {/* Navigation */}
+            <nav className="my-md flex flex-1 flex-col gap-xs overflow-y-auto px-md">
+                {visibleMenuItems.map(item => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={`group relative flex items-center gap-md rounded-md px-md py-sm transition-all duration-150 hover:bg-bg-tertiary hover:text-text-primary ${isActive ? 'bg-linear-to-br from-color-primary/20 to-color-accent/10 text-color-primary-light' : 'text-text-secondary'} ${sidebarCollapsed ? 'justify-center p-sm' : ''} ${item.adminOnly ? 'mt-sm pt-md before:absolute before:top-0 before:left-0 before:right-0 before:h-px before:bg-border-color-light' : ''}`}
+                            title={sidebarCollapsed ? item.label : undefined}
+                        >
+                            <item.icon size={20} className="shrink-0" />
+                            {!sidebarCollapsed && <span className="whitespace-nowrap text-[0.875rem] font-500">{item.label}</span>}
+                            {!sidebarCollapsed && item.adminOnly && (
+                                <Shield size={12} className="ml-auto text-color-warning opacity-70" />
+                            )}
+                            {!sidebarCollapsed && isActive && (
+                                <div className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-r-sm bg-color-primary shadow-[0_0_10px_var(--color-primary-glow)]" />
+                            )}
+                        </NavLink>
+                    );
+                })}
             </nav>
 
-            {/* 使用者選單 */}
-            <div className="sidebar-user">
+            {/* User Menu */}
+            <div className="border-t border-border-color-light p-md">
                 {sidebarCollapsed ? (
                     <button
-                        className="user-avatar-btn"
+                        className="flex w-full justify-center"
                         onClick={handleLogout}
                         title="登出"
                     >
-                        <div className="user-avatar">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-color-primary to-color-primary-dark text-[0.9rem] font-600 text-white">
                             {user?.username.charAt(0).toUpperCase()}
                         </div>
                     </button>
                 ) : (
-                    <div className="user-menu-wrapper">
+                    <div className="relative">
                         <button
-                            className={`user-menu-trigger ${showUserMenu ? 'open' : ''}`}
+                            className={`flex w-full items-center gap-md rounded-md border border-border-color bg-bg-tertiary p-sm transition-all duration-150 hover:border-color-primary hover:bg-bg-hover ${showUserMenu ? 'border-color-primary' : ''}`}
                             onClick={() => setShowUserMenu(!showUserMenu)}
                         >
-                            <div className="user-avatar">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-color-primary to-color-primary-dark text-[0.9rem] font-600 text-white">
                                 {(user?.displayName || user?.username || '?').charAt(0).toUpperCase()}
                             </div>
-                            <div className="user-info">
-                                <span className="user-name">{user?.displayName || user?.username}</span>
-                                <span className="user-role">
+                            <div className="flex flex-1 flex-col items-start overflow-hidden text-left">
+                                <span className="w-full truncate text-[0.85rem] font-600 text-text-primary">{user?.displayName || user?.username}</span>
+                                <span className="text-[0.7rem] text-text-muted">
                                     {user?.role === 'admin' ? '管理員' : '使用者'}
                                 </span>
                             </div>
-                            <ChevronDown size={16} className="user-chevron" />
+                            <ChevronDown size={16} className={`text-text-muted transition-transform duration-150 ${showUserMenu ? 'rotate-180' : ''}`} />
                         </button>
 
                         {showUserMenu && (
-                            <div className="user-dropdown">
-                                <div className="dropdown-header">
+                            <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 animate-slide-up overflow-hidden rounded-md border border-border-color bg-bg-secondary shadow-lg">
+                                <div className="flex items-center gap-sm border-b border-border-color-light p-md text-[0.8rem] text-text-muted">
                                     <User size={14} />
                                     <span>{user?.email}</span>
                                 </div>
                                 <button
-                                    className="dropdown-item logout"
+                                    className="group flex w-full items-center gap-sm bg-none p-md text-[0.85rem] text-text-secondary transition-all duration-150 hover:bg-bg-hover hover:text-text-primary"
                                     onClick={handleLogout}
                                 >
-                                    <LogOut size={16} />
-                                    <span>登出</span>
+                                    <LogOut size={16} className="group-hover:text-color-error" />
+                                    <span className="group-hover:text-color-error">登出</span>
                                 </button>
                             </div>
                         )}
