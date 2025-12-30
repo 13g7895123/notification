@@ -31,7 +31,7 @@ class ApiKeyController extends BaseController
             return [
                 'id' => $key['id'],
                 'name' => $key['name'],
-                'key' => $key['prefix'], // 只顯示前綴
+                'key' => $key['key'], // 這裡現在回傳完整金鑰（新產生的金鑰會存明文）
                 'prefix' => $key['prefix'],
                 'permissions' => json_decode($key['permissions'], true),
                 'rateLimit' => (int) $key['rate_limit'],
@@ -61,14 +61,15 @@ class ApiKeyController extends BaseController
 
         $now = date('Y-m-d H:i:s');
 
-        // 生成金鑰
-        $fullKey = 'nk_live_' . bin2hex(random_bytes(24));
-        $prefix = substr($fullKey, 0, 12) . '...' . substr($fullKey, -4);
+        // 生成金鑰 (使用 Entity 的統一格式)
+        $keyInfo = \App\Entities\ApiKeyEntity::generateKey();
+        $fullKey = $keyInfo['key'];
+        $prefix = $keyInfo['prefix'];
 
         $apiKeyData = [
             'user_id' => $user ? $user['id'] : 1,
             'name' => $json['name'],
-            'key' => hash('sha256', $fullKey), // 儲存 hash
+            'key' => $fullKey, // 儲存明文以便後續查看/複製
             'prefix' => $prefix,
             'permissions' => json_encode($json['permissions'] ?? ['send']),
             'rate_limit' => $json['rateLimit'] ?? 60,
@@ -222,14 +223,15 @@ class ApiKeyController extends BaseController
             return $this->errorResponse('NOT_FOUND', '金鑰不存在', 404);
         }
 
-        // 生成新金鑰
-        $fullKey = 'nk_live_' . bin2hex(random_bytes(24));
-        $prefix = substr($fullKey, 0, 12) . '...' . substr($fullKey, -4);
+        // 生成新金鑰 (使用 Entity 的統一格式)
+        $keyInfo = \App\Entities\ApiKeyEntity::generateKey();
+        $fullKey = $keyInfo['key'];
+        $prefix = $keyInfo['prefix'];
 
         $this->db->table('api_keys')
             ->where('id', $id)
             ->update([
-                'key' => hash('sha256', $fullKey),
+                'key' => $fullKey, // 儲存明文
                 'prefix' => $prefix,
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);

@@ -41,7 +41,17 @@ class ApiKeyRepository extends BaseRepository
      */
     public function findByKey(string $rawKey): ?array
     {
-        // 計算 hash 值比對
+        // 1. 先嘗試明文比對（新邏輯）
+        $data = $this->db->table($this->table)
+            ->where('key', $rawKey)
+            ->get()
+            ->getRowArray();
+
+        if ($data) {
+            return $data;
+        }
+
+        // 2. 如果沒找到，嘗試 Hash 比對（相容舊金鑰）
         $hash = hash('sha256', $rawKey);
         $data = $this->db->table($this->table)
             ->where('key', $hash)

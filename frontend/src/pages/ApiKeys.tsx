@@ -124,17 +124,17 @@ export function ApiKeys() {
                 <div className="api-info-content">
                     <div className="api-endpoint">
                         <span className="method post">POST</span>
-                        <code>/api/v1/send</code>
+                        <code>/api/notifications/windows</code>
                         <span className="endpoint-desc">發送通知</span>
                     </div>
                     <div className="api-example">
-                        <pre>{`curl -X POST https://your-domain.com/api/v1/send \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
+                        <pre>{`curl -X POST https://your-domain.com/api/notifications/windows \\
+  -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "通知標題",
     "content": "通知內容",
-    "channelIds": ["1", "2"]
+    "priority": "high"
   }'`}</pre>
                     </div>
                 </div>
