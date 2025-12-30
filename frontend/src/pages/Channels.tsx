@@ -604,27 +604,39 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
                     ) : (
                         <div className="users-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                             {users.map((user) => (
-                                <div key={user.id} className="user-item-card flex items-center gap-md p-md border-b border-light last:border-0 hover:bg-tertiary transition-colors">
-                                    <div className="user-avatar-wrapper flex-shrink-0">
+                                <div key={user.id} className="user-item-card" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 16px', borderBottom: '1px solid var(--border-color-light)' }}>
+                                    {/* 頭像 */}
+                                    <div style={{ flexShrink: 0 }}>
                                         {user.pictureUrl ? (
-                                            <img src={user.pictureUrl} alt={user.displayName || 'User'} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                            <img
+                                                src={user.pictureUrl}
+                                                alt={user.displayName || 'User'}
+                                                style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+                                            />
                                         ) : (
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold flex-shrink-0">
+                                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)', fontWeight: 'bold', fontSize: '1.25rem' }}>
                                                 {user.displayName?.charAt(0) || '?'}
                                             </div>
                                         )}
                                     </div>
-                                    <div className="user-info flex-1">
-                                        <div className="flex items-center gap-sm">
-                                            <span className="font-semibold text-white">{user.displayName || '未知使用者'}</span>
-                                            <span className={`px-2 py-0.5 rounded text-xs ${user.status === 'active' ? 'bg-success/20 text-success' : 'bg-error/20 text-error'}`}>
+                                    {/* 使用者資訊 */}
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{user.displayName || '未知使用者'}</span>
+                                            <span style={{
+                                                padding: '2px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '0.75rem',
+                                                background: user.status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                                color: user.status === 'active' ? 'var(--color-success)' : 'var(--color-error)'
+                                            }}>
                                                 {user.status === 'active' ? '活躍' : '封鎖'}
                                             </span>
                                         </div>
-                                        <div className="text-xs text-secondary mt-1 font-mono">
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                                             ID: {user.providerId}
                                         </div>
-                                        <div className="text-xs text-muted mt-1">
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                                             加入時間: {format(new Date(user.createdAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}
                                         </div>
                                     </div>
