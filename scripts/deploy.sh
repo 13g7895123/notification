@@ -51,7 +51,45 @@ show_help() {
     echo "  ./scripts/deploy.sh status               - 顯示狀態"
     echo "  ./scripts/deploy.sh rollback             - 回滾到待命版本"
     echo "  ./scripts/deploy.sh reload               - 重整 Nginx 設定"
+    echo "  ./scripts/deploy.sh scheduler            - 檢查/重啟 Scheduler"
     echo ""
+}
+
+# 檢查並確保 Task Scheduler 運行中
+check_scheduler() {
+    echo -e "${BLUE}檢查 Task Scheduler 狀態...${NC}"
+    
+    # 檢查 scheduler 進程是否存在
+    SCHEDULER_RUNNING=$(docker compose exec -T backend sh -c 'pgrep -f "tasks:run" > /dev/null && echo "yes" || echo "no"')
+    
+    if [ "$SCHEDULER_RUNNING" == "yes" ]; then
+        echo -e "${GREEN}✓ Task Scheduler 運行中${NC}"
+    else
+        echo -e "${YELLOW}Task Scheduler 未運行，正在啟動...${NC}"
+        restart_scheduler
+    fi
+}
+
+# 重啟 Scheduler
+restart_scheduler() {
+    echo -e "${YELLOW}正在重啟 Task Scheduler...${NC}"
+    
+    # 停止現有的 scheduler (如果存在)
+    docker compose exec -T backend sh -c 'pkill -f "tasks:run" 2>/dev/null || true'
+    
+    # 啟動新的 scheduler daemon
+    docker compose exec -T backend sh -c 'nohup php spark tasks:run --daemon > writable/logs/scheduler.log 2>&1 &'
+    
+    sleep 2
+    
+    # 確認啟動成功
+    SCHEDULER_RUNNING=$(docker compose exec -T backend sh -c 'pgrep -f "tasks:run" > /dev/null && echo "yes" || echo "no"')
+    
+    if [ "$SCHEDULER_RUNNING" == "yes" ]; then
+        echo -e "${GREEN}✓ Task Scheduler 已啟動${NC}"
+    else
+        echo -e "${RED}✗ Task Scheduler 啟動失敗，請手動檢查${NC}"
+    fi
 }
 
 # 建構版本
@@ -76,6 +114,10 @@ build_version() {
     docker compose exec -T backend php spark migrate --all || {
         echo -e "${RED}警告: 資料庫遷移失敗，請手動檢查${NC}"
     }
+
+    # 確認 Task Scheduler 狀態
+    echo -e "${YELLOW}檢查 Task Scheduler 狀態...${NC}"
+    check_scheduler
 
     echo -e "${YELLOW}正在建構並啟動 ${VERSION} 版本...${NC}"
     
@@ -163,6 +205,9 @@ case "$1" in
         ;;
     reload)
         reload_nginx
+        ;;
+    scheduler)
+        check_scheduler
         ;;
     *)
         show_help

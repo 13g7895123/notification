@@ -91,12 +91,43 @@ echo "Waiting for database..."
 sleep 5
 
 # ===========================================
+# 啟動 Task Scheduler Daemon (背景執行)
+# ===========================================
+echo ""
+echo "Starting Task Scheduler Daemon..."
+
+# 建立 PID 檔案目錄
+mkdir -p writable/pids
+
+# 啟動 scheduler daemon 在背景
+nohup php spark tasks:run --daemon > writable/logs/scheduler.log 2>&1 &
+SCHEDULER_PID=$!
+echo $SCHEDULER_PID > writable/pids/scheduler.pid
+echo "  Scheduler started with PID: $SCHEDULER_PID"
+
+# 設定清理函數，當主程序結束時停止 scheduler
+cleanup() {
+    echo ""
+    echo "Stopping Task Scheduler..."
+    if [ -f writable/pids/scheduler.pid ]; then
+        kill $(cat writable/pids/scheduler.pid) 2>/dev/null || true
+        rm -f writable/pids/scheduler.pid
+    fi
+    echo "Cleanup complete."
+    exit 0
+}
+
+# 捕捉終止信號
+trap cleanup SIGTERM SIGINT
+
+# ===========================================
 # 啟動 CodeIgniter 4 CLI Server
 # ===========================================
 echo ""
 echo "=========================================="
 echo " Starting CodeIgniter 4 CLI Server..."
 echo " Listening on http://0.0.0.0:8080"
+echo " Task Scheduler: Running (PID: $SCHEDULER_PID)"
 echo "=========================================="
 echo ""
 

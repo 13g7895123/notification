@@ -62,15 +62,40 @@ class MessageService
         $validChannels = $this->channelRepository->findByIdsAndUserId($data['channelIds'], $userId);
         $validChannelIds = array_map(fn($c) => $c->id, $validChannels);
 
+        // 判斷是否為排程發送
+        $isScheduled = false;
+        $scheduledAt = $data['scheduledAt'] ?? null;
+        
+        if ($scheduledAt) {
+            $scheduledTime = strtotime($scheduledAt);
+            $now = time();
+            // 若排程時間在未來（允許 1 分鐘的誤差），則標記為排程
+            if ($scheduledTime && $scheduledTime > ($now + 60)) {
+                $isScheduled = true;
+            }
+        }
+
         // 建立訊息記錄
         $message = $this->messageRepository->create([
             'title' => $data['title'],
             'content' => $data['content'],
             'channelIds' => $validChannelIds,
-            'scheduledAt' => $data['scheduledAt'] ?? null,
+            'scheduledAt' => $scheduledAt,
+            'channelOptions' => $data['channelOptions'] ?? [],
             'userId' => $userId,
-            'status' => MessageEntity::STATUS_SENDING,
+            'status' => $isScheduled ? MessageEntity::STATUS_SCHEDULED : MessageEntity::STATUS_SENDING,
         ]);
+
+        // 如果是排程發送，立即返回，不執行實際發送
+        if ($isScheduled) {
+            return [
+                'success' => true,
+                'messageId' => $message->id,
+                'status' => MessageEntity::STATUS_SCHEDULED,
+                'scheduledAt' => $scheduledAt,
+                'message' => '訊息已排程，將於指定時間發送',
+            ];
+        }
 
         // 發送到各渠道
         $results = [];

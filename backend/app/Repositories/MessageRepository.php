@@ -71,12 +71,25 @@ class MessageRepository extends BaseRepository
     {
         $now = date('Y-m-d H:i:s');
 
+        // 格式化 scheduledAt
+        $scheduledAt = $data['scheduledAt'] ?? null;
+        if ($scheduledAt && !is_string($scheduledAt)) {
+            // 如果是 DateTime 物件或時間戳，轉換為字串
+            if ($scheduledAt instanceof \DateTimeInterface) {
+                $scheduledAt = $scheduledAt->format('Y-m-d H:i:s');
+            }
+        } elseif ($scheduledAt && strtotime($scheduledAt)) {
+            // 確保格式正確
+            $scheduledAt = date('Y-m-d H:i:s', strtotime($scheduledAt));
+        }
+
         $messageData = [
             'title' => $data['title'],
             'content' => $data['content'],
             'status' => $data['status'] ?? MessageEntity::STATUS_PENDING,
             'channel_ids' => json_encode($data['channelIds']),
-            'scheduled_at' => $data['scheduledAt'] ?? null,
+            'channel_options' => json_encode($data['channelOptions'] ?? []),
+            'scheduled_at' => $scheduledAt,
             'created_at' => $now,
             'user_id' => $data['userId'],
         ];
@@ -142,6 +155,39 @@ class MessageRepository extends BaseRepository
             ->getResultArray();
 
         return array_map(fn($row) => new MessageEntity($row), $data);
+    }
+
+    /**
+     * 取得已到期的排程訊息
+     */
+    public function getScheduledMessagesReady(): array
+    {
+        $now = date('Y-m-d H:i:s');
+
+        $data = $this->db->table($this->table)
+            ->where('status', MessageEntity::STATUS_SCHEDULED)
+            ->where('scheduled_at <=', $now)
+            ->get()
+            ->getResultArray();
+
+        return array_map(fn($row) => new MessageEntity($row), $data);
+    }
+
+    /**
+     * 取得訊息的 channel_options
+     */
+    public function getChannelOptions(int $messageId): array
+    {
+        $row = $this->db->table($this->table)
+            ->select('channel_options')
+            ->where('id', $messageId)
+            ->get()
+            ->getRowArray();
+
+        if ($row && !empty($row['channel_options'])) {
+            return json_decode($row['channel_options'], true) ?? [];
+        }
+        return [];
     }
 
     /**
