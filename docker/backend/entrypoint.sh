@@ -21,6 +21,7 @@ apk add --no-cache \
     gcc \
     g++ \
     make \
+    tzdata \
     > /dev/null 2>&1
 
 # ===========================================

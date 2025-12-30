@@ -11,6 +11,7 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      TZ: Asia/Taipei
     volumes:
       - ./mariadb_data:/var/lib/mysql
     networks:
@@ -59,6 +60,7 @@ services:
       DATABASE_USERNAME: ${MARIADB_USER}
       DATABASE_PASSWORD: ${MARIADB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Taipei
     volumes:
       - ./backend:/var/www/html
       - ./docker/backend/entrypoint.sh:/entrypoint.sh:ro
