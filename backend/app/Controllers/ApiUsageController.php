@@ -112,7 +112,7 @@ class ApiUsageController extends BaseController
 
         // Endpoint 統計
         $endpointStats = $this->db->table('api_usage_logs')
-            ->select('endpoint, COUNT(*) as count')
+            ->select('endpoint, COUNT(*) as count, AVG(response_time) as avg_response_time')
             ->where('created_at >=', $startDate)
             ->groupBy('endpoint')
             ->orderBy('count', 'DESC')
@@ -120,17 +120,20 @@ class ApiUsageController extends BaseController
             ->get()
             ->getResultArray();
 
-        $endpointData = [];
-        foreach ($endpointStats as $stat) {
-            $endpointData[$stat['endpoint']] = (int) $stat['count'];
-        }
+        $endpointData = array_map(function ($stat) {
+            return [
+                'endpoint' => $stat['endpoint'],
+                'count' => (int) $stat['count'],
+                'avgResponseTime' => (int) ($stat['avg_response_time'] ?? 0),
+            ];
+        }, $endpointStats);
 
         // 每日統計
         $dailyStats = $this->db->table('api_usage_logs')
-            ->select("DATE(created_at) as date, COUNT(*) as requests, SUM(success) as success, SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed")
+            ->select("DATE(created_at) as date, COUNT(*) as count, SUM(success) as success, SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed")
             ->where('created_at >=', $startDate)
             ->groupBy('DATE(created_at)')
-            ->orderBy('date', 'DESC')
+            ->orderBy('date', 'ASC')
             ->limit(30)
             ->get()
             ->getResultArray();
@@ -138,20 +141,21 @@ class ApiUsageController extends BaseController
         $dailyData = array_map(function ($stat) {
             return [
                 'date' => $stat['date'],
-                'requests' => (int) $stat['requests'],
+                'count' => (int) $stat['count'],
                 'success' => (int) $stat['success'],
                 'failed' => (int) $stat['failed'],
             ];
         }, $dailyStats);
 
+        // 返回欄位名稱要與前端 ApiStats interface 一致
         return $this->successResponse([
             'totalRequests' => $totalRequests,
-            'successCount' => $successCount,
-            'failedCount' => $failedCount,
+            'successfulRequests' => $successCount,
+            'failedRequests' => $failedCount,
             'successRate' => $successRate,
             'avgResponseTime' => $avgResponseTime,
-            'endpointStats' => $endpointData,
-            'dailyStats' => $dailyData,
+            'requestsByEndpoint' => $endpointData,
+            'requestsByDay' => $dailyData,
         ]);
     }
 }
