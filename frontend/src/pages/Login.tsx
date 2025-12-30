@@ -30,6 +30,7 @@ export function Login() {
         setIsSubmitting(false);
     };
 
+    /*
     const fillDemo = (type: 'admin' | 'user') => {
         if (type === 'admin') {
             setUsername('admin');
@@ -39,6 +40,7 @@ export function Login() {
             setPassword('user123');
         }
     };
+    */
 
     if (isLoading) {
         return (
