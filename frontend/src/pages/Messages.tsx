@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
     MessageSquare,
     Search,
@@ -9,13 +9,14 @@ import {
     CheckCircle,
     XCircle,
     Clock,
-    AlertCircle
+    AlertCircle,
+    Loader2
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { NotificationMessage, MessageStatus } from '../types';
 import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 export function Messages() {
     const { messages, deleteMessage } = useNotification();
@@ -126,6 +127,9 @@ function getStatusColor(status: MessageStatus) {
 }
 
 function MessageDetailModal({ message, onClose }: any) {
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
             <div className="absolute inset-0 bg-bg-overlay/80" onClick={onClose} />

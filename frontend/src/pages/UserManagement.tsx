@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
     Users,
@@ -22,6 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { UserWithAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 import { toast, confirm } from '../utils/alert';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 export function UserManagement() {
     const { user, isAdmin, users, fetchUsers, addUser, updateUser, deleteUser, toggleUserStatus, resetUserPassword } = useAuth();
@@ -280,6 +281,9 @@ function UserModal({ user, onClose, onSave }: any) {
     const [status, setStatus] = useState<'active' | 'inactive'>(user?.status || 'active');
     const [showPassword, setShowPassword] = useState(false);
 
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
             <div className="absolute inset-0 bg-bg-overlay/80" onClick={onClose} />
@@ -359,6 +363,9 @@ function PasswordModal({ user, onClose, onSave }: any) {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

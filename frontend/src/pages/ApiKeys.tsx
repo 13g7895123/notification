@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Key,
     Plus,
@@ -18,6 +18,7 @@ import type { ApiKey, ApiPermission } from '../types';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 const PERMISSION_LABELS: Record<ApiPermission, { label: string; description: string }> = {
     send: { label: '發送通知', description: '允許透過 API 發送通知訊息' },
@@ -246,6 +247,9 @@ function ApiKeyModal({ apiKey, onClose, onSave }: any) {
     const [enabled, setEnabled] = useState(apiKey?.enabled ?? true);
     const [hasExpiry, setHasExpiry] = useState(!!apiKey?.expiresAt);
     const [expiryDate, setExpiryDate] = useState(apiKey?.expiresAt ? format(new Date(apiKey.expiresAt), 'yyyy-MM-dd') : '');
+
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
 
     const togglePermission = (perm: ApiPermission) => {
         setPermissions(prev => prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm]);

@@ -26,6 +26,7 @@ import { api } from '../utils/api';
 import type { WindowsNotification, WindowsNotificationStats, WindowsNotificationStatus } from '../types';
 import { format } from 'date-fns';
 import { toast, confirm } from '../utils/alert';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface PaginatedResponse {
     notifications: WindowsNotification[];
@@ -278,6 +279,9 @@ function IntegrationHelpModal({ onClose }: any) {
         toast.success('已複製到剪貼簿');
         setTimeout(() => setCopiedSec(null), 2000);
     };
+
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
 
     return (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-md backdrop-blur-xl">

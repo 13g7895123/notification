@@ -16,6 +16,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import type { ApiUsageLog } from '../types';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 export function ApiUsage() {
     const { apiUsageLogs, apiStats, apiKeys, fetchApiUsage, isLoading } = useNotification();
@@ -245,6 +246,9 @@ function Loader2({ className, size }: { className?: string, size?: number }) {
 }
 
 function LogDetailModal({ log, onClose }: any) {
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
             <div className="absolute inset-0 bg-bg-overlay/80" onClick={onClose} />

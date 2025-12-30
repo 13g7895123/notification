@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Settings2,
     Plus,
@@ -19,6 +19,7 @@ import type { NotificationChannel, ChannelType, LineConfig, TelegramConfig } fro
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 export function Channels() {
     const { channels, addChannel, updateChannel, deleteChannel, toggleChannel, testChannel } = useNotification();
@@ -225,6 +226,9 @@ function ChannelModal({ channel, onClose, onSave }: any) {
     const [isRegenerating, setIsRegenerating] = useState(false);
     const apiUrl = import.meta.env.VITE_API_URL;
 
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
             <div className="absolute inset-0 bg-bg-overlay/80" onClick={onClose} />
@@ -282,6 +286,9 @@ function ChannelUsersModal({ channelId, onClose }: any) {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
+
     useEffect(() => {
         getChannelUsers(channelId).then((data: any) => { setUsers(data || []); setLoading(false); });
     }, [channelId]);
@@ -325,6 +332,9 @@ function ChannelLogsModal({ channelId, onClose }: any) {
     const [logs, setLogs] = useState<any[]>([]);
     const [selectedLog, setSelectedLog] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
 
     useEffect(() => {
         getChannelWebhookLogs(channelId).then((data: any) => { setLogs(data || []); setLoading(false); if (data?.[0]) setSelectedLog(data[0]); });

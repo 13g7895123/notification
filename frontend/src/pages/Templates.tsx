@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
     FileText,
     Plus,
@@ -14,6 +14,7 @@ import type { NotificationTemplate, ChannelType } from '../types';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 export function Templates() {
     const { templates, addTemplate, updateTemplate, deleteTemplate } = useNotification();
@@ -185,6 +186,9 @@ function TemplateModal({ template, onClose, onSave }: any) {
     const [variablesInput, setVariablesInput] = useState(
         template?.variables.join(', ') || ''
     );
+
+    const handleClose = useCallback(() => onClose(), [onClose]);
+    useEscapeKey(handleClose);
 
     const toggleChannelType = (type: ChannelType) => {
         setChannelTypes(prev =>
