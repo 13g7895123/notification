@@ -11,6 +11,7 @@ import {
     Check,
     Loader2,
     RefreshCw,
+    Users,
     ClipboardList
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
@@ -181,6 +182,7 @@ export function Channels() {
                                             <TestTube2 size={18} />
                                         )}
                                     </button>
+
                                     <button
                                         className="btn btn-ghost btn-icon"
                                         onClick={() => handleEditChannel(channel)}
@@ -188,16 +190,32 @@ export function Channels() {
                                     >
                                         <Edit2 size={18} />
                                     </button>
-                                    <button
-                                        className="btn btn-ghost btn-icon"
-                                        onClick={() => {
-                                            setViewingChannelId(channel.id);
-                                            setShowLogsModal(true);
-                                        }}
-                                        title="Webhook 記錄"
-                                    >
-                                        <ClipboardList size={18} />
-                                    </button>
+
+                                    {channel.type === 'line' && (
+                                        <>
+                                            <button
+                                                className="btn btn-ghost btn-icon"
+                                                onClick={() => {
+                                                    setViewingChannelId(channel.id);
+                                                    setShowUsersModal(true);
+                                                }}
+                                                title="人員清單"
+                                            >
+                                                <Users size={18} />
+                                            </button>
+                                            <button
+                                                className="btn btn-ghost btn-icon"
+                                                onClick={() => {
+                                                    setViewingChannelId(channel.id);
+                                                    setShowLogsModal(true);
+                                                }}
+                                                title="Webhook 記錄"
+                                            >
+                                                <ClipboardList size={18} />
+                                            </button>
+                                        </>
+                                    )}
+
                                     <button
                                         className="btn btn-ghost btn-icon text-error"
                                         onClick={() => handleDeleteChannel(channel)}
