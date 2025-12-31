@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Key,
     Plus,
@@ -16,8 +16,9 @@ import {
 import { useNotification } from '../contexts/NotificationContext';
 import type { ApiKey, ApiPermission } from '../types';
 import { format } from 'date-fns';
+import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
-import { useEscapeKey } from '../hooks/useEscapeKey';
+import './ApiKeys.css';
 
 const PERMISSION_LABELS: Record<ApiPermission, { label: string; description: string }> = {
     send: { label: '發送通知', description: '允許透過 API 發送通知訊息' },
@@ -41,7 +42,11 @@ export function ApiKeys() {
     const toggleKeyVisibility = (id: string) => {
         setVisibleKeys(prev => {
             const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
             return next;
         });
     };
@@ -50,19 +55,34 @@ export function ApiKeys() {
         await navigator.clipboard.writeText(key);
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 2000);
-        toast.success('已複製到剪貼簿');
     };
 
-    const handleAddKey = () => { setEditingKey(null); setShowModal(true); };
-    const handleEditKey = (apiKey: ApiKey) => { setEditingKey(apiKey); setShowModal(true); };
+    const handleAddKey = () => {
+        setEditingKey(null);
+        setShowModal(true);
+    };
+
+    const handleEditKey = (apiKey: ApiKey) => {
+        setEditingKey(apiKey);
+        setShowModal(true);
+    };
 
     const handleDeleteKey = async (apiKey: ApiKey) => {
-        const confirmed = await confirm.danger('刪除後使用此金鑰的所有應用程式將無法存取 API。', `確定要刪除「${apiKey.name}」嗎？`);
-        if (confirmed) { deleteApiKey(apiKey.id); toast.success(`API 金鑰「${apiKey.name}」已刪除`); }
+        const confirmed = await confirm.danger(
+            '刪除後使用此金鑰的所有應用程式將無法存取 API。',
+            `確定要刪除「${apiKey.name}」嗎？`
+        );
+        if (confirmed) {
+            deleteApiKey(apiKey.id);
+            toast.success(`API 金鑰「${apiKey.name}」已刪除`);
+        }
     };
 
     const handleRegenerateKey = async (apiKey: ApiKey) => {
-        const confirmed = await confirm.danger('舊金鑰將立即失效，請確保您已更新所有使用此金鑰的應用程式。', `重新產生「${apiKey.name}」的金鑰？`);
+        const confirmed = await confirm.danger(
+            '舊金鑰將立即失效，請確保您已更新所有使用此金鑰的應用程式。',
+            `重新產生「${apiKey.name}」的金鑰？`
+        );
         if (confirmed) {
             const newKey = await regenerateApiKey(apiKey.id);
             setNewlyCreatedKey(newKey);
@@ -73,132 +93,188 @@ export function ApiKeys() {
     const enabledCount = apiKeys.filter(k => k.enabled).length;
 
     return (
-        <div className="flex flex-col gap-lg animate-fade-in">
-            {/* Header */}
-            <div className="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="flex items-center gap-md text-2xl font-700 text-text-primary"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-color-primary/20 text-color-primary-light"><Key size={22} /></div>API 金鑰</h1>
-                    <p className="mt-1 text-text-muted">管理 API 存取金鑰，透過 API 發送通知</p>
+        <div className="api-keys-page">
+            {/* 頁面標題 */}
+            <div className="page-header">
+                <div className="page-title-section">
+                    <h1 className="page-title">
+                        <div className="page-title-icon">
+                            <Key size={22} />
+                        </div>
+                        API 金鑰
+                    </h1>
+                    <p className="page-description">
+                        管理 API 存取金鑰，透過 API 發送通知
+                    </p>
                 </div>
-                <button className="btn btn-primary flex items-center gap-2" onClick={handleAddKey}>
-                    <Plus size={18} />建立金鑰
-                </button>
+                <div className="page-actions">
+                    <button className="btn btn-primary btn-lg" onClick={handleAddKey}>
+                        <Plus size={18} />
+                        建立金鑰
+                    </button>
+                </div>
             </div>
 
-            {/* Info and Stats Card */}
-            <div className="grid grid-cols-1 gap-lg lg:grid-cols-3">
-                <div className="card lg:col-span-2 flex flex-col gap-lg border border-border-color bg-bg-card/50 p-lg backdrop-blur-md">
-                    <div className="flex items-center gap-md border-b border-border-color-light pb-md">
-                        <Shield className="text-color-primary" size={24} />
-                        <h3 className="text-lg font-700 text-text-primary">API 快速入門</h3>
+            {/* API 使用說明 */}
+            <div className="api-info-card card">
+                <div className="api-info-header">
+                    <Shield size={20} />
+                    <h3>API 使用說明</h3>
+                </div>
+                <div className="api-info-content">
+                    <div className="api-endpoint">
+                        <span className="method post">POST</span>
+                        <code>/api/notifications/windows</code>
+                        <span className="endpoint-desc">發送通知</span>
                     </div>
-                    <div className="flex flex-col gap-md">
-                        <div className="flex items-center gap-md rounded bg-bg-tertiary px-4 py-3 font-mono text-sm border border-border-color/30 overflow-x-auto">
-                            <span className="font-800 text-color-primary">POST</span>
-                            <span className="text-text-secondary whitespace-nowrap">/api/notifications/windows</span>
-                        </div>
-                        <div className="relative group">
-                            <pre className="rounded-lg bg-bg-secondary p-lg font-mono text-[0.75rem] text-text-secondary leading-relaxed overflow-x-auto">
-                                {`curl -X POST https://${window.location.host}/api/notifications/windows \\
+                    <div className="api-example">
+                        <pre>{`curl -X POST https://your-domain.com/api/notifications/windows \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "通知標題",
     "content": "通知內容",
     "priority": "high"
-  }'`}
-                            </pre>
-                        </div>
+  }'`}</pre>
                     </div>
                 </div>
-
-                <div className="card flex flex-col border border-border-color bg-bg-card p-lg h-full">
-                    <h3 className="text-[0.8rem] font-700 text-text-muted uppercase tracking-wider mb-6">金鑰統計</h3>
-                    <div className="flex flex-col gap-6">
-                        {[
-                            { label: '總金鑰數', value: apiKeys.length, color: 'text-text-primary' },
-                            { label: '啟用中', value: enabledCount, color: 'text-color-success' },
-                            { label: '總使用次數', value: apiKeys.reduce((sum, k) => sum + k.usageCount, 0).toLocaleString(), color: 'text-color-primary' }
-                        ].map((stat, i) => (
-                            <div key={i} className="flex flex-col">
-                                <span className={`text-3xl font-800 ${stat.color}`}>{stat.value}</span>
-                                <span className="text-[0.75rem] font-600 text-text-muted mt-1 uppercase leading-none">{stat.label}</span>
-                            </div>
-                        ))}
+                <div className="api-stats-mini">
+                    <div className="stat-item">
+                        <span className="stat-value">{apiKeys.length}</span>
+                        <span className="stat-label">總金鑰數</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-value">{enabledCount}</span>
+                        <span className="stat-label">啟用中</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-value">{apiKeys.reduce((sum, k) => sum + k.usageCount, 0).toLocaleString()}</span>
+                        <span className="stat-label">總使用次數</span>
                     </div>
                 </div>
             </div>
 
-            {/* Keys List */}
-            <div className="grid grid-cols-1 gap-md xl:grid-cols-2">
+            {/* 金鑰列表 */}
+            <div className="api-keys-list">
                 {apiKeys.length === 0 ? (
-                    <div className="card col-span-full py-20 text-center opacity-50">
-                        <span className="text-4xl block mb-4">🔑</span>
-                        <h3 className="text-xl font-600">尚無 API 金鑰</h3>
-                        <p className="mt-2 text-text-muted">建立一個以啟動自動化整合</p>
+                    <div className="empty-state card">
+                        <div className="empty-state-icon">🔑</div>
+                        <h3 className="empty-state-title">尚無 API 金鑰</h3>
+                        <p className="empty-state-description">
+                            建立 API 金鑰以透過程式化方式發送通知
+                        </p>
+                        <button className="btn btn-primary" onClick={handleAddKey}>
+                            <Plus size={16} />
+                            建立第一個金鑰
+                        </button>
                     </div>
                 ) : (
                     apiKeys.map((apiKey, index) => (
                         <div
                             key={apiKey.id}
-                            className={`card group flex flex-col border border-border-color bg-bg-card transition-all hover:border-color-primary hover:shadow-glow animate-slide-up ${!apiKey.enabled ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                            className={`api-key-card card animate-slide-up ${!apiKey.enabled ? 'disabled' : ''}`}
                             style={{ animationDelay: `${index * 50}ms` }}
                         >
-                            <div className="flex items-center justify-between border-b border-border-color-light p-md px-lg">
-                                <div className="flex items-center gap-md">
-                                    <h3 className="font-700 text-text-primary truncate max-w-[150px]">{apiKey.name}</h3>
-                                    <span className={`rounded-full px-2 py-0.5 text-[0.6rem] font-800 ${apiKey.enabled ? 'bg-success/20 text-color-success' : 'bg-error/20 text-color-error'}`}>
-                                        {apiKey.enabled ? '啟用中' : '已停用'}
-                                    </span>
+                            <div className="api-key-header">
+                                <div className="api-key-info">
+                                    <h3 className="api-key-name">{apiKey.name}</h3>
+                                    <div className="api-key-meta">
+                                        <span className={`status-badge ${apiKey.enabled ? 'active' : 'inactive'}`}>
+                                            {apiKey.enabled ? '啟用中' : '已停用'}
+                                        </span>
+                                        {apiKey.expiresAt && (
+                                            <span className="expires-badge">
+                                                {new Date(apiKey.expiresAt) < new Date() ? '已過期' : `${format(new Date(apiKey.expiresAt), 'yyyy/MM/dd')} 到期`}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                                <label className="relative inline-flex cursor-pointer items-center">
-                                    <input type="checkbox" className="peer sr-only" checked={apiKey.enabled} onChange={() => toggleApiKey(apiKey.id)} />
-                                    <div className="h-6 w-11 rounded-full bg-border-color transition-all peer-checked:bg-color-primary after:absolute after:top-[2px] after:left-[2px] after:h-5 after:after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={apiKey.enabled}
+                                        onChange={() => toggleApiKey(apiKey.id)}
+                                    />
+                                    <span className="switch-slider" />
                                 </label>
                             </div>
 
-                            <div className="p-lg space-y-6">
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[0.7rem] font-700 text-text-muted uppercase">金鑰數值</span>
-                                        <div className="flex gap-1">
-                                            <button className="p-1.5 text-text-muted hover:text-text-primary transition-colors" onClick={() => toggleKeyVisibility(apiKey.id)}>{visibleKeys.has(apiKey.id) ? <EyeOff size={16} /> : <Eye size={16} />}</button>
-                                            <button className="p-1.5 text-text-muted hover:text-text-primary transition-colors" onClick={() => handleCopyKey(apiKey.key, apiKey.id)}>{copiedId === apiKey.id ? <Check size={16} className="text-color-success" /> : <Copy size={16} />}</button>
-                                            <button className="p-1.5 text-text-muted hover:text-text-primary transition-colors" onClick={() => handleRegenerateKey(apiKey)} title="重新產生"><RefreshCw size={16} /></button>
-                                        </div>
-                                    </div>
-                                    <code className="rounded border border-border-color/30 bg-bg-tertiary px-4 py-3 font-mono text-sm text-text-primary tracking-wider truncate">
-                                        {visibleKeys.has(apiKey.id) ? apiKey.key : apiKey.prefix.padEnd(apiKey.key.length, '•')}
-                                    </code>
+                            <div className="api-key-value">
+                                <code className="key-display">
+                                    {visibleKeys.has(apiKey.id) ? apiKey.key : apiKey.prefix}
+                                </code>
+                                <div className="key-actions">
+                                    <button
+                                        className="btn btn-ghost btn-icon"
+                                        onClick={() => toggleKeyVisibility(apiKey.id)}
+                                        title={visibleKeys.has(apiKey.id) ? '隱藏' : '顯示'}
+                                    >
+                                        {visibleKeys.has(apiKey.id) ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                    <button
+                                        className="btn btn-ghost btn-icon"
+                                        onClick={() => handleCopyKey(apiKey.key, apiKey.id)}
+                                        title="複製"
+                                    >
+                                        {copiedId === apiKey.id ? <Check size={16} className="text-success" /> : <Copy size={16} />}
+                                    </button>
+                                    <button
+                                        className="btn btn-ghost btn-icon"
+                                        onClick={() => handleRegenerateKey(apiKey)}
+                                        title="重新產生"
+                                    >
+                                        <RefreshCw size={16} />
+                                    </button>
                                 </div>
+                            </div>
 
-                                <div className="flex flex-wrap gap-1.5">
+                            <div className="api-key-permissions">
+                                <span className="permissions-label">權限：</span>
+                                <div className="permissions-list">
                                     {apiKey.permissions.map(perm => (
-                                        <span key={perm} className="rounded bg-bg-secondary px-2 py-0.5 text-[0.65rem] font-700 text-text-secondary border border-border-color-light/50">
+                                        <span key={perm} className="permission-tag">
                                             {PERMISSION_LABELS[perm].label}
                                         </span>
                                     ))}
                                 </div>
+                            </div>
 
-                                <div className="grid grid-cols-3 gap-2 border-t border-border-color-light pt-lg">
-                                    {[
-                                        { label: '使用次數', value: apiKey.usageCount.toLocaleString() },
-                                        { label: '每分限制', value: `${apiKey.rateLimit}` },
-                                        { label: '最後使用', value: apiKey.lastUsedAt ? format(new Date(apiKey.lastUsedAt), 'MM/dd HH:mm') : '-' }
-                                    ].map((s, i) => (
-                                        <div key={i} className="flex flex-col">
-                                            <span className="text-[0.85rem] font-700 text-text-primary leading-none">{s.value}</span>
-                                            <span className="text-[0.6rem] font-600 text-text-muted mt-1 uppercase tracking-tight">{s.label}</span>
-                                        </div>
-                                    ))}
+                            <div className="api-key-stats">
+                                <div className="key-stat">
+                                    <span className="key-stat-value">{apiKey.usageCount.toLocaleString()}</span>
+                                    <span className="key-stat-label">使用次數</span>
+                                </div>
+                                <div className="key-stat">
+                                    <span className="key-stat-value">{apiKey.rateLimit}/min</span>
+                                    <span className="key-stat-label">速率限制</span>
+                                </div>
+                                <div className="key-stat">
+                                    <span className="key-stat-value">
+                                        {apiKey.lastUsedAt ? format(new Date(apiKey.lastUsedAt), 'MM/dd HH:mm') : '-'}
+                                    </span>
+                                    <span className="key-stat-label">最後使用</span>
                                 </div>
                             </div>
 
-                            <div className="mt-auto flex items-center justify-between border-t border-border-color-light p-md px-lg">
-                                <span className="text-[0.7rem] text-text-muted">建立於 {format(new Date(apiKey.createdAt), 'yyyy/MM/dd')}</span>
-                                <div className="flex gap-1">
-                                    <button className="btn h-8 w-8 p-0 text-text-secondary hover:bg-bg-tertiary" onClick={() => handleEditKey(apiKey)}><Edit2 size={16} /></button>
-                                    <button className="btn h-8 w-8 p-0 text-color-error/70 hover:bg-color-error/10 hover:text-color-error" onClick={() => handleDeleteKey(apiKey)}><Trash2 size={16} /></button>
+                            <div className="api-key-footer">
+                                <span className="key-created">
+                                    建立於 {format(new Date(apiKey.createdAt), 'yyyy/MM/dd', { locale: zhTW })}
+                                </span>
+                                <div className="key-footer-actions">
+                                    <button
+                                        className="btn btn-ghost btn-icon"
+                                        onClick={() => handleEditKey(apiKey)}
+                                        title="編輯"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                        className="btn btn-ghost btn-icon text-error"
+                                        onClick={() => handleDeleteKey(apiKey)}
+                                        title="刪除"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -206,102 +282,197 @@ export function ApiKeys() {
                 )}
             </div>
 
-            {/* Newly Created Key Alert Modal */}
+            {/* 新建立金鑰提示 */}
             {newlyCreatedKey && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-md backdrop-blur-xl">
-                    <div className="absolute inset-0 bg-bg-overlay/60" onClick={() => setNewlyCreatedKey(null)} />
-                    <div className="relative w-full max-w-md rounded-2xl border border-color-primary/30 bg-bg-card p-10 shadow-glow animate-scale-in text-center">
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-color-primary/20 text-color-primary mb-6">
-                            <AlertCircle size={32} />
+                <div className="new-key-modal-overlay" onClick={() => setNewlyCreatedKey(null)}>
+                    <div className="new-key-modal" onClick={e => e.stopPropagation()}>
+                        <div className="new-key-header">
+                            <AlertCircle size={24} className="warning-icon" />
+                            <h3>請保存您的 API 金鑰</h3>
                         </div>
-                        <h2 className="text-xl font-800 text-text-primary mb-3">請保存您的 API 金鑰</h2>
-                        <p className="text-sm text-text-muted leading-relaxed mb-8">
-                            這是您唯一一次能看到完整金鑰的機會。<br />請立即複製並安全保存。
+                        <p className="new-key-warning">
+                            這是您唯一一次能看到完整金鑰的機會。請立即複製並安全保存。
                         </p>
-                        <div className="mb-8 flex items-center gap-2 rounded-lg bg-bg-tertiary/50 border border-border-color p-4 font-mono text-sm text-color-primary-light">
-                            <code className="flex-1 truncate">{newlyCreatedKey}</code>
-                            <button className="p-2 hover:bg-bg-tertiary rounded text-white" onClick={() => handleCopyKey(newlyCreatedKey, 'new')}>
-                                {copiedId === 'new' ? <Check size={18} className="text-color-success" /> : <Copy size={18} />}
+                        <div className="new-key-value">
+                            <code>{newlyCreatedKey}</code>
+                            <button
+                                className="btn btn-primary btn-sm"
+                                onClick={() => handleCopyKey(newlyCreatedKey, 'new')}
+                            >
+                                {copiedId === 'new' ? <Check size={14} /> : <Copy size={14} />}
+                                {copiedId === 'new' ? '已複製' : '複製'}
                             </button>
                         </div>
-                        <button className="btn btn-primary w-full h-12 text-md font-700" onClick={() => setNewlyCreatedKey(null)}>我已保存金鑰</button>
+                        <button className="btn btn-secondary w-full" onClick={() => setNewlyCreatedKey(null)}>
+                            我已保存金鑰
+                        </button>
                     </div>
                 </div>
             )}
 
-            {/* Edit Modal */}
-            {showModal && <ApiKeyModal apiKey={editingKey} onClose={() => setShowModal(false)} onSave={async (data: any) => {
-                if (editingKey) { updateApiKey(editingKey.id, data); }
-                else { const newKey = await addApiKey(data as any); setNewlyCreatedKey(newKey); }
-                setShowModal(false);
-            }} />}
+            {/* 新增/編輯 Modal */}
+            {showModal && (
+                <ApiKeyModal
+                    apiKey={editingKey}
+                    onClose={() => setShowModal(false)}
+                    onSave={async (data) => {
+                        if (editingKey) {
+                            updateApiKey(editingKey.id, data);
+                        } else {
+                            const newKey = await addApiKey(data as Omit<ApiKey, 'id' | 'key' | 'prefix' | 'usageCount' | 'createdAt' | 'updatedAt'>);
+                            setNewlyCreatedKey(newKey);
+                        }
+                        setShowModal(false);
+                    }}
+                />
+            )}
         </div>
     );
 }
 
-function ApiKeyModal({ apiKey, onClose, onSave }: any) {
+interface ApiKeyModalProps {
+    apiKey: ApiKey | null;
+    onClose: () => void;
+    onSave: (data: Partial<ApiKey>) => void;
+}
+
+function ApiKeyModal({ apiKey, onClose, onSave }: ApiKeyModalProps) {
     const [name, setName] = useState(apiKey?.name || '');
-    const [permissions, setPermissions] = useState<ApiPermission[]>(apiKey?.permissions || ['send', 'read_channels']);
+    const [permissions, setPermissions] = useState<ApiPermission[]>(
+        apiKey?.permissions || ['send', 'read_channels']
+    );
     const [rateLimit, setRateLimit] = useState(apiKey?.rateLimit || 60);
     const [enabled, setEnabled] = useState(apiKey?.enabled ?? true);
     const [hasExpiry, setHasExpiry] = useState(!!apiKey?.expiresAt);
-    const [expiryDate, setExpiryDate] = useState(apiKey?.expiresAt ? format(new Date(apiKey.expiresAt), 'yyyy-MM-dd') : '');
-
-    const handleClose = useCallback(() => onClose(), [onClose]);
-    useEscapeKey(handleClose);
+    const [expiryDate, setExpiryDate] = useState(
+        apiKey?.expiresAt ? format(new Date(apiKey.expiresAt), 'yyyy-MM-dd') : ''
+    );
 
     const togglePermission = (perm: ApiPermission) => {
-        setPermissions(prev => prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm]);
+        setPermissions(prev =>
+            prev.includes(perm)
+                ? prev.filter(p => p !== perm)
+                : [...prev, perm]
+        );
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        onSave({
+            name,
+            permissions,
+            rateLimit,
+            enabled,
+            expiresAt: hasExpiry && expiryDate ? new Date(expiryDate) : undefined
+        });
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-md backdrop-blur-md">
-            <div className="absolute inset-0 bg-bg-overlay/80" onClick={onClose} />
-            <div className="relative w-full max-w-lg overflow-hidden rounded-xl border border-border-color bg-bg-secondary shadow-2xl animate-scale-in">
-                <div className="flex items-center justify-between border-b border-border-color-light p-lg">
-                    <h2 className="text-xl font-700 text-text-primary">{apiKey ? '編輯 API 金鑰' : '建立 API 金鑰'}</h2>
-                    <button className="text-text-muted hover:text-text-primary" onClick={onClose}><X size={24} /></button>
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal api-key-modal" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>{apiKey ? '編輯 API 金鑰' : '建立 API 金鑰'}</h2>
+                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
+                        <X size={20} />
+                    </button>
                 </div>
-                <form className="max-h-[85vh] overflow-y-auto p-lg space-y-6" onSubmit={(e) => { e.preventDefault(); onSave({ name, permissions, rateLimit, enabled, expiresAt: hasExpiry && expiryDate ? new Date(expiryDate) : undefined }); }}>
-                    <div className="input-group"><label className="input-label font-600">金鑰名稱</label><input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="如：外部服務集成" required /></div>
-                    <div className="input-group"><label className="input-label font-600">存取權限</label>
-                        <div className="grid grid-cols-1 gap-2">
-                            {(Object.entries(PERMISSION_LABELS) as any).map(([perm, info]: any) => (
-                                <label key={perm} className={`group flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all ${permissions.includes(perm) ? 'border-color-primary bg-color-primary/10' : 'border-border-color bg-bg-tertiary/20'}`}>
-                                    <div className="flex flex-col">
-                                        <span className={`text-sm font-700 ${permissions.includes(perm) ? 'text-color-primary-light' : 'text-text-secondary'}`}>{info.label}</span>
-                                        <span className="text-[0.7rem] text-text-muted">{info.description}</span>
+
+                <form onSubmit={handleSubmit} className="modal-body">
+                    {/* 名稱 */}
+                    <div className="input-group">
+                        <label className="input-label">金鑰名稱</label>
+                        <input
+                            type="text"
+                            className="input"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            placeholder="例如：生產環境 API"
+                            required
+                        />
+                    </div>
+
+                    {/* 權限 */}
+                    <div className="input-group">
+                        <label className="input-label">API 權限</label>
+                        <div className="permissions-selector">
+                            {(Object.entries(PERMISSION_LABELS) as [ApiPermission, { label: string; description: string }][]).map(([perm, info]) => (
+                                <label key={perm} className={`permission-option ${permissions.includes(perm) ? 'selected' : ''}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={permissions.includes(perm)}
+                                        onChange={() => togglePermission(perm)}
+                                    />
+                                    <div className="permission-content">
+                                        <span className="permission-name">{info.label}</span>
+                                        <span className="permission-desc">{info.description}</span>
                                     </div>
-                                    <input type="checkbox" className="h-5 w-5 accent-color-primary" checked={permissions.includes(perm)} onChange={() => togglePermission(perm)} />
                                 </label>
                             ))}
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-md">
-                        <div className="input-group"><label className="input-label font-600">速率限制 (次/分)</label><input type="number" className="input" value={rateLimit} onChange={e => setRateLimit(Number(e.target.value))} min={1} max={1000} required /></div>
-                        <div className="input-group flex flex-col justify-end"><div className="flex items-center gap-md rounded-lg border border-border-color bg-bg-tertiary/50 p-2.5 px-3">
-                            <label className="relative inline-flex cursor-pointer items-center">
-                                <input type="checkbox" className="peer sr-only" checked={enabled} onChange={e => setEnabled(e.target.checked)} />
-                                <div className="h-6 w-11 rounded-full bg-border-color transition-all peer-checked:bg-color-primary after:absolute after:top-[2px] after:left-[2px] after:h-5 after:after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
+
+                    {/* 速率限制 */}
+                    <div className="input-group">
+                        <label className="input-label">速率限制 (每分鐘請求數)</label>
+                        <input
+                            type="number"
+                            className="input"
+                            value={rateLimit}
+                            onChange={e => setRateLimit(Number(e.target.value))}
+                            min={1}
+                            max={1000}
+                            required
+                        />
+                    </div>
+
+                    {/* 過期設定 */}
+                    <div className="input-group">
+                        <div className="expiry-header">
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    checked={hasExpiry}
+                                    onChange={e => setHasExpiry(e.target.checked)}
+                                />
+                                <span className="switch-slider" />
                             </label>
-                            <span className="text-xs font-700 text-text-secondary">金鑰啟用</span>
-                        </div></div>
-                    </div>
-                    <div className="input-group border-t border-border-color-light/50 pt-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-md">
-                                <label className="relative inline-flex cursor-pointer items-center">
-                                    <input type="checkbox" className="peer sr-only" checked={hasExpiry} onChange={e => setHasExpiry(e.target.checked)} />
-                                    <div className="h-6 w-11 rounded-full bg-border-color transition-all peer-checked:bg-color-primary after:absolute after:top-[2px] after:left-[2px] after:h-5 after:after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
-                                </label>
-                                <span className="text-sm font-600 text-text-secondary">設定有效期限</span>
-                            </div>
+                            <span className="input-label">設定過期日期</span>
                         </div>
-                        {hasExpiry && <input type="date" className="input animate-slide-up" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required={hasExpiry} />}
+                        {hasExpiry && (
+                            <input
+                                type="date"
+                                className="input"
+                                value={expiryDate}
+                                onChange={e => setExpiryDate(e.target.value)}
+                                required={hasExpiry}
+                            />
+                        )}
                     </div>
-                    <div className="flex gap-md pt-4">
-                        <button type="button" className="btn btn-secondary flex-1" onClick={onClose}>取消</button>
-                        <button type="submit" className="btn btn-primary flex-1">{apiKey ? '儲存變更' : '建立金鑰'}</button>
+
+                    {/* 啟用狀態 */}
+                    <div className="input-group">
+                        <label className="input-label">啟用狀態</label>
+                        <div className="flex items-center gap-md">
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    checked={enabled}
+                                    onChange={e => setEnabled(e.target.checked)}
+                                />
+                                <span className="switch-slider" />
+                            </label>
+                            <span className="text-secondary">{enabled ? '已啟用' : '已停用'}</span>
+                        </div>
+                    </div>
+
+                    <div className="modal-actions">
+                        <button type="button" className="btn btn-secondary" onClick={onClose}>
+                            取消
+                        </button>
+                        <button type="submit" className="btn btn-primary">
+                            {apiKey ? '儲存變更' : '建立金鑰'}
+                        </button>
                     </div>
                 </form>
             </div>

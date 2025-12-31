@@ -1,17 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import {
-    ClipboardList,
-    GitCommit,
-    Calendar,
-    User,
-    Clock,
-    Filter,
-    CheckCircle2,
-    RefreshCw,
-    Hash,
-    GitBranch
-} from 'lucide-react';
+import './Changelog.css';
 
 interface Commit {
     hash: string;
@@ -42,10 +31,12 @@ export function Changelog() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // api.get 已經處理了 BASE_URL，返回的直接是 data
                 const [versionData, historyData] = await Promise.all([
                     api.get<VersionInfo>('/version/current'),
                     api.get<{ commits: Commit[]; total: number }>('/version/history', { limit: 100 })
                 ]);
+
                 setVersion(versionData);
                 setCommits(historyData.commits || []);
             } catch (error) {
@@ -54,6 +45,7 @@ export function Changelog() {
                 setLoading(false);
             }
         };
+
         fetchData();
     }, []);
 
@@ -61,18 +53,18 @@ export function Changelog() {
         const colors: Record<string, string> = {
             'feat': 'success',
             'fix': 'error',
-            'docs': 'accent',
+            'docs': 'info',
             'style': 'warning',
             'refactor': 'primary',
             'perf': 'accent',
-            'test': 'accent',
+            'test': 'info',
             'build': 'warning',
             'ci': 'primary',
-            'chore': 'text-text-muted',
+            'chore': 'muted',
             'revert': 'error',
-            'other': 'text-text-muted'
+            'other': 'muted'
         };
-        return colors[type] || 'text-text-muted';
+        return colors[type] || 'muted';
     };
 
     const getTypeIcon = (type: string): string => {
@@ -93,11 +85,19 @@ export function Changelog() {
         return icons[type] || '📝';
     };
 
-    const formatRelativeDate = (dateStr: string): string => {
-        if (!dateStr || dateStr === 'unknown') return '未知時間';
+    const formatDate = (dateStr: string): string => {
         const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return '未知時間';
+        return new Intl.DateTimeFormat('zh-TW', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        }).format(date);
+    };
 
+    const formatRelativeDate = (dateStr: string): string => {
+        const date = new Date(dateStr);
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
         const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -108,7 +108,9 @@ export function Changelog() {
         if (diffMins < 60) return `${diffMins} 分鐘前`;
         if (diffHours < 24) return `${diffHours} 小時前`;
         if (diffDays < 7) return `${diffDays} 天前`;
-        return date.toLocaleDateString('zh-TW');
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} 週前`;
+        if (diffDays < 365) return `${Math.floor(diffDays / 30)} 個月前`;
+        return `${Math.floor(diffDays / 365)} 年前`;
     };
 
     const types = [
@@ -127,96 +129,87 @@ export function Changelog() {
         ? commits
         : commits.filter(c => c.type === filter);
 
+    // 按日期分組
     const groupedCommits = filteredCommits.reduce((groups, commit) => {
-        let date = '未知日期';
-        try {
-            if (commit.date) {
-                const d = new Date(commit.date);
-                if (!isNaN(d.getTime())) {
-                    date = d.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
-                }
-            }
-        } catch { /* ignore */ }
-
-        if (!groups[date]) groups[date] = [];
+        const date = new Date(commit.date).toLocaleDateString('zh-TW');
+        if (!groups[date]) {
+            groups[date] = [];
+        }
         groups[date].push(commit);
         return groups;
     }, {} as Record<string, Commit[]>);
 
     if (loading) {
         return (
-            <div className="flex h-[60vh] flex-col items-center justify-center gap-md">
-                <RefreshCw className="h-10 w-10 animate-spin text-color-primary" />
-                <p className="text-text-muted animate-pulse">正在讀取系統更新日誌...</p>
+            <div className="changelog-page">
+                <div className="loading-screen">
+                    <div className="animate-spin">⏳</div>
+                    <p>載入更新歷史中...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col gap-lg animate-fade-in min-w-0">
-            {/* Header */}
-            <div className="flex flex-col gap-md">
-                <h1 className="flex items-center gap-md text-2xl font-700 text-text-primary">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-color-primary/20 text-color-primary-light">
-                        <ClipboardList size={22} />
-                    </div>
-                    系統更新日誌
-                </h1>
-                <p className="text-text-muted">追蹤 NotifyHub 的每一次演進與修復</p>
-            </div>
+        <div className="changelog-page">
+            {/* 頁面標題 */}
+            <header className="page-header">
+                <div className="page-title-section">
+                    <h1 className="page-title">
+                        <span className="page-title-icon">📋</span>
+                        更新日誌
+                    </h1>
+                    <p className="page-description">
+                        查看系統的所有更新記錄與版本歷史
+                    </p>
+                </div>
+            </header>
 
-            {/* Version Hero */}
+            {/* 當前版本資訊 */}
             {version && (
-                <div className="card relative overflow-hidden border border-border-color bg-linear-to-br from-bg-card to-bg-tertiary/20 p-lg shadow-xl">
-                    <div className="absolute top-0 right-0 p-12 opacity-5 text-color-primary">
-                        <GitBranch size={160} />
+                <div className="version-hero card">
+                    <div className="version-hero-content">
+                        <div className="version-hero-main">
+                            <span className="version-hero-label">當前版本</span>
+                            <span className="version-hero-number">v{version.version}</span>
+                            <span className="version-hero-hash">{version.shortHash}</span>
+                        </div>
+                        <div className="version-hero-stats">
+                            <div className="version-stat">
+                                <span className="version-stat-value">{version.commitCount}</span>
+                                <span className="version-stat-label">提交次數</span>
+                            </div>
+                            <div className="version-stat">
+                                <span className="version-stat-value">{version.branch}</span>
+                                <span className="version-stat-label">分支</span>
+                            </div>
+                            <div className="version-stat">
+                                <span className="version-stat-value">{formatRelativeDate(version.lastCommitDate)}</span>
+                                <span className="version-stat-label">最後更新</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-lg">
-                        <div className="flex flex-col gap-2">
-                            <span className="text-[0.65rem] font-900 text-color-primary uppercase tracking-[0.3em]">Current Release</span>
-                            <div className="flex items-baseline gap-3">
-                                <h2 className="text-4xl font-900 text-text-primary tracking-tighter tabular-nums">v{version.version || 'Dev'}</h2>
-                                <span className="rounded bg-bg-secondary px-2 py-1 font-mono text-xs text-text-muted border border-border-color/50">{version.shortHash || 'HEAD'}</span>
-                            </div>
-                            <div className="flex items-center gap-3 mt-2 text-sm text-text-secondary bg-bg-secondary/50 rounded-full px-4 py-1 self-start border border-border-color/20">
-                                <CheckCircle2 size={14} className="text-color-success" />
-                                <span>{version.lastCommitMessage || 'No recent commits'}</span>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4 border-l border-border-color-light/20 pl-0 md:pl-8">
-                            <div className="flex flex-col">
-                                <span className="text-xl font-800 text-text-primary tabular-nums">{version.commitCount}</span>
-                                <span className="text-[0.6rem] font-700 text-text-muted uppercase tracking-wider">總提交次數</span>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-xl font-800 text-text-primary truncate max-w-[120px]">{version.branch || 'unknown'}</span>
-                                <span className="text-[0.6rem] font-700 text-text-muted uppercase tracking-wider">活動分支</span>
-                            </div>
-                            <div className="flex flex-col col-span-2 lg:col-span-1">
-                                <span className="text-xl font-800 text-text-primary whitespace-nowrap">{formatRelativeDate(version.lastCommitDate)}</span>
-                                <span className="text-[0.6rem] font-700 text-text-muted uppercase tracking-wider">最後部署</span>
-                            </div>
-                        </div>
+                    <div className="version-hero-message">
+                        <span className="message-icon">💬</span>
+                        <span className="message-text">{version.lastCommitMessage}</span>
                     </div>
                 </div>
             )}
 
-            {/* Filters */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                <div className="flex items-center gap-2 rounded-full border border-border-color bg-bg-card p-1 shadow-md">
-                    <div className="flex items-center gap-2 px-3 text-text-muted">
-                        <Filter size={14} />
-                    </div>
-                    {types.map(t => (
+            {/* 過濾器 */}
+            <div className="changelog-filters">
+                <div className="filter-tabs">
+                    {types.map(type => (
                         <button
-                            key={t.value}
-                            className={`rounded-full px-4 py-1.5 text-xs font-800 transition-all uppercase tracking-tighter ${filter === t.value ? 'bg-color-primary text-white shadow-glow' : 'text-text-muted hover:text-text-primary'}`}
-                            onClick={() => setFilter(t.value)}
+                            key={type.value}
+                            className={`filter-tab ${filter === type.value ? 'active' : ''}`}
+                            onClick={() => setFilter(type.value)}
                         >
-                            {t.label}
-                            {filter === t.value && (
-                                <span className="ml-2 rounded-full bg-white/20 px-1.5 tabular-nums">
-                                    {t.value === 'all' ? commits.length : commits.filter(c => c.type === t.value).length}
+                            {type.value !== 'all' && <span className="filter-icon">{getTypeIcon(type.value)}</span>}
+                            {type.label}
+                            {type.value === filter && (
+                                <span className="filter-count">
+                                    {type.value === 'all' ? commits.length : commits.filter(c => c.type === type.value).length}
                                 </span>
                             )}
                         </button>
@@ -224,68 +217,55 @@ export function Changelog() {
                 </div>
             </div>
 
-            {/* Timeline */}
-            <div className="flex flex-col gap-10 mt-4">
+            {/* 提交歷史 */}
+            <div className="changelog-timeline">
                 {Object.entries(groupedCommits).map(([date, dateCommits]) => (
-                    <div key={date} className="relative pl-8 md:pl-0">
-                        {/* Date Divider */}
-                        <div className="flex items-center gap-4 mb-6 md:-ml-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bg-card border-2 border-border-color text-text-muted shadow-lg z-10">
-                                <Calendar size={18} />
-                            </div>
-                            <div className="flex items-baseline gap-3">
-                                <h3 className="text-md font-900 text-text-primary italic">{date}</h3>
-                                <span className="text-[0.65rem] font-800 text-text-muted uppercase tracking-widest">{dateCommits.length} CHANGES</span>
-                            </div>
-                            <div className="hidden md:block h-px flex-1 bg-linear-to-r from-border-color-light/50 to-transparent" />
+                    <div key={date} className="timeline-group">
+                        <div className="timeline-date">
+                            <span className="date-icon">📅</span>
+                            {date}
+                            <span className="date-count">{dateCommits.length} 項更新</span>
                         </div>
-
-                        {/* Commits List */}
-                        <div className="flex flex-col gap-4">
-                            {dateCommits.map((commit, idx) => (
+                        <div className="timeline-commits">
+                            {dateCommits.map((commit, index) => (
                                 <div
                                     key={commit.hash}
-                                    className="card group ml-2 md:ml-6 border border-border-color bg-bg-card p-md shadow-md transition-all hover:border-color-primary/30 hover:bg-bg-tertiary/10 animate-slide-up"
-                                    style={{ animationDelay: `${idx * 40}ms` }}
+                                    className="commit-card"
+                                    style={{ animationDelay: `${index * 0.05}s` }}
                                 >
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <div className="flex flex-col gap-2 flex-1">
-                                            <div className="flex items-center gap-3">
-                                                <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[0.65rem] font-900 border bg-bg-secondary uppercase tracking-tighter text-${getTypeColor(commit.type)}`}>
-                                                    <span>{getTypeIcon(commit.type)}</span>
-                                                    {commit.typeLabel}
-                                                </span>
-                                                <h4 className="text-sm font-800 text-text-primary leading-snug group-hover:text-color-primary-light transition-colors">{commit.message}</h4>
-                                            </div>
-                                            <div className="flex items-center gap-6 text-[0.7rem] text-text-muted font-600">
-                                                <span className="flex items-center gap-1.5"><User size={12} /> {commit.author}</span>
-                                                <span className="flex items-center gap-1.5"><Clock size={12} /> {formatRelativeDate(commit.date)}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
-                                            <div className="flex items-center gap-1 px-2 py-1 rounded bg-bg-tertiary/50 border border-border-color-light/20 font-mono text-[0.65rem] text-text-muted">
-                                                <Hash size={10} />
-                                                {commit.shortHash}
-                                            </div>
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-tertiary text-text-muted opacity-0 group-hover:opacity-100 transition-all">
-                                                <GitCommit size={14} />
-                                            </div>
-                                        </div>
+                                    <div className="commit-header">
+                                        <span className={`commit-type type-${getTypeColor(commit.type)}`}>
+                                            <span className="type-icon">{getTypeIcon(commit.type)}</span>
+                                            {commit.typeLabel}
+                                        </span>
+                                        <span className="commit-hash" title={commit.hash}>
+                                            {commit.shortHash}
+                                        </span>
+                                    </div>
+                                    <p className="commit-message">{commit.message}</p>
+                                    <div className="commit-meta">
+                                        <span className="commit-author">
+                                            <span className="author-icon">👤</span>
+                                            {commit.author}
+                                        </span>
+                                        <span className="commit-time" title={formatDate(commit.date)}>
+                                            <span className="time-icon">🕒</span>
+                                            {formatRelativeDate(commit.date)}
+                                        </span>
                                     </div>
                                 </div>
                             ))}
                         </div>
-
-                        {/* Timeline Path */}
-                        <div className="absolute left-[19px] top-10 bottom-0 w-0.5 bg-linear-to-b from-border-color via-border-color/30 to-transparent -z-0" />
                     </div>
                 ))}
 
                 {filteredCommits.length === 0 && (
-                    <div className="py-20 text-center opacity-40">
-                        <span className="text-5xl block mb-4">🛸</span>
-                        <p className="font-900 uppercase tracking-[0.2em]">Data stream empty</p>
-                        <p className="text-sm">Try alternate time-line or filter</p>
+                    <div className="empty-state">
+                        <div className="empty-state-icon">📭</div>
+                        <h3 className="empty-state-title">沒有找到相關更新</h3>
+                        <p className="empty-state-description">
+                            目前沒有符合篩選條件的更新記錄
+                        </p>
                     </div>
                 )}
             </div>

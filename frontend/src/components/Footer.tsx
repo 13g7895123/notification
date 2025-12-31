@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
+import './Footer.css';
 
 interface VersionInfo {
     version: string;
@@ -19,6 +20,7 @@ export function Footer() {
     useEffect(() => {
         const fetchVersion = async () => {
             try {
+                // api.get 已經處理了 BASE_URL，返回的直接是 data
                 const data = await api.get<VersionInfo>('/version/current');
                 setVersion(data);
             } catch (error) {
@@ -32,39 +34,39 @@ export function Footer() {
     }, []);
 
     return (
-        <footer className="border-t border-border-color bg-bg-secondary p-md md:px-lg">
-            <div className="flex flex-col items-center justify-between gap-md md:flex-row">
-                <div className="flex items-center gap-md">
-                    <span className="flex items-center gap-sm font-600 text-color-primary-light">
-                        <span className="text-[1.2rem]">🔔</span>
+        <footer className="app-footer">
+            <div className="footer-content">
+                <div className="footer-left">
+                    <span className="footer-brand">
+                        <span className="brand-icon">🔔</span>
                         NotifyHub
                     </span>
-                    <span className="hidden text-text-muted md:inline">•</span>
-                    <span className="text-[0.75rem] text-text-muted">
+                    <span className="footer-separator">•</span>
+                    <span className="footer-copyright">
                         © {new Date().getFullYear()} All rights reserved.
                     </span>
                 </div>
 
-                <div className="flex items-center">
+                <div className="footer-right">
                     {loading ? (
-                        <span className="flex items-center gap-sm text-[0.75rem] text-text-muted">
-                            <span className="h-2 w-2 animate-pulse rounded-full bg-color-primary"></span>
+                        <span className="version-loading">
+                            <span className="loading-dot"></span>
                             載入版本...
                         </span>
                     ) : version ? (
-                        <Link to="/changelog" className="flex items-center gap-sm rounded-full border border-border-color bg-bg-tertiary px-md py-1 text-[0.75rem] transition-all hover:border-color-primary hover:bg-bg-hover" title={`最後更新: ${version.lastCommitMessage}`}>
-                            <span className="grayscale-100 group-hover:grayscale-0">🏷️</span>
-                            <span className="font-600 text-text-primary">
+                        <Link to="/changelog" className="version-badge" title={`最後更新: ${version.lastCommitMessage}`}>
+                            <span className="version-icon">🏷️</span>
+                            <span className="version-text">
                                 v{version.version}
                             </span>
-                            <span className="font-mono text-text-muted">
-                                ({version.shortHash})
+                            <span className="version-hash">
+                                {version.shortHash}
                             </span>
-                            <span className="text-color-primary-light">→</span>
+                            <span className="version-arrow">→</span>
                         </Link>
                     ) : (
-                        <span className="flex items-center gap-sm rounded-full border border-error/30 bg-error/10 px-md py-1 text-[0.75rem] text-color-error-light">
-                            <span>⚠️</span>
+                        <span className="version-badge error">
+                            <span className="version-icon">⚠️</span>
                             版本未知
                         </span>
                     )}
