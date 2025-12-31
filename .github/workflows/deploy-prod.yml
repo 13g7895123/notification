@@ -87,9 +87,15 @@ jobs:
             echo "[5/7] 變更摘要:"
             git log --oneline $BEFORE_COMMIT..$AFTER_COMMIT | head -10
             
+            # 生成版本資訊
+            echo ""
+            echo "[6/8] 生成版本資訊..."
+            chmod +x ./scripts/generate-version.sh
+            ./scripts/generate-version.sh
+            
             # 執行部署腳本（藍綠部署）
             echo ""
-            echo "[6/7] 執行藍綠部署..."
+            echo "[7/8] 執行藍綠部署..."
             
             # 取得當前活躍版本
             PROXY_CONF="./docker/frontend-proxy/conf.d/default.conf"
@@ -111,7 +117,7 @@ jobs:
             
             # 顯示服務狀態
             echo ""
-            echo "[7/7] 服務狀態:"
+            echo "[8/8] 服務狀態:"
             docker compose ps
             
             echo ""
