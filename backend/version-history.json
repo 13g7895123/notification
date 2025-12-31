@@ -1,0 +1,905 @@
+{
+  "commits": [
+    {
+      "hash": "b4bf4db9f66219607737ca507d59863eae5120b3",
+      "shortHash": "b4bf4db",
+      "author": "Jarvis",
+      "date": "2025-12-31 08:08:16 +0800",
+      "message": "feat: 新增 Webhook 呼叫記錄模態視窗以顯示詳細日誌與統計資訊。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "28473a9b4b4c649dbf4a63dba2e5d59eb1c8e49d",
+      "shortHash": "28473a9",
+      "author": "Jarvis",
+      "date": "2025-12-31 08:02:06 +0800",
+      "message": "revert: 還原前端樣式系統至 Vanilla CSS 並移除 Tailwind CSS",
+      "type": "revert",
+      "typeLabel": "還原"
+    },
+    {
+      "hash": "ba576d199e406ddcf029fd438758ed0ff82d5530",
+      "shortHash": "ba576d1",
+      "author": "Jarvis",
+      "date": "2025-12-30 22:37:28 +0800",
+      "message": "feat: 新增側邊欄 margin-left 和 width 相關的 CSS 變數",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "3b88d83b971b2cb36175aef195c6224faa39a0dd",
+      "shortHash": "3b88d83",
+      "author": "Jarvis",
+      "date": "2025-12-30 22:15:33 +0800",
+      "message": "feat: 新增更新日誌頁面至側邊欄並改善其日期與版本資訊顯示",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "85237547c971eade1d05b1a85be05f693c11d78b",
+      "shortHash": "8523754",
+      "author": "Jarvis",
+      "date": "2025-12-30 22:10:13 +0800",
+      "message": "fix: 改善日誌回應狀態處理以支援空值並優化狀態判斷邏輯",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "81559dda0b21e3d544167a45f6ae51b9be2f78c3",
+      "shortHash": "81559dd",
+      "author": "Jarvis",
+      "date": "2025-12-30 22:07:11 +0800",
+      "message": "refactor: 強化渠道相關組件的類型定義與類型安全並調整 WebhookLog 響應狀態類型",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "9dfe362291ad9c28e5b8475b9863bccc05e728cb",
+      "shortHash": "9dfe362",
+      "author": "Jarvis",
+      "date": "2025-12-30 22:03:39 +0800",
+      "message": "feat(webhook-logs): 重新設計 Webhook 記錄介面，增加統計數據與相對時間顯示。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "007365441f4cd0ddc74c3082e478761048363f9c",
+      "shortHash": "0073654",
+      "author": "Jarvis",
+      "date": "2025-12-30 21:52:27 +0800",
+      "message": "chore: 更新套件依賴",
+      "type": "chore",
+      "typeLabel": "雜項"
+    },
+    {
+      "hash": "7cb81d86485e62da7d27953ee7ed944568dfd644",
+      "shortHash": "7cb81d8",
+      "author": "Jarvis",
+      "date": "2025-12-30 21:49:28 +0800",
+      "message": "refactor: 重新命名 CSS 變數並優化 API 使用日誌詳情顯示。",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "80d0b820e9e0ab41b6096660fc7292f6fde3bf79",
+      "shortHash": "80d0b82",
+      "author": "Jarvis",
+      "date": "2025-12-30 21:41:52 +0800",
+      "message": "feat: 新增 `useEscapeKey` hook 並整合至多個頁面以支援按下 Esc 鍵關閉彈窗",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "8769dc5261a1acb39d4d058d2c2956d62e288fc5",
+      "shortHash": "8769dc5",
+      "author": "Jarvis",
+      "date": "2025-12-30 21:27:42 +0800",
+      "message": "refactor: 移除未使用的導入、更新視窗通知標題及優化介面元素",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "de2b6975d7def3160caa1e69a80eb233129a98a3",
+      "shortHash": "de2b697",
+      "author": "Jarvis",
+      "date": "2025-12-30 21:12:54 +0800",
+      "message": "revert: 還原 Nginx 配置至 commit 4dd38a5c",
+      "type": "revert",
+      "typeLabel": "還原"
+    },
+    {
+      "hash": "34164cc28809e6472b80bd6dbb0c09fbf09e6524",
+      "shortHash": "34164cc",
+      "author": "Jarvis",
+      "date": "2025-12-30 21:06:43 +0800",
+      "message": "refactor(nginx): 移除前端 Nginx 的 API 代理設定",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "8fd6556ea39f8bb0fb9db690b27d5e5d9c3d0260",
+      "shortHash": "8fd6556",
+      "author": "Jarvis",
+      "date": "2025-12-30 21:01:35 +0800",
+      "message": "feat: 新增 Nginx 後端 API 代理設定以處理 `/api/` 請求",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "4dd38a5c22b0f2e3272cefd7a8b83656dc50b747",
+      "shortHash": "4dd38a5",
+      "author": "Jarvis",
+      "date": "2025-12-30 20:50:03 +0800",
+      "message": "ci: 更新部署工作流程",
+      "type": "ci",
+      "typeLabel": "CI/CD"
+    },
+    {
+      "hash": "3824372781752c524e49aabbf9f6e48a34affcf5",
+      "shortHash": "3824372",
+      "author": "Jarvis",
+      "date": "2025-12-30 20:45:53 +0800",
+      "message": "refactor: 將前端樣式系統遷移至 Tailwind CSS 並移除舊有 CSS 檔案",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "69f060414675bfcbd7bc1ae4fe286a966e9553d5",
+      "shortHash": "69f0604",
+      "author": "Jarvis",
+      "date": "2025-12-30 20:30:40 +0800",
+      "message": "refactor: 重構 .nav-item.admin-item 的頂部邊框實作並調整其上邊距",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "69230ab2c66bcab101242afd780ffd3f2729cf21",
+      "shortHash": "69230ab",
+      "author": "Jarvis",
+      "date": "2025-12-30 19:39:02 +0800",
+      "message": "feat(api-log): 將回應主體加入 API 紀錄並統一請求主體變數名稱",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "4af673262dda3c35ded141e5afa6db0390e8d95c",
+      "shortHash": "4af6732",
+      "author": "Jarvis",
+      "date": "2025-12-30 19:36:03 +0800",
+      "message": "feat: 新增 API 使用紀錄重新整理功能、優化空內容顯示並調整資料欄位名稱",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "2954d2d57aa1bc6b371c315382103b333458c4fd",
+      "shortHash": "2954d2d",
+      "author": "Jarvis",
+      "date": "2025-12-30 19:26:58 +0800",
+      "message": "feat: 增加 API 使用日誌的回應內容記錄與顯示功能",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "3636a8c8d7924d4e3d03941b3532df4c58a70e56",
+      "shortHash": "3636a8c",
+      "author": "jarvis",
+      "date": "2025-12-30 17:24:28 +0800",
+      "message": "feat: 增加手動解析 JWT 邏輯以支援未經 AuthFilter 的身份驗證。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "8068b4784886d6c078d69022a52510e5282d3421",
+      "shortHash": "8068b47",
+      "author": "jarvis",
+      "date": "2025-12-30 16:53:51 +0800",
+      "message": "feat: 調整 Windows 通知 API 路由，使其大部分無需 JWT 認證，僅刪除操作仍需登入。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "c5b9b74f0c7d7810ae83f2a52dd4ffcf691770ad",
+      "shortHash": "c5b9b74",
+      "author": "jarvis",
+      "date": "2025-12-30 15:59:23 +0800",
+      "message": "ci: 更新開發與生產環境部署工作流程。",
+      "type": "ci",
+      "typeLabel": "CI/CD"
+    },
+    {
+      "hash": "264436a89e79206886be067cf4caa0b5636338c6",
+      "shortHash": "264436a",
+      "author": "jarvis",
+      "date": "2025-12-30 15:52:49 +0800",
+      "message": "feat: 調整 API 金鑰儲存為明文並支援明文查找，同時更新前端 API 範例的端點與授權方式",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "7d56939280c519020bd6444796abf1e0b4fa133f",
+      "shortHash": "7d56939",
+      "author": "jarvis",
+      "date": "2025-12-30 15:40:34 +0800",
+      "message": "fix(api-usage): 修正 API Stats 返回欄位名稱以符合前端期望格式",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "0b598e2b053d90f89c45adbdf861d6f86bf02cf6",
+      "shortHash": "0b598e2",
+      "author": "jarvis",
+      "date": "2025-12-30 15:32:59 +0800",
+      "message": "feat(dashboard): 新增手動啟動系統排程器功能",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "c7ea2fa525052d1ba63917e573d51152cfe20763",
+      "shortHash": "c7ea2fa",
+      "author": "jarvis",
+      "date": "2025-12-30 15:27:57 +0800",
+      "message": "feat(windows-notifications): 新增 Windows Client 整合說明的複製按鈕",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "afe1ff708efbd8426df81a425007f32559234308",
+      "shortHash": "afe1ff7",
+      "author": "jarvis",
+      "date": "2025-12-30 15:14:05 +0800",
+      "message": "style: 新增 Dashboard 空狀態樣式",
+      "type": "style",
+      "typeLabel": "樣式"
+    },
+    {
+      "hash": "9d6f2d7e090a85383fe844efd73fe7cbfff12a42",
+      "shortHash": "9d6f2d7",
+      "author": "jarvis",
+      "date": "2025-12-30 15:02:04 +0800",
+      "message": "feat(dashboard): 實作 API 使用紀錄顯示並修復資料載入邏輯",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "e14e359c5d1fcefc0452627f8da5d7c8a5d16bde",
+      "shortHash": "e14e359",
+      "author": "jarvis",
+      "date": "2025-12-30 14:53:09 +0800",
+      "message": "feat(log): 實作 API 使用日誌記錄功能",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "fc07e2ac2a5ef972f7bc2eb412f744e415c83a69",
+      "shortHash": "fc07e2a",
+      "author": "jarvis",
+      "date": "2025-12-30 14:47:50 +0800",
+      "message": "fix(api): 修復 API Key 建立時 ID 類型錯誤導致寫入失敗的問題",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "c302d12769b1198f9fe524ce262ad90334293219",
+      "shortHash": "c302d12",
+      "author": "jarvis",
+      "date": "2025-12-30 14:42:59 +0800",
+      "message": "fix: 修復 React useEffect lint 錯誤及 API 路由認證問題",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "5014d4ef7fe175ef0252e2f94bcb55ddccc745b7",
+      "shortHash": "5014d4e",
+      "author": "jarvis",
+      "date": "2025-12-30 14:41:26 +0800",
+      "message": "fix(api): 移動 Windows 通知 API 至 auth filter 外，支援 X-API-Key 認證",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "5fd7af09ee62e4239bd4d60389aad213c0beac7f",
+      "shortHash": "5fd7af0",
+      "author": "jarvis",
+      "date": "2025-12-30 14:37:17 +0800",
+      "message": "feat(ci): integrate windows notification to deployment workflows",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "043cdf80c0306f9bcf74b426d6a7c6ed3a99c046",
+      "shortHash": "043cdf8",
+      "author": "jarvis",
+      "date": "2025-12-30 14:32:08 +0800",
+      "message": "chore(debug): add version marker to page title",
+      "type": "chore",
+      "typeLabel": "雜項"
+    },
+    {
+      "hash": "0985ad3eabc1c94d913b14ceee9ccf16538d3c49",
+      "shortHash": "0985ad3",
+      "author": "jarvis",
+      "date": "2025-12-30 14:29:21 +0800",
+      "message": "fix(frontend): 修復並還原 WindowsNotifications 組件內容",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "4461719bc749ecb19a316168caf884c903c4aa07",
+      "shortHash": "4461719",
+      "author": "jarvis",
+      "date": "2025-12-30 14:26:49 +0800",
+      "message": "fix(api): 修復系統狀態路由與增強文件功能",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "1f05a664348e7964ac62cae9067b4721891dedf4",
+      "shortHash": "1f05a66",
+      "author": "jarvis",
+      "date": "2025-12-30 14:25:06 +0800",
+      "message": "refactor: 移除 Windows 通知頁面及其所有相關邏輯與 UI 實作。",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "7ab5b7d0a2b51eb5cd8e1c1650d07c632643552b",
+      "shortHash": "7ab5b7d",
+      "author": "jarvis",
+      "date": "2025-12-30 14:15:33 +0800",
+      "message": "refactor: 註解掉登入頁面中的 fillDemo 函數",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "00a95207cb9f4e50ffc4c3e524b0fb7949f658f5",
+      "shortHash": "00a9520",
+      "author": "jarvis",
+      "date": "2025-12-30 14:08:10 +0800",
+      "message": "chore: 隱藏登入頁面的 Demo 帳號區塊",
+      "type": "chore",
+      "typeLabel": "雜項"
+    },
+    {
+      "hash": "6b446f82d79ca7441b0402da80b86bd89644d888",
+      "shortHash": "6b446f8",
+      "author": "jarvis",
+      "date": "2025-12-30 13:58:55 +0800",
+      "message": "feat: 新增生成 UUID v4 的方法",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "dd2d2371b262d3793b07f61fa3615dfba722d4fd",
+      "shortHash": "dd2d237",
+      "author": "jarvis",
+      "date": "2025-12-30 13:55:47 +0800",
+      "message": "fix: 將系統狀態 API 移至無需認證的路由以供監控使用",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "0114606493fb15281875feabae4cfae1c00e70ba",
+      "shortHash": "0114606",
+      "author": "jarvis",
+      "date": "2025-12-30 11:31:43 +0800",
+      "message": "feat: 新增儀表板標題旁迷你狀態徽章，並優化系統狀態顯示與 API 呼叫。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "022e25cddc0c02c6d09e7e687e5afd918f238a14",
+      "shortHash": "022e25c",
+      "author": "jarvis",
+      "date": "2025-12-30 11:23:45 +0800",
+      "message": "feat: 新增系統狀態檢查功能，包含排程器心跳監控與前端顯示。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "23435ef51f0e8f074abaa2717f9a0c0b9047d702",
+      "shortHash": "23435ef",
+      "author": "jarvis",
+      "date": "2025-12-30 11:11:58 +0800",
+      "message": "feat: 引入 CodeIgniter Tasks 與 Settings 模組並啟用 commands",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "3b58f8bf52503f7307f5c7a61155c4603628ec54",
+      "shortHash": "3b58f8b",
+      "author": "jarvis",
+      "date": "2025-12-30 10:53:36 +0800",
+      "message": "feat: 新增 CodeIgniter Tasks、Settings 和 Queue 元件",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "f7a21ae816299d8280e368f2230e12010e01298f",
+      "shortHash": "f7a21ae",
+      "author": "jarvis",
+      "date": "2025-12-30 10:51:37 +0800",
+      "message": "chore: 新增後端 vendor/writable 及資料庫 mariadb_data 忽略規則",
+      "type": "chore",
+      "typeLabel": "雜項"
+    },
+    {
+      "hash": "c95cf81f16fedb6270e87837f57091e3f0eb8cd3",
+      "shortHash": "c95cf81",
+      "author": "jarvis",
+      "date": "2025-12-30 10:31:45 +0800",
+      "message": "chore: 設定應用程式與 Docker 容器時區為 Asia/Taipei 並安裝 tzdata。",
+      "type": "chore",
+      "typeLabel": "雜項"
+    },
+    {
+      "hash": "a239c7450745a7d88657cadfa7ae40508648cb20",
+      "shortHash": "a239c74",
+      "author": "jarvis",
+      "date": "2025-12-30 10:27:27 +0800",
+      "message": "build: 調整 Composer 最低穩定性設定為開發版本並優先選擇穩定版本。",
+      "type": "build",
+      "typeLabel": "建置"
+    },
+    {
+      "hash": "2ac53e66038cb68f5996cbe99fee069987ba1f59",
+      "shortHash": "2ac53e6",
+      "author": "jarvis",
+      "date": "2025-12-30 10:24:25 +0800",
+      "message": "chore: 更新 codeigniter4/tasks 依賴版本至 dev-develop",
+      "type": "chore",
+      "typeLabel": "雜項"
+    },
+    {
+      "hash": "561c088fc21c78b79e6d61d5ec7d4126ba337339",
+      "shortHash": "561c088",
+      "author": "jarvis",
+      "date": "2025-12-30 10:19:27 +0800",
+      "message": "feat: 導入 CodeIgniter Tasks 支援訊息排程，優化排程判斷邏輯並改進 API 回應處理",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "b644836c6aa1af41e645bb4c30caab5d0a9165ec",
+      "shortHash": "b644836",
+      "author": "jarvis",
+      "date": "2025-12-30 10:14:17 +0800",
+      "message": "refactor: 修正 finalOptions 的型別定義並移除 catch 區塊中未使用的錯誤變數",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "8aee289f24cf19cea95392d9efb1186275deb9f0",
+      "shortHash": "8aee289",
+      "author": "jarvis",
+      "date": "2025-12-30 10:11:45 +0800",
+      "message": "feat: 實作排程訊息發送功能，包含排程指令、訊息排程狀態與渠道選項欄位，並整合任務排程器。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "a78682a713587ca56a1ab608d0c87594773267e6",
+      "shortHash": "a78682a",
+      "author": "jarvis",
+      "date": "2025-12-30 09:50:40 +0800",
+      "message": "feat: 於 Windows 通知頁面新增 API 整合說明模態框，提供詳細文件與專屬樣式。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "16c7aacdcdd7605c375f69dc6eebe5730d8b2268",
+      "shortHash": "16c7aac",
+      "author": "jarvis",
+      "date": "2025-12-30 09:48:57 +0800",
+      "message": "refactor: 將使用者列表項目的樣式從 Tailwind 類別重構為行內樣式並新增 flex 相關的 CSS 實用類別。",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "4d3ed1b397245fc0b59bc05091fe9013aa3fcc3d",
+      "shortHash": "4d3ed1b",
+      "author": "jarvis",
+      "date": "2025-12-30 09:44:44 +0800",
+      "message": "feat: 增強 `tryFormatJson` 函數以支援物件及更廣泛的輸入類型。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "4235b1f13cab93d68726e674004f38a2d0214295",
+      "shortHash": "4235b1f",
+      "author": "jarvis",
+      "date": "2025-12-30 09:39:40 +0800",
+      "message": "feat: 引入 `safeFormatDate` 函數以安全地格式化日期並處理無效日期字串。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "0b4c1e031d268a27c61220e8bbe45ee1d172fc08",
+      "shortHash": "0b4c1e0",
+      "author": "jarvis",
+      "date": "2025-12-30 09:36:55 +0800",
+      "message": "feat: 新增 CSS 工具類別並應用 `flex-shrink-0` 以防止使用者頭像縮小。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "fb8fa74409870645fab09300884f465d452eda9d",
+      "shortHash": "fb8fa74",
+      "author": "Jarvis",
+      "date": "2025-12-30 08:39:56 +0800",
+      "message": "feat: 為 channel_users 表的 channel_id 和 provider_id 欄位新增具名唯一索引",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "f453fc89db4bf9df2f3d280769667ebeef435a20",
+      "shortHash": "f453fc8",
+      "author": "Jarvis",
+      "date": "2025-12-30 08:38:01 +0800",
+      "message": "feat: 於 LINE webhook 處理中新增詳細日誌記錄及使用者資料獲取逾時設定",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "768009c6044bd533ae643c5d3f083c934e85044d",
+      "shortHash": "768009c",
+      "author": "Jarvis",
+      "date": "2025-12-30 08:33:37 +0800",
+      "message": "feat: 新增取得渠道使用者的方法",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "538b78c274cf703de54b56d86f2a0c82f7a22a1e",
+      "shortHash": "538b78c",
+      "author": "Jarvis",
+      "date": "2025-12-30 08:30:02 +0800",
+      "message": "feat: 在渠道使用者列表模態框標頭新增關閉按鈕",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "a396d8c9d51fd00e15d75a3f02d960382511e90c",
+      "shortHash": "a396d8c",
+      "author": "Jarvis",
+      "date": "2025-12-30 08:27:21 +0800",
+      "message": "feat: 為 Line 頻道新增人員清單按鈕並條件式顯示相關操作",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "80fa801745761da58450168a805e9f112437a6e1",
+      "shortHash": "80fa801",
+      "author": "Jarvis",
+      "date": "2025-12-30 08:22:28 +0800",
+      "message": "feat: 新增版本號顯示及更新日誌功能",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "0a75dc6239f3d6ad53a9ee7cfecd7a423c56134a",
+      "shortHash": "0a75dc6",
+      "author": "Jarvis",
+      "date": "2025-12-28 22:33:22 +0800",
+      "message": "refactor: 移除渠道使用者列表相關按鈕與模態框關閉按鈕，並更新 Webhook 記錄圖示",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "39259ef3433bfa14de00f1b324e9c890b0b2b71a",
+      "shortHash": "39259ef",
+      "author": "Jarvis",
+      "date": "2025-12-28 22:25:24 +0800",
+      "message": "feat: 新增 Windows 通知頁面的 API 整合說明模態框",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "10b98540b08f18bd2b5bf5c4cd50f89108ba00d3",
+      "shortHash": "10b9854",
+      "author": "Jarvis",
+      "date": "2025-12-28 21:54:15 +0800",
+      "message": "feat: 新增渠道 Webhook 請求記錄與查詢功能",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "c30330f376ed386dfb48f9d203ed863426dfc230",
+      "shortHash": "c30330f",
+      "author": "Jarvis",
+      "date": "2025-12-28 21:44:20 +0800",
+      "message": "feat: 新增通知渠道管理頁面，包含渠道列表、新增、編輯、刪除及測試功能。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "3d372cba4e9ae1877ac346ccef01976774f9728b",
+      "shortHash": "3d372cb",
+      "author": "Jarvis",
+      "date": "2025-12-28 21:38:05 +0800",
+      "message": "feat: 支援通知發送至指定頻道用戶功能並新增相關後端實作",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "665f23cd9fedc548d46960554af029aecbaa3273",
+      "shortHash": "665f23c",
+      "author": "Jarvis",
+      "date": "2025-12-28 21:24:09 +0800",
+      "message": "feat: 新增渠道 Webhook Key 重新生成功能並將 Line 配置中的 targetId 設為可選",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "5dcf937236193f99dbf9ad73ef0257f6e4ced37c",
+      "shortHash": "5dcf937",
+      "author": "Jarvis",
+      "date": "2025-12-28 21:12:48 +0800",
+      "message": "fix: 於更新渠道時若無 webhook_key 則自動生成並補上。",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "1a318f2504f55dc2cfaa395e52d137c358cc3b4b",
+      "shortHash": "1a318f2",
+      "author": "Jarvis",
+      "date": "2025-12-28 21:04:24 +0800",
+      "message": "feat: 新增 LINE 頻道 Webhook URL 顯示與複製功能，並為頻道模型新增 webhookKey 屬性",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "5e87ed44c31a752740fdd18addc9c75d4fae9069",
+      "shortHash": "5e87ed4",
+      "author": "Jarvis",
+      "date": "2025-12-28 21:00:18 +0800",
+      "message": "fix: 增加對 channelIds 和 channel.type 的空值檢查以避免 UI 錯誤",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "7175f2d17e82dd35158ca45c4cb0ef956585172e",
+      "shortHash": "7175f2d",
+      "author": "Jarvis",
+      "date": "2025-12-28 20:55:37 +0800",
+      "message": "fix: 確保 API 回傳空值時，相關狀態變數設定為空陣列",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "3a9793844139dc0c6fc2c9b6843aa6cce78d1446",
+      "shortHash": "3a97938",
+      "author": "Jarvis",
+      "date": "2025-12-28 20:47:11 +0800",
+      "message": "style: 還原前端樣式至 commit d2ca521",
+      "type": "style",
+      "typeLabel": "樣式"
+    },
+    {
+      "hash": "2d27bc3e34765096354844678f0e4ffdd0bbdea8",
+      "shortHash": "2d27bc3",
+      "author": "Jarvis",
+      "date": "2025-12-28 20:33:29 +0800",
+      "message": "feat: 移除 Tailwind CSS 並重構側邊欄為可折疊設計，同時將樣式遷移至自訂 CSS 類別",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "9d25feae8a07452011041b6d4b9df5cdeaf8ed81",
+      "shortHash": "9d25fea",
+      "author": "Jarvis",
+      "date": "2025-12-28 20:30:37 +0800",
+      "message": "test: 更新側邊欄組件測試以匹配 UI 變更、調整圖示模擬並新增 Vitest 參考。",
+      "type": "test",
+      "typeLabel": "測試"
+    },
+    {
+      "hash": "46e0d4bb24c697f43c92781a3cca9c547bb04699",
+      "shortHash": "46e0d4b",
+      "author": "Jarvis",
+      "date": "2025-12-28 20:26:51 +0800",
+      "message": "chore: 更新 typescript, vite 及 vitest 依賴版本",
+      "type": "chore",
+      "typeLabel": "雜項"
+    },
+    {
+      "hash": "6527082507227e62ccb0758c52ae25005b30abb4",
+      "shortHash": "6527082",
+      "author": "Jarvis",
+      "date": "2025-12-28 20:18:47 +0800",
+      "message": "fix: 修正前端多處類型或使用者名稱可能為空時的 UI 錯誤，並於後端統計 API 新增渠道類型資料",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "06c4da9d0191a76cad007f9c2101ea96f5f55f8d",
+      "shortHash": "06c4da9",
+      "author": "Jarvis",
+      "date": "2025-12-28 20:15:40 +0800",
+      "message": "feat: 新增 LINE Webhook 功能，包含資料庫欄位、API 端點、前端顯示與自動生成金鑰",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "453875f6b670546b5314932550fb3f9479fbc801",
+      "shortHash": "453875f",
+      "author": "Jarvis",
+      "date": "2025-12-28 20:03:49 +0800",
+      "message": "feat: 升級為 Tailwind CSS v4 並重構為雙層式側邊欄",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "d2ca52109888e0c70b58975a01b6505fb4bc0906",
+      "shortHash": "d2ca521",
+      "author": "Jarvis",
+      "date": "2025-12-28 19:54:35 +0800",
+      "message": "feat: 調整 Windows 通知頁面樣式、間距與動畫效果，並優化統計卡片佈局",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "ebd7dd1d945773cef93b3a317112e95fa1e516c8",
+      "shortHash": "ebd7dd1",
+      "author": "Jarvis",
+      "date": "2025-12-28 19:52:37 +0800",
+      "message": "fix(test): 修正 AuthService 單元測試以符合使用者名稱登入邏輯",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "1094303d248cf1a9a33b3e7a4cb6895085bd3f38",
+      "shortHash": "1094303",
+      "author": "Jarvis",
+      "date": "2025-12-28 19:50:17 +0800",
+      "message": "feat: 更新認證與統計功能",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "3cd4f64fd037b90cf0ff0d962e9ff9c5ca3ecdb9",
+      "shortHash": "3cd4f64",
+      "author": "Jarvis",
+      "date": "2025-12-28 19:45:51 +0800",
+      "message": "fix: 修復儀表板趨勢圖無資料時不顯示的問題",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "bf479e18379fba5773e80c4ab03b3449c419787b",
+      "shortHash": "bf479e1",
+      "author": "Jarvis",
+      "date": "2025-12-28 19:40:09 +0800",
+      "message": "feat: 新增資料庫種子腳本 (seed.sh)",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "cd8657efc287ed17668dd455255d15a16071964a",
+      "shortHash": "cd8657e",
+      "author": "Jarvis",
+      "date": "2025-12-28 19:39:35 +0800",
+      "message": "fix(test): 在 Sidebar 測試中新增 Monitor icon mock",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "b85acb5188bd72f76f4c8f5875e255dfcd1b3d60",
+      "shortHash": "b85acb5",
+      "author": "Jarvis",
+      "date": "2025-12-28 19:35:22 +0800",
+      "message": "refactor: 將 shell 腳本移至 scripts 目錄",
+      "type": "refactor",
+      "typeLabel": "重構"
+    },
+    {
+      "hash": "9a9fb873275abc20d3650252d8055f012be8f15e",
+      "shortHash": "9a9fb87",
+      "author": "Jarvis",
+      "date": "2025-12-28 19:32:33 +0800",
+      "message": "feat: 新增資料庫遷移腳本並整合到部署流程",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "b89d47c6c6be9999ff67b6019ea31e94a9d84fd9",
+      "shortHash": "b89d47c",
+      "author": "Jarvis",
+      "date": "2025-12-28 18:50:03 +0800",
+      "message": "chore: 新增 phpMyAdmin 診斷腳本",
+      "type": "chore",
+      "typeLabel": "雜項"
+    },
+    {
+      "hash": "1833ea29eeef58f0ea2ceff8c3934ca127180544",
+      "shortHash": "1833ea2",
+      "author": "Jarvis",
+      "date": "2025-12-28 18:40:59 +0800",
+      "message": "fix(ci): 新增後端測試時 writable 資料夾權限設定",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "400e9df4b012a96d707a520754bae27df5aea40e",
+      "shortHash": "400e9df",
+      "author": "Jarvis",
+      "date": "2025-12-28 18:39:26 +0800",
+      "message": "fix(nginx): 修正 phpMyAdmin 反向代理路徑設定",
+      "type": "fix",
+      "typeLabel": "修復"
+    },
+    {
+      "hash": "0647cecfb1a8cd8062323f87d69112b58f5f1662",
+      "shortHash": "0647cec",
+      "author": "Jarvis",
+      "date": "2025-12-28 18:32:25 +0800",
+      "message": "feat(windows-notifications): 新增 Windows 桌面通知功能",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "221bb53650008c1ab050d3ee156819835e5ad71c",
+      "shortHash": "221bb53",
+      "author": "Jarvis",
+      "date": "2025-12-28 18:19:41 +0800",
+      "message": "feat: 強化 API 請求的類型安全並優化使用者管理介面中的資料處理",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "e1b1bd20808eebcedca4b3a9dbea9b2ec0844bc7",
+      "shortHash": "e1b1bd2",
+      "author": "Jarvis",
+      "date": "2025-12-28 18:13:17 +0800",
+      "message": "feat: 增加 phpMyAdmin 的 PMA_ABSOLUTE_URI 配置。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "7edd559eb60f8fc40619c9965db50317557dbc49",
+      "shortHash": "7edd559",
+      "author": "Jarvis",
+      "date": "2025-12-28 18:05:59 +0800",
+      "message": "ci: 排除測試檔案於應用程式建構之外",
+      "type": "ci",
+      "typeLabel": "CI/CD"
+    },
+    {
+      "hash": "7bc132cd377dc4525cdea37cc234e4f23032148d",
+      "shortHash": "7bc132c",
+      "author": "Jarvis",
+      "date": "2025-12-28 18:02:37 +0800",
+      "message": "feat: 新增生成 JWT 密鑰腳本並使前端 API URL 可透過環境變數配置。",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "b0db8cb18b4e54a8644b311e7f2140dbf7dda95a",
+      "shortHash": "b0db8cb",
+      "author": "Jarvis",
+      "date": "2025-12-28 17:57:00 +0800",
+      "message": "feat: 引入自訂應用程式圖示並更新登入頁面、側邊欄及 favicon",
+      "type": "feat",
+      "typeLabel": "新功能"
+    },
+    {
+      "hash": "2d3521c46734b58aad984d6e08ec56af27e6e9aa",
+      "shortHash": "2d3521c",
+      "author": "Jarvis",
+      "date": "2025-12-27 13:37:41 +0800",
+      "message": "ci: 新增多個單元測試、PHPUnit配置並更新CI工作流程與部分資料庫遷移檔案。",
+      "type": "ci",
+      "typeLabel": "CI/CD"
+    },
+    {
+      "hash": "7195bdd26e00553c5a6673f82909975dd0d2053f",
+      "shortHash": "7195bdd",
+      "author": "Jarvis",
+      "date": "2025-12-27 13:16:36 +0800",
+      "message": "feat: 導入 Vitest 測試框架、初始測試檔案並建立前端 CI 工作流程",
+      "type": "feat",
+      "typeLabel": "新功能"
+    }
+  ],
+  "total": 100
+}

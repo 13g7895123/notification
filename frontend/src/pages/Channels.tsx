@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { NotificationChannel, ChannelType, LineConfig, TelegramConfig } from '../types';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { toast, confirm } from '../utils/alert';
 import './Channels.css';
@@ -651,6 +651,7 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
     );
 }
 
+
 function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: () => void }) {
     const { getChannelWebhookLogs } = useNotification();
     const [logs, setLogs] = useState<import('../types').WebhookLog[]>([]);
@@ -662,7 +663,13 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
             setLoading(true);
             try {
                 const data = await getChannelWebhookLogs(channelId);
-                setLogs(data || []);
+                const sortedLogs = (data || []).sort((a, b) =>
+                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
+                setLogs(sortedLogs);
+                if (sortedLogs.length > 0) {
+                    setSelectedLog(sortedLogs[0]);
+                }
             } catch (error) {
                 console.error('Failed to load logs:', error);
                 toast.error('無法載入 Webhook 記錄');
@@ -671,94 +678,172 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
             }
         };
         loadLogs();
-    }, [channelId, getChannelWebhookLogs]);
+    }, [channelId]);
+
+    const stats = {
+        total: logs.length,
+        success: logs.filter(l => l.responseStatus === 200).length,
+        error: logs.filter(l => l.responseStatus !== 200).length
+    };
+
+    const successRate = stats.total > 0 ? Math.round((stats.success / stats.total) * 100) : 0;
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', width: '90%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '1000px', width: '95%', height: '85vh', display: 'flex', flexDirection: 'column' }}>
                 <div className="modal-header">
-                    <h2>Webhook 呼叫記錄</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <ClipboardList size={22} className="text-primary" />
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Webhook 呼叫記錄</h2>
+                            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>查看來自外部服務的即時請求資訊</p>
+                        </div>
+                    </div>
                     <button className="btn btn-ghost btn-icon" onClick={onClose}>
                         <X size={20} />
                     </button>
                 </div>
-                <div className="modal-body" style={{ flex: 1, overflow: 'hidden', padding: 0, display: 'flex' }}>
-                    <div className="logs-list-pane" style={{ width: '40%', borderRight: '1px solid var(--border-color-light)', overflowY: 'auto' }}>
-                        {loading ? (
-                            <div className="flex items-center justify-center py-xl">
-                                <Loader2 size={32} className="animate-spin text-primary" />
-                            </div>
-                        ) : logs.length === 0 ? (
-                            <div className="empty-state py-lg">
-                                <h3 className="text-md font-semibold mb-2">尚無記錄</h3>
-                            </div>
-                        ) : (
-                            logs.map(log => (
-                                <div
-                                    key={log.id}
-                                    className={`log-item p-md border-b border-light cursor-pointer hover:bg-tertiary ${selectedLog?.id === log.id ? 'bg-tertiary' : ''}`}
-                                    onClick={() => setSelectedLog(log)}
-                                >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${log.responseStatus === 200 ? 'bg-success/20 text-success' : 'bg-error/20 text-error'}`}>
-                                            {log.method} {log.responseStatus}
-                                        </span>
-                                        <span className="text-xs text-muted">{safeFormatDate(log.createdAt, 'MM/dd HH:mm:ss')}</span>
-                                    </div>
-                                    <div className="text-xs font-mono break-all text-secondary truncate">
-                                        {log.ipAddress}
-                                    </div>
+
+                <div className="webhook-logs-container">
+                    {/* 左側列表 */}
+                    <div className="logs-list-pane">
+                        <div className="logs-header-section">
+                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>最近 50 筆記錄</div>
+                            <div className="logs-stats-bar">
+                                <div className="stat-item">
+                                    <span className="stat-label">成功率</span>
+                                    <span className={`stat-value ${successRate > 90 ? 'success' : 'error'}`}>{successRate}%</span>
                                 </div>
-                            ))
-                        )}
+                                <div className="stat-item">
+                                    <span className="stat-label">總呼叫次數</span>
+                                    <span className="stat-value">{stats.total}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="logs-items-container">
+                            {loading ? (
+                                <div className="flex items-center justify-center py-xl">
+                                    <Loader2 size={32} className="animate-spin text-primary" />
+                                </div>
+                            ) : logs.length === 0 ? (
+                                <div className="empty-state py-xl">
+                                    <div style={{ fontSize: '2rem', marginBottom: '12px' }}>📭</div>
+                                    <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>預期外！目前尚無記錄</h3>
+                                </div>
+                            ) : (
+                                logs.map(log => (
+                                    <div
+                                        key={log.id}
+                                        className={`log-item ${selectedLog?.id === log.id ? 'active' : ''}`}
+                                        onClick={() => setSelectedLog(log)}
+                                    >
+                                        <div className="log-item-header">
+                                            <span className={`log-status-badge ${log.responseStatus === 200 ? 's200' : 'sError'}`}>
+                                                {log.method} {log.responseStatus}
+                                            </span>
+                                            <span className="log-time-relative">
+                                                {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true, locale: zhTW })}
+                                            </span>
+                                        </div>
+                                        <div className="log-item-meta">
+                                            <span style={{ fontFamily: 'var(--font-mono)' }}>{log.ipAddress}</span>
+                                            <span>{format(new Date(log.createdAt), 'HH:mm:ss')}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
-                    <div className="log-detail-pane" style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+
+                    {/* 右側詳情 */}
+                    <div className="log-detail-pane">
                         {selectedLog ? (
-                            <div className="log-detail space-y-4">
-                                <div className="detail-section">
-                                    <h4 className="text-sm font-semibold text-secondary mb-2">Request Info</h4>
-                                    <div className="bg-tertiary p-3 rounded text-xs font-mono">
-                                        <div>Time: {safeFormatDate(selectedLog.createdAt, 'yyyy-MM-dd HH:mm:ss')}</div>
-                                        <div>IP: {selectedLog.ipAddress}</div>
-                                        <div>URL: {selectedLog.url}</div>
+                            <div className="animate-fade-in">
+                                <div className="detail-header">
+                                    <div className="detail-title">
+                                        <span className={`log-status-badge ${selectedLog.responseStatus === 200 ? 's200' : 'sError'}`} style={{ fontSize: '0.9rem', padding: '4px 10px' }}>
+                                            {selectedLog.method} {selectedLog.responseStatus}
+                                        </span>
+                                        請求詳情
+                                    </div>
+                                    <div className="detail-subtitle">
+                                        追蹤 ID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{selectedLog.id}</span>
                                     </div>
                                 </div>
 
                                 <div className="detail-section">
-                                    <h4 className="text-sm font-semibold text-secondary mb-2">Query/Key</h4>
-                                    <div className="bg-tertiary p-3 rounded text-xs font-mono break-all">
-                                        {selectedLog.url.split('?')[1] || '-'}
+                                    <div className="detail-section-title">基礎資訊</div>
+                                    <div className="info-grid">
+                                        <div className="info-item">
+                                            <span className="info-item-label">請求來源 IP</span>
+                                            <span className="info-item-value">{selectedLog.ipAddress}</span>
+                                        </div>
+                                        <div className="info-item">
+                                            <span className="info-item-label">完整請求 URL</span>
+                                            <span className="info-item-value">{selectedLog.url}</span>
+                                        </div>
+                                        <div className="info-item">
+                                            <span className="info-item-label">觸發時間</span>
+                                            <span className="info-item-value">{format(new Date(selectedLog.createdAt), 'yyyy-MM-dd HH:mm:ss')}</span>
+                                        </div>
+                                        <div className="info-item">
+                                            <span className="info-item-label">回應狀態</span>
+                                            <span className={`info-item-value ${selectedLog.responseStatus === 200 ? 'text-success' : 'text-error'}`}>
+                                                {selectedLog.responseStatus === 200 ? 'OK' : 'Error'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="detail-section">
-                                    <h4 className="text-sm font-semibold text-secondary mb-2">Payload</h4>
-                                    <div className="bg-tertiary p-3 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto">
-                                        {tryFormatJson(selectedLog.payload)}
-                                    </div>
+                                    <div className="detail-section-title">請求主體 (Payload)</div>
+                                    <JsonDisplay data={selectedLog.payload} />
                                 </div>
 
                                 <div className="detail-section">
-                                    <h4 className="text-sm font-semibold text-secondary mb-2">Response ({selectedLog.responseStatus})</h4>
-                                    <div className="bg-tertiary p-3 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto">
-                                        {tryFormatJson(selectedLog.responseBody)}
-                                    </div>
+                                    <div className="detail-section-title">回應內容 (Response)</div>
+                                    <JsonDisplay data={selectedLog.responseBody} />
                                 </div>
 
                                 <div className="detail-section">
-                                    <h4 className="text-sm font-semibold text-secondary mb-2">Headers</h4>
-                                    <div className="bg-tertiary p-3 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto">
-                                        {tryFormatJson(selectedLog.headers)}
-                                    </div>
+                                    <div className="detail-section-title">請求標頭 (Headers)</div>
+                                    <JsonDisplay data={selectedLog.headers} />
                                 </div>
                             </div>
                         ) : (
-                            <div className="h-full flex items-center justify-center text-muted text-sm">
-                                請從左側選擇一筆記錄以查看詳情
+                            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                                <div style={{ fontSize: '3rem', marginBottom: '16px', opacity: 0.5 }}>🖱️</div>
+                                <div>請從左側選擇一筆記錄以查看具體交握資訊</div>
                             </div>
                         )}
                     </div>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+function JsonDisplay({ data }: { data: string | object | null | undefined }) {
+    const formattedJson = tryFormatJson(data);
+
+    return (
+        <div className="code-block-wrapper">
+            <div className="code-block-header">
+                <span className="code-lang">JSON</span>
+                <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ padding: '2px 8px', fontSize: '0.65rem' }}
+                    onClick={() => {
+                        navigator.clipboard.writeText(formattedJson);
+                        toast.success('已複製到剪貼簿');
+                    }}
+                >
+                    複製
+                </button>
+            </div>
+            <div className="code-block-content">
+                <pre style={{ margin: 0 }}>{formattedJson}</pre>
             </div>
         </div>
     );

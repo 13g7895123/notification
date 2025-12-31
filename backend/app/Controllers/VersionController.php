@@ -7,14 +7,40 @@ use CodeIgniter\HTTP\ResponseInterface;
 /**
  * 版本控制器
  * 提供應用程式版本資訊和 Git 提交歷史
+ * 
+ * 優先從靜態 JSON 檔案讀取（生產環境），
+ * 如果檔案不存在則嘗試從 Git 取得（開發環境）
  */
 class VersionController extends BaseController
 {
+    private string $versionFile;
+    private string $historyFile;
+
+    public function __construct()
+    {
+        $this->versionFile = ROOTPATH . 'version.json';
+        $this->historyFile = ROOTPATH . 'version-history.json';
+    }
+
     /**
      * 取得當前版本資訊
      */
     public function current(): ResponseInterface
     {
+        // 優先從檔案讀取
+        if (file_exists($this->versionFile)) {
+            $content = file_get_contents($this->versionFile);
+            $version = json_decode($content, true);
+
+            if ($version) {
+                return $this->response->setJSON([
+                    'success' => true,
+                    'data' => $version
+                ]);
+            }
+        }
+
+        // 備選：從 Git 取得（開發環境）
         $version = $this->getVersionFromGit();
 
         return $this->response->setJSON([
@@ -29,8 +55,27 @@ class VersionController extends BaseController
     public function history(): ResponseInterface
     {
         $limit = (int) ($this->request->getGet('limit') ?? 50);
-        $limit = min(max($limit, 1), 100); // 限制在 1-100 之間
+        $limit = min(max($limit, 1), 100);
 
+        // 優先從檔案讀取
+        if (file_exists($this->historyFile)) {
+            $content = file_get_contents($this->historyFile);
+            $history = json_decode($content, true);
+
+            if ($history && isset($history['commits'])) {
+                // 根據 limit 截取
+                $commits = array_slice($history['commits'], 0, $limit);
+                return $this->response->setJSON([
+                    'success' => true,
+                    'data' => [
+                        'commits' => $commits,
+                        'total' => count($commits)
+                    ]
+                ]);
+            }
+        }
+
+        // 備選：從 Git 取得（開發環境）
         $commits = $this->getGitCommits($limit);
 
         return $this->response->setJSON([
@@ -43,41 +88,29 @@ class VersionController extends BaseController
     }
 
     /**
-     * 從 Git 取得版本資訊
+     * 從 Git 取得版本資訊（開發環境用）
      */
     private function getVersionFromGit(): array
     {
         $projectRoot = ROOTPATH;
 
-        // 取得最新的 tag（如果有的話）
+        // 檢查是否在 Git 倉庫中
+        $gitDir = $projectRoot . '.git';
+        if (!is_dir($gitDir)) {
+            return $this->getDefaultVersion();
+        }
+
         $tag = $this->executeGitCommand('describe --tags --abbrev=0 2>/dev/null || echo ""', $projectRoot);
-
-        // 取得提交數量
         $commitCount = (int) $this->executeGitCommand('rev-list --count HEAD 2>/dev/null || echo "0"', $projectRoot);
-
-        // 取得最新提交的短 hash
         $shortHash = $this->executeGitCommand('rev-parse --short HEAD 2>/dev/null || echo "unknown"', $projectRoot);
-
-        // 取得最新提交的完整 hash
         $fullHash = $this->executeGitCommand('rev-parse HEAD 2>/dev/null || echo "unknown"', $projectRoot);
-
-        // 取得最新提交的時間
         $lastCommitDate = $this->executeGitCommand('log -1 --format=%ci 2>/dev/null || echo ""', $projectRoot);
-
-        // 取得當前分支
         $branch = $this->executeGitCommand('rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"', $projectRoot);
-
-        // 取得最新提交訊息
         $lastCommitMessage = $this->executeGitCommand('log -1 --format=%s 2>/dev/null || echo ""', $projectRoot);
 
-        // 計算版本號
-        // 格式: 1.major.minor，其中 minor 是提交數量
-        // 根據 tag 或提交數量計算
         if (!empty($tag)) {
             $version = $tag;
         } else {
-            // 沒有 tag 時，使用提交數量計算版本
-            // 每 100 次提交增加一個次版本號
             $major = (int) floor($commitCount / 100);
             $minor = $commitCount % 100;
             $version = "1.{$major}.{$minor}";
@@ -96,14 +129,35 @@ class VersionController extends BaseController
     }
 
     /**
-     * 取得 Git 提交記錄
+     * 取得預設版本資訊（無 Git 時使用）
+     */
+    private function getDefaultVersion(): array
+    {
+        return [
+            'version' => '1.0.0',
+            'commitCount' => 0,
+            'shortHash' => 'unknown',
+            'fullHash' => 'unknown',
+            'lastCommitDate' => date('Y-m-d H:i:s'),
+            'lastCommitMessage' => '版本資訊不可用',
+            'branch' => 'unknown',
+            'displayVersion' => '1.0.0 (unknown)',
+            'note' => '請執行 scripts/generate-version.sh 生成版本資訊'
+        ];
+    }
+
+    /**
+     * 取得 Git 提交記錄（開發環境用）
      */
     private function getGitCommits(int $limit): array
     {
         $projectRoot = ROOTPATH;
 
-        // 使用自訂格式取得提交記錄
-        // 格式: hash|shortHash|author|date|message
+        $gitDir = $projectRoot . '.git';
+        if (!is_dir($gitDir)) {
+            return [];
+        }
+
         $format = '%H|%h|%an|%ci|%s';
         $output = $this->executeGitCommand(
             "log --format=\"{$format}\" -n {$limit} 2>/dev/null",
@@ -120,7 +174,6 @@ class VersionController extends BaseController
         foreach ($lines as $line) {
             $parts = explode('|', $line, 5);
             if (count($parts) === 5) {
-                // 解析提交訊息中的類型
                 $message = $parts[4];
                 $type = $this->parseCommitType($message);
 
@@ -144,11 +197,9 @@ class VersionController extends BaseController
      */
     private function parseCommitType(string $message): string
     {
-        // 匹配 Conventional Commit 格式: type(scope): description
         if (preg_match('/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+?\))?:/', $message, $matches)) {
             return $matches[1];
         }
-
         return 'other';
     }
 
@@ -171,7 +222,6 @@ class VersionController extends BaseController
             'revert' => '還原',
             'other' => '其他'
         ];
-
         return $labels[$type] ?? $labels['other'];
     }
 
@@ -182,7 +232,6 @@ class VersionController extends BaseController
     {
         $fullCommand = "cd {$cwd} && git {$command}";
         $output = shell_exec($fullCommand);
-
         return trim($output ?? '');
     }
 }
