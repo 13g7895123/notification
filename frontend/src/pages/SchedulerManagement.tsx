@@ -31,6 +31,7 @@ export function SchedulerManagement() {
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [refreshInterval, setRefreshInterval] = useState<number>(10); // 預設 10 秒
 
     const fetchSchedulerData = useCallback(async () => {
         setIsLoading(true);
@@ -53,9 +54,9 @@ export function SchedulerManagement() {
 
     useEffect(() => {
         fetchSchedulerData();
-        const interval = setInterval(fetchSchedulerData, 30000);
+        const interval = setInterval(fetchSchedulerData, refreshInterval * 1000);
         return () => clearInterval(interval);
-    }, [fetchSchedulerData]);
+    }, [fetchSchedulerData, refreshInterval]);
 
     const handleStart = async () => {
         setIsProcessing(true);
@@ -63,7 +64,10 @@ export function SchedulerManagement() {
             const success = await startScheduler();
             if (success) {
                 toast.success('排程器已啟動');
-                await fetchSchedulerData();
+                // 延遲 2 秒讓排程器完全啟動
+                setTimeout(async () => {
+                    await fetchSchedulerData();
+                }, 2000);
             } else {
                 toast.error('排程器啟動失敗');
             }
@@ -88,7 +92,9 @@ export function SchedulerManagement() {
             const success = await stopScheduler();
             if (success) {
                 toast.success('排程器已停止');
+                // 立即刷新，然後再等 2 秒刷新一次確保狀態更新
                 await fetchSchedulerData();
+                setTimeout(fetchSchedulerData, 2000);
             } else {
                 toast.error('排程器停止失敗');
             }
@@ -142,6 +148,24 @@ export function SchedulerManagement() {
                     </p>
                 </div>
                 <div className="page-actions">
+                    <div className="refresh-control">
+                        <label htmlFor="refresh-interval" className="refresh-label">
+                            <Clock size={16} />
+                            更新頻率：
+                        </label>
+                        <select
+                            id="refresh-interval"
+                            className="refresh-select"
+                            value={refreshInterval}
+                            onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                        >
+                            <option value={5}>5 秒</option>
+                            <option value={10}>10 秒</option>
+                            <option value={15}>15 秒</option>
+                            <option value={30}>30 秒</option>
+                            <option value={60}>60 秒</option>
+                        </select>
+                    </div>
                     <button
                         className={`btn btn-secondary ${isLoading ? 'loading' : ''}`}
                         onClick={fetchSchedulerData}
