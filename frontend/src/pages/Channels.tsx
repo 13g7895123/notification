@@ -750,12 +750,12 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
                                                 {log.method} {log.responseStatus}
                                             </span>
                                             <span className="webhook-log-time">
-                                                {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true, locale: zhTW })}
+                                                {safeFormatDistanceToNow(log.createdAt)}
                                             </span>
                                         </div>
                                         <div className="webhook-log-meta">
                                             <span className="webhook-log-ip">{log.ipAddress}</span>
-                                            <span className="webhook-log-timestamp">{format(new Date(log.createdAt), 'HH:mm:ss')}</span>
+                                            <span className="webhook-log-timestamp">{safeFormatDate(log.createdAt, 'HH:mm:ss')}</span>
                                         </div>
                                     </div>
                                 ))
@@ -794,7 +794,7 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
                                         </div>
                                         <div className="webhook-info-item">
                                             <span className="webhook-info-label">觸發時間</span>
-                                            <span className="webhook-info-value">{format(new Date(selectedLog.createdAt), 'yyyy-MM-dd HH:mm:ss')}</span>
+                                            <span className="webhook-info-value">{safeFormatDate(selectedLog.createdAt, 'yyyy-MM-dd HH:mm:ss')}</span>
                                         </div>
                                         <div className="webhook-info-item">
                                             <span className="webhook-info-label">回應狀態</span>
@@ -889,4 +889,27 @@ function tryFormatJson(data: string | object | null | undefined): string {
 function maskString(str: string, visibleChars: number = 8): string {
     if (str.length <= visibleChars) return str;
     return str.slice(0, visibleChars) + '••••••••';
+}
+
+// 安全的日期格式化函數
+function safeFormatDate(dateStr: string | null | undefined, formatStr: string, fallback: string = '-'): string {
+    if (!dateStr) return fallback;
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return fallback;
+        return format(date, formatStr);
+    } catch {
+        return fallback;
+    }
+}
+
+function safeFormatDistanceToNow(dateStr: string | null | undefined, fallback: string = '-'): string {
+    if (!dateStr) return fallback;
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return fallback;
+        return formatDistanceToNow(date, { addSuffix: true, locale: zhTW });
+    } catch {
+        return fallback;
+    }
 }
