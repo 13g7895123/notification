@@ -249,7 +249,8 @@ class SchedulerController extends BaseController
         // 發送 SIGTERM 信號
         $stopped = false;
         if (function_exists('posix_kill')) {
-            $stopped = @posix_kill($pid, SIGTERM);
+            // SIGTERM = 15
+            $stopped = @posix_kill($pid, defined('SIGTERM') ? SIGTERM : 15);
         } else {
             // 使用 kill 命令（適用於 Docker）
             exec("kill -TERM {$pid} 2>&1", $output, $returnVar);
@@ -274,7 +275,8 @@ class SchedulerController extends BaseController
         // 如果還沒結束，強制終止
         if ($this->checkProcessExists($pid)) {
             if (function_exists('posix_kill')) {
-                @posix_kill($pid, SIGKILL);
+                // SIGKILL = 9
+                @posix_kill($pid, defined('SIGKILL') ? SIGKILL : 9);
             } else {
                 exec("kill -KILL {$pid} 2>&1");
             }

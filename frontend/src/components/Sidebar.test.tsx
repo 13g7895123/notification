@@ -40,7 +40,8 @@ vi.mock('lucide-react', () => ({
     LogOut: () => <div data-testid="icon-logout" />,
     User: () => <div data-testid="icon-user" />,
     Shield: () => <div data-testid="icon-shield" />,
-    Monitor: () => <div data-testid="icon-monitor" />
+    Monitor: () => <div data-testid="icon-monitor" />,
+    Cpu: () => <div data-testid="icon-cpu" />
 }));
 
 describe('Sidebar 組件', () => {
