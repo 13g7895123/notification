@@ -223,6 +223,194 @@ class SchedulerController extends BaseController
     }
 
     /**
+     * POST /api/scheduler/stop
+     * 
+     * 停止排程器守護進程
+     * 僅限管理員存取
+     */
+    public function stop(): ResponseInterface
+    {
+        $pidFile = WRITEPATH . 'pids/scheduler.pid';
+
+        // 檢查 PID 檔案是否存在
+        if (!file_exists($pidFile)) {
+            return $this->failResponse('排程器未運行', 400);
+        }
+
+        $pid = (int) trim(file_get_contents($pidFile));
+
+        // 檢查進程是否存在
+        if (!$this->checkProcessExists($pid)) {
+            // PID 檔案存在但進程不存在，清理 PID 檔案
+            @unlink($pidFile);
+            return $this->failResponse('排程器進程不存在', 400);
+        }
+
+        // 發送 SIGTERM 信號
+        $stopped = false;
+        if (function_exists('posix_kill')) {
+            $stopped = @posix_kill($pid, SIGTERM);
+        } else {
+            // 使用 kill 命令（適用於 Docker）
+            exec("kill -TERM {$pid} 2>&1", $output, $returnVar);
+            $stopped = ($returnVar === 0);
+        }
+
+        if (!$stopped) {
+            return $this->failResponse('無法停止排程器', 500);
+        }
+
+        // 等待進程結束（最多 10 秒）
+        $maxWait = 10;
+        $waited = 0;
+        while ($waited < $maxWait) {
+            if (!$this->checkProcessExists($pid)) {
+                break;
+            }
+            sleep(1);
+            $waited++;
+        }
+
+        // 如果還沒結束，強制終止
+        if ($this->checkProcessExists($pid)) {
+            if (function_exists('posix_kill')) {
+                @posix_kill($pid, SIGKILL);
+            } else {
+                exec("kill -KILL {$pid} 2>&1");
+            }
+            sleep(1);
+        }
+
+        // 清理 PID 檔案
+        @unlink($pidFile);
+
+        // 記錄操作日誌
+        log_message('info', "Scheduler stopped by user, PID: {$pid}");
+
+        return $this->successResponse([
+            'message' => '排程器已停止',
+            'pid' => $pid,
+            'stoppedAt' => date('c')
+        ]);
+    }
+
+    /**
+     * POST /api/scheduler/start
+     * 
+     * 啟動排程器守護進程
+     * 僅限管理員存取
+     */
+    public function start(): ResponseInterface
+    {
+        $pidFile = WRITEPATH . 'pids/scheduler.pid';
+        $logFile = WRITEPATH . 'logs/scheduler_startup.log';
+
+        // 檢查是否已在運行
+        if (file_exists($pidFile)) {
+            $pid = (int) trim(file_get_contents($pidFile));
+            if ($this->checkProcessExists($pid)) {
+                return $this->successResponse([
+                    'message' => '排程器已在運行中',
+                    'pid' => $pid,
+                    'status' => 'already_running'
+                ]);
+            } else {
+                // PID 檔案存在但進程不存在，清理舊檔案
+                @unlink($pidFile);
+            }
+        }
+
+        // 啟動排程器
+        $cmd = 'nohup php ' . ROOTPATH . 'spark scheduler:daemon > ' . $logFile . ' 2>&1 &';
+        exec($cmd, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            log_message('error', 'Scheduler start failed: ' . implode("\n", $output));
+            return $this->failResponse('啟動失敗，請檢查日誌', 500);
+        }
+
+        // 等待 PID 檔案生成（最多 5 秒）
+        $maxWait = 5;
+        $waited = 0;
+        $newPid = null;
+
+        while ($waited < $maxWait) {
+            if (file_exists($pidFile)) {
+                $newPid = (int) trim(file_get_contents($pidFile));
+                if ($this->checkProcessExists($newPid)) {
+                    break;
+                }
+            }
+            sleep(1);
+            $waited++;
+        }
+
+        if (!$newPid || !$this->checkProcessExists($newPid)) {
+            return $this->failResponse('排程器啟動失敗，請檢查日誌', 500);
+        }
+
+        // 記錄操作日誌
+        log_message('info', "Scheduler started by user, PID: {$newPid}");
+
+        return $this->successResponse([
+            'message' => '排程器已啟動',
+            'pid' => $newPid,
+            'startedAt' => date('c')
+        ]);
+    }
+
+    /**
+     * POST /api/scheduler/restart
+     * 
+     * 重啟排程器守護進程
+     * 僅限管理員存取
+     */
+    public function restart(): ResponseInterface
+    {
+        $pidFile = WRITEPATH . 'pids/scheduler.pid';
+        $oldPid = null;
+
+        // 如果正在運行，先停止
+        if (file_exists($pidFile)) {
+            $oldPid = (int) trim(file_get_contents($pidFile));
+            
+            if ($this->checkProcessExists($oldPid)) {
+                // 停止排程器
+                $stopResult = $this->stop();
+                $stopData = json_decode($stopResult->getBody(), true);
+                
+                if (!$stopData['success']) {
+                    return $this->failResponse('停止排程器失敗', 500);
+                }
+                
+                // 等待 2 秒確保完全停止
+                sleep(2);
+            } else {
+                // PID 檔案存在但進程不存在，清理
+                @unlink($pidFile);
+            }
+        }
+
+        // 啟動排程器
+        $startResult = $this->start();
+        $startData = json_decode($startResult->getBody(), true);
+
+        if (!$startData['success']) {
+            return $this->failResponse('啟動排程器失敗', 500);
+        }
+
+        // 記錄操作日誌
+        log_message('info', "Scheduler restarted by user, old PID: {$oldPid}, new PID: {$startData['data']['pid']}");
+
+        return $this->successResponse([
+            'message' => '排程器已重啟',
+            'oldPid' => $oldPid,
+            'newPid' => $startData['data']['pid'],
+            'restartedAt' => date('c')
+        ]);
+    }
+
+    /**
      * 檢查進程是否存在（適用於 Docker 環境）
      */
     private function checkProcessExists(int $pid): bool

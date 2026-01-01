@@ -946,6 +946,112 @@ Accept: application/json
 
 ---
 
+### POST /api/scheduler/stop
+
+停止排程器守護進程。
+
+**請求：** 無需 Body
+
+**成功回應 (200)：**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "排程器已停止",
+    "pid": 12345,
+    "stoppedAt": "2024-12-25T12:05:00Z"
+  }
+}
+```
+
+**失敗回應 (400)：**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "SCHEDULER_NOT_RUNNING",
+    "message": "排程器未運行"
+  }
+}
+```
+
+---
+
+### POST /api/scheduler/start
+
+啟動排程器守護進程。
+
+**請求：** 無需 Body
+
+**成功回應 (200)：**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "排程器已啟動",
+    "pid": 12345,
+    "startedAt": "2024-12-25T12:06:00Z"
+  }
+}
+```
+
+**成功回應（已在運行）(200)：**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "排程器已在運行中",
+    "pid": 12345,
+    "status": "already_running"
+  }
+}
+```
+
+**失敗回應 (500)：**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "START_FAILED",
+    "message": "啟動失敗，請檢查日誌"
+  }
+}
+```
+
+---
+
+### POST /api/scheduler/restart
+
+重啟排程器守護進程（先停止再啟動）。
+
+**請求：** 無需 Body
+
+**成功回應 (200)：**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "排程器已重啟",
+    "oldPid": 12345,
+    "newPid": 12346,
+    "restartedAt": "2024-12-25T12:07:00Z"
+  }
+}
+```
+
+**失敗回應 (500)：**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "RESTART_FAILED",
+    "message": "停止排程器失敗"
+  }
+}
+```
+
+---
+
 ## 錯誤處理
 
 ### 標準錯誤回應格式

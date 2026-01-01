@@ -139,6 +139,9 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
             // 排程器管理
             $routes->get('scheduler/status', 'SchedulerController::status');
             $routes->get('scheduler/logs', 'SchedulerController::logs');
+            $routes->post('scheduler/stop', 'SchedulerController::stop');
+            $routes->post('scheduler/start', 'SchedulerController::start');
+            $routes->post('scheduler/restart', 'SchedulerController::restart');
         });
 
         // =========================================
