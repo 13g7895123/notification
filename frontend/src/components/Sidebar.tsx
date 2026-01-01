@@ -12,6 +12,7 @@ import {
     Zap,
     Key,
     Activity,
+    Cpu,
     Book,
     LogOut,
     User,
@@ -42,6 +43,7 @@ const menuItems: MenuItem[] = [
     { path: '/windows-notifications', icon: Monitor, label: 'Windows 通知' },
     { path: '/api-keys', icon: Key, label: 'API 金鑰' },
     { path: '/api-usage', icon: Activity, label: 'API 使用紀錄' },
+    { path: '/scheduler', icon: Cpu, label: '排程器管理', adminOnly: true },
     { path: '/api-docs', icon: Book, label: 'API 文件' },
     { path: '/users', icon: Users, label: '使用者管理', adminOnly: true },
 ];

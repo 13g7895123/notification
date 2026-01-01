@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Send,
     Clock,
@@ -7,7 +8,8 @@ import {
     AlertCircle,
     FileText,
     Users,
-    ChevronUp
+    ChevronUp,
+    Activity
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { ChannelUser } from '../types';
@@ -249,18 +251,24 @@ export function SendNotification() {
                     {/* 排程發送 */}
                     <div className="schedule-section">
                         <div className="schedule-header">
-                            <label className="switch">
-                                <input
-                                    type="checkbox"
-                                    checked={scheduleEnabled}
-                                    onChange={e => setScheduleEnabled(e.target.checked)}
-                                />
-                                <span className="switch-slider" />
-                            </label>
-                            <span className="schedule-label">
-                                <Clock size={16} />
-                                排程發送
-                            </span>
+                            <div className="schedule-header-left">
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={scheduleEnabled}
+                                        onChange={e => setScheduleEnabled(e.target.checked)}
+                                    />
+                                    <span className="switch-slider" />
+                                </label>
+                                <span className="schedule-label">
+                                    <Clock size={16} />
+                                    排程發送
+                                </span>
+                            </div>
+                            <Link to="/scheduler" className="scheduler-manage-link">
+                                <Activity size={14} />
+                                排程器管理
+                            </Link>
                         </div>
 
                         {scheduleEnabled && (

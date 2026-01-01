@@ -38,7 +38,31 @@
 .schedule-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--spacing-md);
+}
+
+.schedule-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.scheduler-manage-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.scheduler-manage-link:hover {
+    background: rgba(99, 102, 241, 0.1);
+    text-decoration: underline;
 }
 
 .schedule-label {

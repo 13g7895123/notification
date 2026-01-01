@@ -1,0 +1,203 @@
+.scheduler-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.scheduler-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 24px;
+}
+
+@media (max-width: 1200px) {
+    .scheduler-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.scheduler-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Status Cards */
+.status-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    transition: transform 0.2s;
+}
+
+.status-card:hover {
+    transform: translateY(-2px);
+}
+
+.status-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-card-icon.running { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.status-card-icon.last-run { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.status-card-icon.next-run { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+
+.status-card-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.status-card-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.status-card-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-indicator.online {
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    animation: pulse 2s infinite;
+}
+
+/* Checks Section */
+.checks-section {
+    padding: 24px;
+}
+
+.section-header {
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.checks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.check-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    gap: 16px;
+}
+
+.check-status-icon.ok { color: #10b981; }
+.check-status-icon.warning { color: #f59e0b; }
+.check-status-icon.error { color: #ef4444; }
+
+.check-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.check-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.check-message {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.check-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.check-badge.ok { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.check-badge.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.check-badge.error { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+/* Logs Console */
+.scheduler-logs {
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+}
+
+.logs-console {
+    flex: 1;
+    background: #1e1e1e;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    font-size: 0.85rem;
+    overflow-y: auto;
+    color: #d4d4d4;
+}
+
+.log-line {
+    margin-bottom: 6px;
+    line-height: 1.4;
+    display: flex;
+    gap: 10px;
+}
+
+.log-time { color: #888; }
+.log-level { font-weight: bold; min-width: 60px; }
+
+.log-line.info .log-level { color: #3b82f6; }
+.log-line.warning .log-level { color: #f59e0b; }
+.log-line.error .log-level { color: #ef4444; }
+
+.log-message { word-break: break-all; }
+
+.logs-empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-style: italic;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}

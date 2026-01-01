@@ -11,6 +11,7 @@
 - [API 金鑰管理 API](#api-金鑰管理-api)
 - [API 使用紀錄 API](#api-使用紀錄-api)
 - [統計數據 API](#統計數據-api)
+- [排程器管理 API](#排程器管理-api)
 - [錯誤處理](#錯誤處理)
 - [資料類型定義](#資料類型定義)
 
@@ -868,6 +869,78 @@ Accept: application/json
       { "date": "2024-12-20", "sent": 45, "success": 44, "failed": 1 }
     ]
   }
+}
+```
+
+---
+
+## 排程器管理 API
+
+> ⚠️ 以下 API 僅限管理員 (role: admin) 存取
+
+### GET /api/scheduler/status
+
+取得排程器當前狀態與健康檢查結果。
+
+**成功回應 (200)：**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "running",
+    "lastRun": "2024-12-25T12:00:00Z",
+    "nextRun": "2024-12-25T12:01:00Z",
+    "daemonStatus": "active",
+    "checks": [
+      {
+        "name": "Database Connection",
+        "status": "ok",
+        "message": "Connected"
+      },
+      {
+        "name": "Queue Worker",
+        "status": "ok",
+        "message": "3 workers active"
+      },
+      {
+        "name": "Cron Job",
+        "status": "warning",
+        "message": "Last run was 5 minutes ago"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET /api/scheduler/logs
+
+取得排程器執行日誌。
+
+**查詢參數：**
+| 參數 | 類型 | 說明 |
+|------|------|------|
+| `limit` | number | 筆數，預設 50 |
+
+**成功回應 (200)：**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "timestamp": "2024-12-25T12:00:00Z",
+      "level": "info",
+      "message": "Starting scheduled task: ProcessScheduledMessages",
+      "context": { "task": "ProcessScheduledMessages" }
+    },
+    {
+      "timestamp": "2024-12-25T12:00:05Z",
+      "level": "info",
+      "message": "Successfully processed 5 messages",
+      "context": { "count": 5 }
+    }
+  ]
 }
 ```
 

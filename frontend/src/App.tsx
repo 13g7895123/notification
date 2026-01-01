@@ -14,6 +14,7 @@ import { ApiKeys } from './pages/ApiKeys';
 import { ApiUsage } from './pages/ApiUsage';
 import { ApiDocs } from './pages/ApiDocs';
 import { UserManagement } from './pages/UserManagement';
+import { SchedulerManagement } from './pages/SchedulerManagement';
 import { WindowsNotifications } from './pages/WindowsNotifications';
 import { Changelog } from './pages/Changelog';
 import './index.css';
@@ -42,6 +43,7 @@ function App() {
                     <Route path="/api-usage" element={<ApiUsage />} />
                     <Route path="/api-docs" element={<ApiDocs />} />
                     <Route path="/users" element={<UserManagement />} />
+                    <Route path="/scheduler" element={<SchedulerManagement />} />
                     <Route path="/windows-notifications" element={<WindowsNotifications />} />
                     <Route path="/changelog" element={<Changelog />} />
                   </Routes>
