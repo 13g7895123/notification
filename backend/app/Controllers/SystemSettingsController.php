@@ -86,15 +86,15 @@ class SystemSettingsController extends BaseController
             $data = $this->request->getJSON(true);
 
             if (isset($data['heartbeatInterval'])) {
-                $this->settingModel->set('scheduler.heartbeat_interval', $data['heartbeatInterval']);
+                $this->settingModel->setSetting('scheduler.heartbeat_interval', $data['heartbeatInterval']);
             }
 
             if (isset($data['taskCheckInterval'])) {
-                $this->settingModel->set('scheduler.task_check_interval', $data['taskCheckInterval']);
+                $this->settingModel->setSetting('scheduler.task_check_interval', $data['taskCheckInterval']);
             }
 
             if (isset($data['heartbeatTimeout'])) {
-                $this->settingModel->set('scheduler.heartbeat_timeout', $data['heartbeatTimeout']);
+                $this->settingModel->setSetting('scheduler.heartbeat_timeout', $data['heartbeatTimeout']);
             }
 
             log_message('info', 'Scheduler settings updated by user');

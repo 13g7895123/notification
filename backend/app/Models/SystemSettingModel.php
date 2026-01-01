@@ -37,7 +37,7 @@ class SystemSettingModel extends Model
     /**
      * 設定值
      */
-    public function set(string $key, $value): bool
+    public function setSetting(string $key, $value): bool
     {
         $existing = $this->where('key', $key)->first();
 
