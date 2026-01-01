@@ -280,6 +280,12 @@ export interface SchedulerLog {
     context?: Record<string, unknown>;
 }
 
+export interface SchedulerSettings {
+    heartbeatInterval: number;  // 心跳更新間隔（秒）
+    taskCheckInterval: number;  // 任務檢查間隔（秒）
+    heartbeatTimeout: number;   // 心跳超時時間（秒）
+}
+
 export interface SchedulerControlResponse {
     success: boolean;
     data?: {

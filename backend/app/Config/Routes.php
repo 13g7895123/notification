@@ -142,6 +142,11 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
             $routes->post('scheduler/stop', 'SchedulerController::stop');
             $routes->post('scheduler/start', 'SchedulerController::start');
             $routes->post('scheduler/restart', 'SchedulerController::restart');
+
+            // 系統設定
+            $routes->get('settings', 'SystemSettingsController::index');
+            $routes->get('settings/scheduler', 'SystemSettingsController::scheduler');
+            $routes->put('settings/scheduler', 'SystemSettingsController::updateScheduler');
         });
 
         // =========================================

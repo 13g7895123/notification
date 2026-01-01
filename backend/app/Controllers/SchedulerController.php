@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use CodeIgniter\HTTP\ResponseInterface;
+use App\Models\SystemSettingModel;
 
 /**
  * SchedulerController - 排程器管理 API
@@ -11,6 +12,13 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class SchedulerController extends BaseController
 {
+    private SystemSettingModel $settingModel;
+
+    public function __construct()
+    {
+        $this->settingModel = new SystemSettingModel();
+    }
+
     /**
      * GET /api/scheduler/status
      * 
@@ -22,6 +30,9 @@ class SchedulerController extends BaseController
         $heartbeatFile = WRITEPATH . 'pids/scheduler_heartbeat';
         $pidFile = WRITEPATH . 'pids/scheduler.pid';
         $logFile = WRITEPATH . 'logs/scheduler.log';
+
+        // 從系統設定讀取超時時間
+        $heartbeatTimeout = $this->settingModel->get('scheduler.heartbeat_timeout', 150);
 
         $checks = [];
         $status = 'stopped';
@@ -37,11 +48,12 @@ class SchedulerController extends BaseController
 
             $lastRun = date('c', $lastRunTimestamp);
             
-            // 預估下次執行時間（心跳間隔約 60 秒）
-            $nextRunTimestamp = $lastRunTimestamp + 60;
+            // 從系統設定讀取任務檢查間隔
+            $taskCheckInterval = $this->settingModel->get('scheduler.task_check_interval', 60);
+            $nextRunTimestamp = $lastRunTimestamp + $taskCheckInterval;
             $nextRun = date('c', $nextRunTimestamp);
 
-            if ($diff < 150) {
+            if ($diff < $heartbeatTimeout) {
                 $status = 'running';
                 $daemonStatus = 'active';
                 $checks[] = [
@@ -53,7 +65,7 @@ class SchedulerController extends BaseController
                 $checks[] = [
                     'name' => 'Scheduler Heartbeat',
                     'status' => 'error',
-                    'message' => "No heartbeat for {$diff}s (expected < 150s)"
+                    'message' => "No heartbeat for {$diff}s (expected < {$heartbeatTimeout}s)"
                 ];
             }
         } else {
@@ -197,16 +209,23 @@ class SchedulerController extends BaseController
                 continue;
             }
 
-            // 使用正則表達式解析日誌
+            // 嘗試解析標準格式: [2024-12-25 12:00:00] [info] message
             if (preg_match('/^\[([^\]]+)\] \[([^\]]+)\] (.+)$/', $line, $matches)) {
+                $timestamp = $matches[1];
+                // 驗證並轉換時間戳
+                $parsedTime = strtotime($timestamp);
+                if ($parsedTime === false) {
+                    $parsedTime = time();
+                }
+                
                 $parsedLogs[] = [
-                    'timestamp' => date('c', strtotime($matches[1])),
+                    'timestamp' => date('c', $parsedTime),
                     'level' => $matches[2],
                     'message' => $matches[3],
                     'context' => null
                 ];
             } else {
-                // 無法解析的行，作為普通訊息
+                // 無法解析的行，使用當前時間並顯示原始內容
                 $parsedLogs[] = [
                     'timestamp' => date('c'),
                     'level' => 'info',

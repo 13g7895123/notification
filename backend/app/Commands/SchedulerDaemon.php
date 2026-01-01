@@ -8,6 +8,7 @@ use App\Repositories\MessageRepository;
 use App\Repositories\ChannelRepository;
 use App\Repositories\ChannelUserRepository;
 use App\Entities\MessageEntity;
+use App\Models\SystemSettingModel;
 
 /**
  * 排程器守護進程
@@ -17,7 +18,7 @@ use App\Entities\MessageEntity;
  *   php spark scheduler:daemon --once  - 只執行一次（用於 cron job）
  * 
  * 功能：
- *   - 每分鐘檢查並處理已到期的排程訊息
+ *   - 根據系統設定的間隔檢查並處理已到期的排程訊息
  *   - 持續更新心跳檔案以表示排程器正在運行
  */
 class SchedulerDaemon extends BaseCommand
@@ -39,6 +40,7 @@ class SchedulerDaemon extends BaseCommand
     private MessageRepository $messageRepository;
     private ChannelRepository $channelRepository;
     private ChannelUserRepository $channelUserRepository;
+    private SystemSettingModel $settingModel;
 
     public function run(array $params)
     {
@@ -52,6 +54,7 @@ class SchedulerDaemon extends BaseCommand
         $this->messageRepository = new MessageRepository();
         $this->channelRepository = new ChannelRepository();
         $this->channelUserRepository = new ChannelUserRepository();
+        $this->settingModel = new SystemSettingModel();
 
         // 確保 pids 目錄存在
         if (!is_dir(WRITEPATH . 'pids')) {
@@ -94,20 +97,31 @@ class SchedulerDaemon extends BaseCommand
         CLI::write('排程器守護進程已啟動', 'green');
         CLI::write('PID: ' . getmypid(), 'cyan');
         CLI::write('心跳檔案: ' . $this->heartbeatFile, 'cyan');
+        
+        // 讀取並顯示系統設定
+        $heartbeatInterval = $this->settingModel->get('scheduler.heartbeat_interval', 10);
+        $taskCheckInterval = $this->settingModel->get('scheduler.task_check_interval', 60);
+        CLI::write('心跳更新間隔: ' . $heartbeatInterval . ' 秒', 'cyan');
+        CLI::write('任務檢查間隔: ' . $taskCheckInterval . ' 秒', 'cyan');
         CLI::write('按 Ctrl+C 停止...', 'yellow');
         CLI::newLine();
 
         $this->log('守護進程啟動，PID: ' . getmypid());
+        $this->log("設定 - 心跳間隔: {$heartbeatInterval}s, 任務檢查: {$taskCheckInterval}s");
 
         $lastProcess = 0;
 
         while ($this->running) {
+            // 重新讀取設定（允許動態更新，需重啟生效）
+            $heartbeatInterval = $this->settingModel->get('scheduler.heartbeat_interval', 10);
+            $taskCheckInterval = $this->settingModel->get('scheduler.task_check_interval', 60);
+
             // 更新心跳
             $this->updateHeartbeat();
 
-            // 每 60 秒處理一次排程訊息
+            // 根據設定的間隔處理排程訊息
             $now = time();
-            if ($now - $lastProcess >= 60) {
+            if ($now - $lastProcess >= $taskCheckInterval) {
                 $this->processScheduledMessages();
                 $lastProcess = $now;
             }
@@ -117,8 +131,8 @@ class SchedulerDaemon extends BaseCommand
                 pcntl_signal_dispatch();
             }
 
-            // 休眠 10 秒後再次檢查
-            sleep(10);
+            // 根據設定的心跳間隔休眠
+            sleep($heartbeatInterval);
         }
 
         // 清理

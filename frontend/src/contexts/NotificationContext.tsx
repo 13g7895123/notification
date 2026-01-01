@@ -70,6 +70,8 @@ interface NotificationContextType {
     startScheduler: () => Promise<boolean>;
     stopScheduler: () => Promise<boolean>;
     restartScheduler: () => Promise<boolean>;
+    fetchSchedulerSettings: () => Promise<SchedulerSettings>;
+    updateSchedulerSettings: (settings: Partial<SchedulerSettings>) => Promise<boolean>;
 
     // UI 狀態
     isLoading: boolean;
@@ -438,6 +440,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    const fetchSchedulerSettings = useCallback(async (): Promise<SchedulerSettings> => {
+        try {
+            const data = await api.get<SchedulerSettings>('/settings/scheduler');
+            return data;
+        } catch (error) {
+            console.error('Fetch scheduler settings failed', error);
+            throw error;
+        }
+    }, []);
+
+    const updateSchedulerSettings = useCallback(async (settings: Partial<SchedulerSettings>) => {
+        try {
+            await api.put('/settings/scheduler', settings);
+            return true;
+        } catch (error) {
+            console.error('Update scheduler settings failed', error);
+            return false;
+        }
+    }, []);
+
     // 登入後自動加載基本數據
     // 這裡需要在認證狀態改變時獲取數據，這是合理的 useEffect 使用場景
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -502,6 +524,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 startScheduler,
                 stopScheduler,
                 restartScheduler,
+                fetchSchedulerSettings,
+                updateSchedulerSettings,
                 isLoading,
                 sidebarCollapsed,
                 toggleSidebar

@@ -10,11 +10,12 @@ import {
     Cpu,
     Play,
     Square,
-    RotateCw
+    RotateCw,
+    Settings
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import { safeFormatDate, DateFormats } from '../utils/dateUtils';
-import type { SchedulerStatus, SchedulerLog } from '../types';
+import type { SchedulerStatus, SchedulerLog, SchedulerSettings } from '../types';
 import { toast, confirm } from '../utils/alert';
 import './SchedulerManagement.css';
 
@@ -24,7 +25,9 @@ export function SchedulerManagement() {
         fetchSchedulerLogs,
         startScheduler,
         stopScheduler,
-        restartScheduler
+        restartScheduler,
+        fetchSchedulerSettings,
+        updateSchedulerSettings
     } = useNotification();
     const [status, setStatus] = useState<SchedulerStatus | null>(null);
     const [logs, setLogs] = useState<SchedulerLog[]>([]);
@@ -32,25 +35,29 @@ export function SchedulerManagement() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [refreshInterval, setRefreshInterval] = useState<number>(10); // 預設 10 秒
+    const [settings, setSettings] = useState<SchedulerSettings | null>(null);
+    const [isEditingSettings, setIsEditingSettings] = useState(false);
 
     const fetchSchedulerData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const [statusData, logsData] = await Promise.all([
+            const [statusData, logsData, settingsData] = await Promise.all([
                 fetchSchedulerStatus(),
-                fetchSchedulerLogs(50)
+                fetchSchedulerLogs(50),
+                fetchSchedulerSettings()
             ]);
 
             setStatus(statusData);
             setLogs(logsData);
+            setSettings(settingsData);
         } catch (err) {
             console.error('Failed to fetch scheduler data', err);
             setError('無法載入排程器數據');
         } finally {
             setIsLoading(false);
         }
-    }, [fetchSchedulerStatus, fetchSchedulerLogs]);
+    }, [fetchSchedulerStatus, fetchSchedulerLogs, fetchSchedulerSettings]);
 
     useEffect(() => {
         fetchSchedulerData();
@@ -128,6 +135,45 @@ export function SchedulerManagement() {
         } catch (err) {
             console.error('Restart scheduler error', err);
             toast.error('重啟過程中發生錯誤');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleSaveSettings = async () => {
+        if (!settings) return;
+
+        setIsProcessing(true);
+        try {
+            const success = await updateSchedulerSettings(settings);
+            if (success) {
+                setIsEditingSettings(false);
+                
+                // 詢問是否立即重啟排程器
+                const shouldRestart = await confirm.action(
+                    '設定已保存成功！需要重啟排程器才會生效。\n\n是否立即重啟排程器？',
+                    '重啟排程器',
+                    '立即重啟'
+                );
+
+                if (shouldRestart) {
+                    const restartSuccess = await restartScheduler();
+                    if (restartSuccess) {
+                        toast.success('排程器已重啟，新設定已生效');
+                        // 延遲 3 秒後刷新狀態
+                        setTimeout(fetchSchedulerData, 3000);
+                    } else {
+                        toast.error('排程器重啟失敗，請手動重啟');
+                    }
+                } else {
+                    toast.success('設定已保存，請記得重啟排程器以套用新設定');
+                }
+            } else {
+                toast.error('設定保存失敗');
+            }
+        } catch (err) {
+            console.error('Save settings error', err);
+            toast.error('保存過程中發生錯誤');
         } finally {
             setIsProcessing(false);
         }
@@ -264,6 +310,115 @@ export function SchedulerManagement() {
                         </div>
                     </div>
 
+                    {/* 排程器設定 */}
+                    <div className="settings-section card">
+                        <div className="section-header">
+                            <h3 className="section-title">
+                                <Settings size={18} />
+                                排程器設定
+                            </h3>
+                            {!isEditingSettings ? (
+                                <button
+                                    className="btn btn-secondary btn-sm"
+                                    onClick={() => setIsEditingSettings(true)}
+                                >
+                                    編輯設定
+                                </button>
+                            ) : (
+                                <div className="settings-actions">
+                                    <button
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={() => {
+                                            setIsEditingSettings(false);
+                                            fetchSchedulerData();
+                                        }}
+                                    >
+                                        取消
+                                    </button>
+                                    <button
+                                        className="btn btn-primary btn-sm"
+                                        onClick={handleSaveSettings}
+                                        disabled={isProcessing}
+                                    >
+                                        保存設定
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <div className="settings-form">
+                            <div className="setting-item">
+                                <label className="setting-label">
+                                    <Clock size={16} />
+                                    心跳更新間隔
+                                </label>
+                                <div className="setting-input-group">
+                                    <input
+                                        type="number"
+                                        className="setting-input"
+                                        value={settings?.heartbeatInterval ?? 10}
+                                        onChange={(e) => setSettings(prev => prev ? {...prev, heartbeatInterval: Number(e.target.value)} : null)}
+                                        disabled={!isEditingSettings}
+                                        min={5}
+                                        max={60}
+                                    />
+                                    <span className="setting-unit">秒</span>
+                                </div>
+                                <p className="setting-description">
+                                    排程器更新心跳檔案的頻率（建議 5-15 秒）
+                                </p>
+                            </div>
+
+                            <div className="setting-item">
+                                <label className="setting-label">
+                                    <RefreshCw size={16} />
+                                    任務檢查間隔
+                                </label>
+                                <div className="setting-input-group">
+                                    <input
+                                        type="number"
+                                        className="setting-input"
+                                        value={settings?.taskCheckInterval ?? 60}
+                                        onChange={(e) => setSettings(prev => prev ? {...prev, taskCheckInterval: Number(e.target.value)} : null)}
+                                        disabled={!isEditingSettings}
+                                        min={10}
+                                        max={600}
+                                    />
+                                    <span className="setting-unit">秒</span>
+                                </div>
+                                <p className="setting-description">
+                                    檢查並執行排程訊息的頻率（建議 30-120 秒）
+                                </p>
+                            </div>
+
+                            <div className="setting-item">
+                                <label className="setting-label">
+                                    <AlertCircle size={16} />
+                                    心跳超時時間
+                                </label>
+                                <div className="setting-input-group">
+                                    <input
+                                        type="number"
+                                        className="setting-input"
+                                        value={settings?.heartbeatTimeout ?? 150}
+                                        onChange={(e) => setSettings(prev => prev ? {...prev, heartbeatTimeout: Number(e.target.value)} : null)}
+                                        disabled={!isEditingSettings}
+                                        min={30}
+                                        max={300}
+                                    />
+                                    <span className="setting-unit">秒</span>
+                                </div>
+                                <p className="setting-description">
+                                    超過此時間未更新心跳視為已停止（建議 ≥ 心跳間隔 × 10）
+                                </p>
+                            </div>
+
+                            <div className="setting-note">
+                                <AlertCircle size={14} />
+                                <span>💡 修改設定後需要重啟排程器才會生效</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* 詳細檢測 */}
                     <div className="checks-section card">
                         <div className="section-header">
@@ -305,7 +460,7 @@ export function SchedulerManagement() {
                         ) : (
                             logs.map((log, index) => (
                                 <div key={index} className={`log-line ${log.level}`}>
-                                    <span className="log-time">[{safeFormatDate(log.timestamp, 'HH:mm:ss')}]</span>
+                                    <span className="log-time">[{safeFormatDate(log.timestamp, DateFormats.DATETIME)}]</span>
                                     <span className="log-level">{log.level.toUpperCase()}</span>
                                     <span className="log-message">{log.message}</span>
                                 </div>
