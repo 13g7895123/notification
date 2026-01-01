@@ -15,8 +15,7 @@ import {
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { ApiKey, ApiPermission } from '../types';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { safeFormatDate, safeFormatDateSimple, isExpired, formatForDateInput, DateFormats } from '../utils/dateUtils';
 import { toast, confirm } from '../utils/alert';
 import './ApiKeys.css';
 
@@ -184,7 +183,7 @@ export function ApiKeys() {
                                         </span>
                                         {apiKey.expiresAt && (
                                             <span className="expires-badge">
-                                                {new Date(apiKey.expiresAt) < new Date() ? '已過期' : `${format(new Date(apiKey.expiresAt), 'yyyy/MM/dd')} 到期`}
+                                                {isExpired(apiKey.expiresAt) ? '已過期' : `${safeFormatDateSimple(apiKey.expiresAt, DateFormats.DATE)} 到期`}
                                             </span>
                                         )}
                                     </div>
@@ -250,7 +249,7 @@ export function ApiKeys() {
                                 </div>
                                 <div className="key-stat">
                                     <span className="key-stat-value">
-                                        {apiKey.lastUsedAt ? format(new Date(apiKey.lastUsedAt), 'MM/dd HH:mm') : '-'}
+                                        {safeFormatDate(apiKey.lastUsedAt, DateFormats.SHORT_DATETIME, '-')}
                                     </span>
                                     <span className="key-stat-label">最後使用</span>
                                 </div>
@@ -258,7 +257,7 @@ export function ApiKeys() {
 
                             <div className="api-key-footer">
                                 <span className="key-created">
-                                    建立於 {format(new Date(apiKey.createdAt), 'yyyy/MM/dd', { locale: zhTW })}
+                                    建立於 {safeFormatDate(apiKey.createdAt, DateFormats.DATE)}
                                 </span>
                                 <div className="key-footer-actions">
                                     <button
@@ -345,7 +344,7 @@ function ApiKeyModal({ apiKey, onClose, onSave }: ApiKeyModalProps) {
     const [enabled, setEnabled] = useState(apiKey?.enabled ?? true);
     const [hasExpiry, setHasExpiry] = useState(!!apiKey?.expiresAt);
     const [expiryDate, setExpiryDate] = useState(
-        apiKey?.expiresAt ? format(new Date(apiKey.expiresAt), 'yyyy-MM-dd') : ''
+        apiKey?.expiresAt ? formatForDateInput(apiKey.expiresAt) : ''
     );
 
     const togglePermission = (perm: ApiPermission) => {

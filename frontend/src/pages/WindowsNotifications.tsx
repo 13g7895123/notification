@@ -20,8 +20,7 @@ import {
 } from 'lucide-react';
 import { api } from '../utils/api';
 import type { WindowsNotification, WindowsNotificationStats, WindowsNotificationStatus } from '../types';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { safeFormatDate, DateFormats } from '../utils/dateUtils';
 import { toast, confirm } from '../utils/alert';
 import './WindowsNotifications.css';
 
@@ -332,7 +331,7 @@ export function WindowsNotifications() {
                                             )}
                                             <span className="time-info">
                                                 <Clock size={14} />
-                                                {format(new Date(notification.created_at), 'MM/dd HH:mm', { locale: zhTW })}
+                                                {safeFormatDate(notification.created_at, DateFormats.SHORT_DATETIME)}
                                             </span>
                                         </div>
                                     </div>

@@ -9,8 +9,7 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { safeFormatDate, safeFormatDateSimple, DateFormats } from '../utils/dateUtils';
 import './Logs.css';
 
 export function Logs() {
@@ -37,7 +36,7 @@ export function Logs() {
 
     const handleExport = () => {
         const data = filteredLogs.map(log => ({
-            時間: format(new Date(log.sentAt), 'yyyy-MM-dd HH:mm:ss'),
+            時間: safeFormatDate(log.sentAt, 'yyyy-MM-dd HH:mm:ss'),
             渠道類型: log.channelType.toUpperCase(),
             渠道名稱: log.channelName,
             標題: log.title,
@@ -50,7 +49,7 @@ export function Logs() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `notification-logs-${format(new Date(), 'yyyyMMdd-HHmmss')}.json`;
+        a.download = `notification-logs-${safeFormatDateSimple(new Date(), 'yyyyMMdd-HHmmss')}.json`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -193,7 +192,7 @@ export function Logs() {
                                     style={{ animationDelay: `${index * 20}ms` }}
                                 >
                                     <td className="font-mono">
-                                        {format(new Date(log.sentAt), 'MM/dd HH:mm:ss', { locale: zhTW })}
+                                        {safeFormatDate(log.sentAt, DateFormats.SHORT_DATE_FULL_TIME)}
                                     </td>
                                     <td>
                                         <div className="channel-cell">

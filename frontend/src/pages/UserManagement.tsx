@@ -20,8 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserWithAuth } from '../contexts/AuthContext';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { safeFormatDate, DateFormats } from '../utils/dateUtils';
 import { toast, confirm } from '../utils/alert';
 import './UserManagement.css';
 
@@ -264,13 +263,10 @@ export function UserManagement() {
                                             </button>
                                         </td>
                                         <td className="date-cell">
-                                            {format(new Date(u.createdAt), 'yyyy/MM/dd', { locale: zhTW })}
+                                            {safeFormatDate(u.createdAt, DateFormats.DATE)}
                                         </td>
                                         <td className="date-cell">
-                                            {u.lastLoginAt
-                                                ? format(new Date(u.lastLoginAt), 'MM/dd HH:mm', { locale: zhTW })
-                                                : '-'
-                                            }
+                                            {safeFormatDate(u.lastLoginAt, DateFormats.SHORT_DATETIME, '-')}
                                         </td>
                                         <td>
                                             <div className="action-buttons">

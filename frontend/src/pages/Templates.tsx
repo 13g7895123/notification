@@ -11,8 +11,7 @@ import {
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { NotificationTemplate, ChannelType } from '../types';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { safeFormatDate, DateFormats } from '../utils/dateUtils';
 import { toast, confirm } from '../utils/alert';
 import './Templates.css';
 
@@ -121,7 +120,7 @@ export function Templates() {
 
                             <div className="template-footer">
                                 <span className="template-date">
-                                    更新於 {format(new Date(template.updatedAt), 'yyyy/MM/dd', { locale: zhTW })}
+                                    更新於 {safeFormatDate(template.updatedAt, DateFormats.DATE)}
                                 </span>
                                 <div className="template-actions">
                                     <button

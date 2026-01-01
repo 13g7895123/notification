@@ -16,8 +16,7 @@ import {
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { NotificationChannel, ChannelType, LineConfig, TelegramConfig } from '../types';
-import { format, formatDistanceToNow } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { safeFormatDate, safeFormatDistanceToNow, DateFormats } from '../utils/dateUtils';
 import { toast, confirm } from '../utils/alert';
 import './Channels.css';
 
@@ -163,9 +162,9 @@ export function Channels() {
 
                             <div className="channel-card-footer">
                                 <div className="channel-card-meta">
-                                    <span>建立於 {format(new Date(channel.createdAt), 'yyyy/MM/dd', { locale: zhTW })}</span>
+                                    <span>建立於 {safeFormatDate(channel.createdAt, DateFormats.DATE)}</span>
                                     <span>•</span>
-                                    <span>更新於 {format(new Date(channel.updatedAt), 'yyyy/MM/dd', { locale: zhTW })}</span>
+                                    <span>更新於 {safeFormatDate(channel.updatedAt, DateFormats.DATE)}</span>
                                 </div>
                                 <div className="channel-card-actions">
                                     <button
@@ -637,7 +636,7 @@ function ChannelUsersModal({ channelId, onClose }: { channelId: string; onClose:
                                             ID: {user.providerId}
                                         </div>
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                            加入時間: {format(new Date(user.createdAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}
+                                            加入時間: {safeFormatDate(user.createdAt, DateFormats.DATETIME)}
                                         </div>
                                     </div>
                                 </div>
@@ -889,27 +888,4 @@ function tryFormatJson(data: string | object | null | undefined): string {
 function maskString(str: string, visibleChars: number = 8): string {
     if (str.length <= visibleChars) return str;
     return str.slice(0, visibleChars) + '••••••••';
-}
-
-// 安全的日期格式化函數
-function safeFormatDate(dateStr: string | null | undefined, formatStr: string, fallback: string = '-'): string {
-    if (!dateStr) return fallback;
-    try {
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return fallback;
-        return format(date, formatStr);
-    } catch {
-        return fallback;
-    }
-}
-
-function safeFormatDistanceToNow(dateStr: string | null | undefined, fallback: string = '-'): string {
-    if (!dateStr) return fallback;
-    try {
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return fallback;
-        return formatDistanceToNow(date, { addSuffix: true, locale: zhTW });
-    } catch {
-        return fallback;
-    }
 }

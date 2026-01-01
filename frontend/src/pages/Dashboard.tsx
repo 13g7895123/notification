@@ -14,8 +14,7 @@ import {
     Play
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { safeFormatDate, safeFormatDateSimple, DateFormats } from '../utils/dateUtils';
 import { useEffect, useState } from 'react';
 import { api } from '../utils/api';
 import { toast } from '../utils/alert';
@@ -272,7 +271,7 @@ export function Dashboard() {
                                         />
                                     </div>
                                     <span className="chart-label">
-                                        {format(new Date(day.date), 'MM/dd')}
+                                        {safeFormatDateSimple(day.date, DateFormats.SHORT_DATE)}
                                     </span>
                                     <span className="chart-value">{day.sent}</span>
                                 </div>
@@ -322,9 +321,9 @@ export function Dashboard() {
                                         </span>
                                         <span className="recent-item-time">
                                             {msg.sentAt
-                                                ? format(new Date(msg.sentAt), 'MM/dd HH:mm', { locale: zhTW })
+                                                ? safeFormatDate(msg.sentAt, DateFormats.SHORT_DATETIME)
                                                 : msg.scheduledAt
-                                                    ? `預定 ${format(new Date(msg.scheduledAt), 'MM/dd HH:mm', { locale: zhTW })}`
+                                                    ? `預定 ${safeFormatDate(msg.scheduledAt, DateFormats.SHORT_DATETIME)}`
                                                     : '-'
                                             }
                                         </span>
@@ -376,7 +375,7 @@ export function Dashboard() {
                                                 {log.responseTime}ms
                                             </span>
                                             <span className="log-time">
-                                                {format(new Date(log.createdAt), 'HH:mm:ss', { locale: zhTW })}
+                                                {safeFormatDate(log.createdAt, DateFormats.TIME)}
                                             </span>
                                         </div>
                                     </div>
@@ -413,7 +412,7 @@ export function Dashboard() {
                                 </div>
                                 <div className="log-meta">
                                     <span className="log-time">
-                                        {format(new Date(log.sentAt), 'HH:mm:ss')}
+                                        {safeFormatDateSimple(log.sentAt, DateFormats.TIME)}
                                     </span>
                                     {log.responseTime && (
                                         <span className="log-response-time">{log.responseTime}ms</span>

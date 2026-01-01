@@ -14,8 +14,7 @@ import {
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { ApiUsageLog } from '../types';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { safeFormatDate, safeFormatDateSimple, DateFormats } from '../utils/dateUtils';
 import './ApiUsage.css';
 
 export function ApiUsage() {
@@ -162,7 +161,7 @@ export function ApiUsage() {
                                         <div className="day-bar success" style={{ height: `${successHeight}%` }} />
                                         <div className="day-bar failed" style={{ height: `${failedHeight}%` }} />
                                     </div>
-                                    <span className="day-label">{format(new Date(day.date), 'MM/dd')}</span>
+                                    <span className="day-label">{safeFormatDateSimple(day.date, DateFormats.SHORT_DATE)}</span>
                                     <span className="day-count">{day.count}</span>
                                 </div>
                             );
@@ -264,7 +263,7 @@ export function ApiUsage() {
                             {filteredLogs.map((log, index) => (
                                 <tr key={log.id} className="animate-slide-up" style={{ animationDelay: `${index * 20}ms` }}>
                                     <td className="font-mono">
-                                        {format(new Date(log.createdAt), 'MM/dd HH:mm:ss', { locale: zhTW })}
+                                        {safeFormatDate(log.createdAt, DateFormats.SHORT_DATE_FULL_TIME)}
                                     </td>
                                     <td>
                                         <span className="key-name-cell">{log.apiKeyName}</span>
@@ -327,7 +326,7 @@ function LogDetailModal({ log, onClose }: { log: ApiUsageLog; onClose: () => voi
                     <div className="detail-row">
                         <span className="detail-label">時間</span>
                         <span className="detail-value font-mono">
-                            {format(new Date(log.createdAt), 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}
+                            {safeFormatDate(log.createdAt, DateFormats.FULL)}
                         </span>
                     </div>
 

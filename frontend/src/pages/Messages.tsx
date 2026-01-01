@@ -13,8 +13,7 @@ import {
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import type { NotificationMessage, MessageStatus } from '../types';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+import { safeFormatDate, DateFormats } from '../utils/dateUtils';
 import { toast, confirm } from '../utils/alert';
 import './Messages.css';
 
@@ -142,12 +141,12 @@ export function Messages() {
                                         {message.status === 'scheduled' && message.scheduledAt ? (
                                             <>
                                                 <Clock size={14} />
-                                                預定 {format(new Date(message.scheduledAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}
+                                                預定 {safeFormatDate(message.scheduledAt, DateFormats.DATETIME)}
                                             </>
                                         ) : message.sentAt ? (
-                                            <>發送於 {format(new Date(message.sentAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}</>
+                                            <>發送於 {safeFormatDate(message.sentAt, DateFormats.DATETIME)}</>
                                         ) : (
-                                            <>建立於 {format(new Date(message.createdAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}</>
+                                            <>建立於 {safeFormatDate(message.createdAt, DateFormats.DATETIME)}</>
                                         )}
                                     </div>
                                 </div>
@@ -255,18 +254,18 @@ function MessageDetailModal({ message, onClose }: { message: NotificationMessage
                         <div className="detail-times">
                             <div className="time-item">
                                 <span>建立時間</span>
-                                <span>{format(new Date(message.createdAt), 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}</span>
+                                <span>{safeFormatDate(message.createdAt, DateFormats.FULL)}</span>
                             </div>
                             {message.scheduledAt && (
                                 <div className="time-item">
                                     <span>排程時間</span>
-                                    <span>{format(new Date(message.scheduledAt), 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}</span>
+                                    <span>{safeFormatDate(message.scheduledAt, DateFormats.FULL)}</span>
                                 </div>
                             )}
                             {message.sentAt && (
                                 <div className="time-item">
                                     <span>發送時間</span>
-                                    <span>{format(new Date(message.sentAt), 'yyyy/MM/dd HH:mm:ss', { locale: zhTW })}</span>
+                                    <span>{safeFormatDate(message.sentAt, DateFormats.FULL)}</span>
                                 </div>
                             )}
                         </div>
