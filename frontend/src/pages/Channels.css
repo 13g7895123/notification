@@ -316,145 +316,329 @@
     }
 }
 
-/* Webhook Logs Modal Specific Styles */
-.webhook-logs-container {
+/* ============================================
+   Webhook 呼叫記錄 Modal - 完整 Vanilla CSS
+   ============================================ */
+
+/* Modal 容器 */
+.webhook-modal {
+    width: 95%;
+    max-width: 1100px;
+    height: 85vh;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+    box-shadow: var(--shadow-xl), 0 0 60px rgba(99, 102, 241, 0.15);
+}
+
+/* Modal Header */
+.webhook-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+}
+
+.webhook-modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.webhook-modal-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    border-radius: var(--radius-md);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.webhook-modal-title-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.webhook-modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.webhook-modal-subtitle {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.webhook-modal-close {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.webhook-modal-close:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--color-primary);
+    color: var(--text-primary);
+}
+
+/* Modal Body */
+.webhook-modal-body {
     display: flex;
     flex: 1;
     overflow: hidden;
-    height: 100%;
 }
 
-.logs-list-pane {
-    width: 350px;
-    border-right: 1px solid var(--border-color-light);
+/* 左側列表面板 */
+.webhook-list-pane {
+    width: 360px;
+    min-width: 360px;
     display: flex;
     flex-direction: column;
+    border-right: 1px solid var(--border-color);
     background: var(--bg-secondary);
 }
 
-.logs-header-section {
+.webhook-list-header {
     padding: var(--spacing-md);
     background: var(--bg-tertiary);
     border-bottom: 1px solid var(--border-color-light);
 }
 
-.logs-stats-bar {
+.webhook-list-title {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.webhook-stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--spacing-sm);
-    margin-top: var(--spacing-sm);
 }
 
-.stat-item {
+.webhook-stat-card {
     text-align: center;
-    padding: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     background: var(--bg-secondary);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-color-light);
 }
 
-.stat-label {
+.webhook-stat-label {
     display: block;
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
-.stat-value {
-    font-size: 0.9rem;
+.webhook-stat-value {
+    font-size: 1rem;
     font-weight: 700;
     color: var(--text-primary);
 }
 
-.stat-value.success { color: var(--color-success); }
-.stat-value.error { color: var(--color-error); }
+.webhook-stat-value.success {
+    color: var(--color-success);
+}
 
-.logs-items-container {
+.webhook-stat-value.error {
+    color: var(--color-error);
+}
+
+/* 列表內容 */
+.webhook-list-content {
     flex: 1;
     overflow-y: auto;
 }
 
-.log-item {
+/* 載入狀態 */
+.webhook-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    gap: var(--spacing-md);
+    color: var(--color-primary);
+}
+
+.webhook-loading span {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+/* 空狀態 */
+.webhook-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    gap: var(--spacing-sm);
+}
+
+.webhook-empty-icon {
+    font-size: 2.5rem;
+    opacity: 0.6;
+}
+
+.webhook-empty-text {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+/* 單筆記錄項目 */
+.webhook-log-item {
     padding: var(--spacing-md);
     border-bottom: 1px solid var(--border-color-light);
     cursor: pointer;
     transition: all var(--transition-fast);
-    position: relative;
 }
 
-.log-item:hover {
+.webhook-log-item:hover {
     background: var(--bg-tertiary);
 }
 
-.log-item.active {
-    background: rgba(99, 102, 241, 0.1);
-    border-left: 4px solid var(--color-primary);
+.webhook-log-item.active {
+    background: rgba(99, 102, 241, 0.08);
+    border-left: 3px solid var(--color-primary);
+    padding-left: calc(var(--spacing-md) - 3px);
 }
 
-.log-item-header {
+.webhook-log-row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 6px;
 }
 
-.log-status-badge {
-    padding: 2px 6px;
+.webhook-status-badge {
+    display: inline-block;
+    padding: 3px 8px;
     border-radius: 4px;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: 700;
     font-family: var(--font-mono);
+    letter-spacing: 0.02em;
 }
 
-.log-status-badge.s200 { background: rgba(16, 185, 129, 0.2); color: var(--color-success); }
-.log-status-badge.sError { background: rgba(239, 68, 68, 0.2); color: var(--color-error); }
+.webhook-status-badge.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--color-success);
+}
 
-.log-time-relative {
-    font-size: 0.65rem;
+.webhook-status-badge.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--color-error);
+}
+
+.webhook-status-badge.large {
+    font-size: 0.85rem;
+    padding: 4px 12px;
+}
+
+.webhook-log-time {
+    font-size: 0.7rem;
     color: var(--text-muted);
 }
 
-.log-item-meta {
+.webhook-log-meta {
     display: flex;
     justify-content: space-between;
-    font-size: 0.65rem;
+    align-items: center;
+}
+
+.webhook-log-ip {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
     color: var(--text-secondary);
 }
 
-.log-detail-pane {
+.webhook-log-timestamp {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+/* 右側詳情面板 */
+.webhook-detail-pane {
     flex: 1;
     overflow-y: auto;
-    padding: var(--spacing-xl);
     background: var(--bg-primary);
 }
 
-.detail-header {
+.webhook-detail-content {
+    padding: var(--spacing-xl);
+    animation: fadeIn 0.25s ease-out;
+}
+
+/* 詳情標題 */
+.webhook-detail-header {
     margin-bottom: var(--spacing-xl);
     padding-bottom: var(--spacing-md);
     border-bottom: 1px solid var(--border-color-light);
 }
 
-.detail-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: var(--spacing-xs);
+.webhook-detail-title-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
 }
 
-.detail-subtitle {
+.webhook-detail-title-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.webhook-detail-id {
     font-size: 0.8rem;
     color: var(--text-muted);
 }
 
-.detail-section {
+.webhook-detail-id code {
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+/* 詳情區塊 */
+.webhook-detail-section {
     margin-bottom: var(--spacing-xl);
 }
 
-.detail-section-title {
+.webhook-section-title {
     font-size: 0.7rem;
     font-weight: 700;
     color: var(--text-muted);
@@ -463,42 +647,84 @@
     margin-bottom: var(--spacing-sm);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
 }
 
-.detail-section-title::after {
+.webhook-section-title::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--border-color-light);
+    background: linear-gradient(to right, var(--border-color-light), transparent);
 }
 
-.info-grid {
+/* 資訊網格 */
+.webhook-info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-md);
     background: var(--bg-tertiary);
     padding: var(--spacing-md);
     border-radius: var(--radius-md);
+    border: 1px solid var(--border-color-light);
 }
 
-.info-item-label {
-    display: block;
-    font-size: 0.65rem;
+.webhook-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.webhook-info-label {
+    font-size: 0.7rem;
     color: var(--text-muted);
-    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
-.info-item-value {
-    font-size: 0.8rem;
+.webhook-info-value {
+    font-size: 0.85rem;
     font-family: var(--font-mono);
     color: var(--text-secondary);
     word-break: break-all;
 }
 
+.webhook-info-value.success {
+    color: var(--color-success);
+    font-weight: 600;
+}
+
+.webhook-info-value.error {
+    color: var(--color-error);
+    font-weight: 600;
+}
+
+/* 空詳情狀態 */
+.webhook-detail-empty {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    color: var(--text-muted);
+}
+
+.webhook-detail-empty-icon {
+    font-size: 3.5rem;
+    opacity: 0.5;
+}
+
+.webhook-detail-empty-text {
+    font-size: 0.9rem;
+    text-align: center;
+    max-width: 250px;
+    line-height: 1.5;
+}
+
+/* Code Block (JSON 顯示) */
 .code-block-wrapper {
     position: relative;
-    background: #1e1e3f;
+    background: linear-gradient(135deg, #1e1e3f, #151530);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
     overflow: hidden;
@@ -508,33 +734,70 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .code-lang {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    color: var(--text-muted);
+    color: var(--color-primary);
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .code-block-content {
-    padding: 12px;
+    padding: 16px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
-    line-height: 1.5;
+    font-size: 0.8rem;
+    line-height: 1.6;
     color: #e2e8f0;
     overflow-x: auto;
+    max-height: 300px;
 }
 
+/* 複製按鈕 */
+.code-copy-btn {
+    padding: 4px 10px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.code-copy-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* 響應式設計 */
 @media (max-width: 900px) {
-    .webhook-logs-container {
+    .webhook-modal {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        border-radius: 0;
+    }
+
+    .webhook-modal-body {
         flex-direction: column;
     }
-    .logs-list-pane {
+
+    .webhook-list-pane {
         width: 100%;
-        height: 300px;
+        min-width: auto;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .webhook-info-grid {
+        grid-template-columns: 1fr;
     }
 }

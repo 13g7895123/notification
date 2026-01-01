@@ -690,65 +690,72 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '1000px', width: '95%', height: '85vh', display: 'flex', flexDirection: 'column' }}>
-                <div className="modal-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <ClipboardList size={22} className="text-primary" />
-                        <div>
-                            <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Webhook 呼叫記錄</h2>
-                            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>查看來自外部服務的即時請求資訊</p>
+            <div className="webhook-modal" onClick={e => e.stopPropagation()}>
+                {/* Modal Header */}
+                <div className="webhook-modal-header">
+                    <div className="webhook-modal-title-group">
+                        <div className="webhook-modal-icon">
+                            <ClipboardList size={22} />
+                        </div>
+                        <div className="webhook-modal-title-content">
+                            <h2 className="webhook-modal-title">Webhook 呼叫記錄</h2>
+                            <p className="webhook-modal-subtitle">查看來自外部服務的即時請求資訊</p>
                         </div>
                     </div>
-                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
+                    <button className="webhook-modal-close" onClick={onClose}>
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="webhook-logs-container">
+                {/* Modal Body */}
+                <div className="webhook-modal-body">
                     {/* 左側列表 */}
-                    <div className="logs-list-pane">
-                        <div className="logs-header-section">
-                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>最近 50 筆記錄</div>
-                            <div className="logs-stats-bar">
-                                <div className="stat-item">
-                                    <span className="stat-label">成功率</span>
-                                    <span className={`stat-value ${successRate > 90 ? 'success' : 'error'}`}>{successRate}%</span>
+                    <div className="webhook-list-pane">
+                        <div className="webhook-list-header">
+                            <span className="webhook-list-title">最近 50 筆記錄</span>
+                            <div className="webhook-stats-grid">
+                                <div className="webhook-stat-card">
+                                    <span className="webhook-stat-label">成功率</span>
+                                    <span className={`webhook-stat-value ${successRate > 90 ? 'success' : 'error'}`}>
+                                        {successRate}%
+                                    </span>
                                 </div>
-                                <div className="stat-item">
-                                    <span className="stat-label">總呼叫次數</span>
-                                    <span className="stat-value">{stats.total}</span>
+                                <div className="webhook-stat-card">
+                                    <span className="webhook-stat-label">總呼叫</span>
+                                    <span className="webhook-stat-value">{stats.total}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="logs-items-container">
+                        <div className="webhook-list-content">
                             {loading ? (
-                                <div className="flex items-center justify-center py-xl">
-                                    <Loader2 size={32} className="animate-spin text-primary" />
+                                <div className="webhook-loading">
+                                    <Loader2 size={32} className="animate-spin" />
+                                    <span>載入中...</span>
                                 </div>
                             ) : logs.length === 0 ? (
-                                <div className="empty-state py-xl">
-                                    <div style={{ fontSize: '2rem', marginBottom: '12px' }}>📭</div>
-                                    <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>預期外！目前尚無記錄</h3>
+                                <div className="webhook-empty">
+                                    <span className="webhook-empty-icon">📭</span>
+                                    <span className="webhook-empty-text">目前尚無記錄</span>
                                 </div>
                             ) : (
                                 logs.map(log => (
                                     <div
                                         key={log.id}
-                                        className={`log-item ${selectedLog?.id === log.id ? 'active' : ''}`}
+                                        className={`webhook-log-item ${selectedLog?.id === log.id ? 'active' : ''}`}
                                         onClick={() => setSelectedLog(log)}
                                     >
-                                        <div className="log-item-header">
-                                            <span className={`log-status-badge ${log.responseStatus === 200 ? 's200' : 'sError'}`}>
+                                        <div className="webhook-log-row">
+                                            <span className={`webhook-status-badge ${log.responseStatus === 200 ? 'success' : 'error'}`}>
                                                 {log.method} {log.responseStatus}
                                             </span>
-                                            <span className="log-time-relative">
+                                            <span className="webhook-log-time">
                                                 {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true, locale: zhTW })}
                                             </span>
                                         </div>
-                                        <div className="log-item-meta">
-                                            <span style={{ fontFamily: 'var(--font-mono)' }}>{log.ipAddress}</span>
-                                            <span>{format(new Date(log.createdAt), 'HH:mm:ss')}</span>
+                                        <div className="webhook-log-meta">
+                                            <span className="webhook-log-ip">{log.ipAddress}</span>
+                                            <span className="webhook-log-timestamp">{format(new Date(log.createdAt), 'HH:mm:ss')}</span>
                                         </div>
                                     </div>
                                 ))
@@ -757,64 +764,69 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
                     </div>
 
                     {/* 右側詳情 */}
-                    <div className="log-detail-pane">
+                    <div className="webhook-detail-pane">
                         {selectedLog ? (
-                            <div className="animate-fade-in">
-                                <div className="detail-header">
-                                    <div className="detail-title">
-                                        <span className={`log-status-badge ${selectedLog.responseStatus === 200 ? 's200' : 'sError'}`} style={{ fontSize: '0.9rem', padding: '4px 10px' }}>
+                            <div className="webhook-detail-content">
+                                {/* 詳情標題 */}
+                                <div className="webhook-detail-header">
+                                    <div className="webhook-detail-title-row">
+                                        <span className={`webhook-status-badge large ${selectedLog.responseStatus === 200 ? 'success' : 'error'}`}>
                                             {selectedLog.method} {selectedLog.responseStatus}
                                         </span>
-                                        請求詳情
+                                        <span className="webhook-detail-title-text">請求詳情</span>
                                     </div>
-                                    <div className="detail-subtitle">
-                                        追蹤 ID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{selectedLog.id}</span>
+                                    <div className="webhook-detail-id">
+                                        追蹤 ID: <code>{selectedLog.id}</code>
                                     </div>
                                 </div>
 
-                                <div className="detail-section">
-                                    <div className="detail-section-title">基礎資訊</div>
-                                    <div className="info-grid">
-                                        <div className="info-item">
-                                            <span className="info-item-label">請求來源 IP</span>
-                                            <span className="info-item-value">{selectedLog.ipAddress}</span>
+                                {/* 基礎資訊 */}
+                                <div className="webhook-detail-section">
+                                    <div className="webhook-section-title">基礎資訊</div>
+                                    <div className="webhook-info-grid">
+                                        <div className="webhook-info-item">
+                                            <span className="webhook-info-label">請求來源 IP</span>
+                                            <span className="webhook-info-value">{selectedLog.ipAddress}</span>
                                         </div>
-                                        <div className="info-item">
-                                            <span className="info-item-label">完整請求 URL</span>
-                                            <span className="info-item-value">{selectedLog.url}</span>
+                                        <div className="webhook-info-item">
+                                            <span className="webhook-info-label">完整請求 URL</span>
+                                            <span className="webhook-info-value">{selectedLog.url}</span>
                                         </div>
-                                        <div className="info-item">
-                                            <span className="info-item-label">觸發時間</span>
-                                            <span className="info-item-value">{format(new Date(selectedLog.createdAt), 'yyyy-MM-dd HH:mm:ss')}</span>
+                                        <div className="webhook-info-item">
+                                            <span className="webhook-info-label">觸發時間</span>
+                                            <span className="webhook-info-value">{format(new Date(selectedLog.createdAt), 'yyyy-MM-dd HH:mm:ss')}</span>
                                         </div>
-                                        <div className="info-item">
-                                            <span className="info-item-label">回應狀態</span>
-                                            <span className={`info-item-value ${selectedLog.responseStatus === 200 ? 'text-success' : 'text-error'}`}>
-                                                {selectedLog.responseStatus === 200 ? 'OK' : 'Error'}
+                                        <div className="webhook-info-item">
+                                            <span className="webhook-info-label">回應狀態</span>
+                                            <span className={`webhook-info-value ${selectedLog.responseStatus === 200 ? 'success' : 'error'}`}>
+                                                {selectedLog.responseStatus === 200 ? '✓ OK' : '✕ Error'}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="detail-section">
-                                    <div className="detail-section-title">請求主體 (Payload)</div>
+                                {/* Payload */}
+                                <div className="webhook-detail-section">
+                                    <div className="webhook-section-title">請求主體 (Payload)</div>
                                     <JsonDisplay data={selectedLog.payload} />
                                 </div>
 
-                                <div className="detail-section">
-                                    <div className="detail-section-title">回應內容 (Response)</div>
+                                {/* Response */}
+                                <div className="webhook-detail-section">
+                                    <div className="webhook-section-title">回應內容 (Response)</div>
                                     <JsonDisplay data={selectedLog.responseBody} />
                                 </div>
 
-                                <div className="detail-section">
-                                    <div className="detail-section-title">請求標頭 (Headers)</div>
+                                {/* Headers */}
+                                <div className="webhook-detail-section">
+                                    <div className="webhook-section-title">請求標頭 (Headers)</div>
                                     <JsonDisplay data={selectedLog.headers} />
                                 </div>
                             </div>
                         ) : (
-                            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                                <div style={{ fontSize: '3rem', marginBottom: '16px', opacity: 0.5 }}>🖱️</div>
-                                <div>請從左側選擇一筆記錄以查看具體交握資訊</div>
+                            <div className="webhook-detail-empty">
+                                <span className="webhook-detail-empty-icon">🖱️</span>
+                                <span className="webhook-detail-empty-text">請從左側選擇一筆記錄以查看具體交握資訊</span>
                             </div>
                         )}
                     </div>
@@ -874,16 +886,6 @@ function tryFormatJson(data: string | object | null | undefined): string {
     return String(data);
 }
 
-function safeFormatDate(dateStr: string | null | undefined, formatStr: string): string {
-    if (!dateStr) return '-';
-    try {
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return '-';
-        return format(date, formatStr);
-    } catch {
-        return '-';
-    }
-}
 function maskString(str: string, visibleChars: number = 8): string {
     if (str.length <= visibleChars) return str;
     return str.slice(0, visibleChars) + '••••••••';
