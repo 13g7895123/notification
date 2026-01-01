@@ -79,34 +79,33 @@
     transform: translateY(0);
 }
 
-transform: translateY(0);
-}
-
 .btn-start-scheduler {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 0 12px;
-    height: 32px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
+    padding: 0 14px;
+    height: 34px;
+    background: linear-gradient(135deg, var(--color-success), #059669);
+    border: none;
     border-radius: var(--radius-md);
-    color: var(--text-secondary);
+    color: white;
     font-size: 0.8125rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-fast);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .btn-start-scheduler:hover {
-    background: var(--bg-input);
-    color: var(--color-primary);
-    border-color: var(--color-primary);
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .btn-start-scheduler:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
 
 .btn-refresh-status {

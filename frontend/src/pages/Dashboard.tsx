@@ -88,10 +88,10 @@ export function Dashboard() {
                             <LayoutDashboard size={22} />
                         </div>
                         儀表板
-                        {systemStatus && (
-                            <div className={`status-badge-mini ${systemStatus.scheduler_running ? 'running' : 'stopped'}`}>
+                        {systemStatus?.scheduler_running && (
+                            <div className="status-badge-mini running">
                                 <Activity size={12} />
-                                <span>{systemStatus.scheduler_running ? '系統排程運作中' : '系統排程已停止'}</span>
+                                <span>系統排程運作中</span>
                             </div>
                         )}
                     </h1>
