@@ -29,7 +29,7 @@ export function SchedulerManagement() {
                 fetchSchedulerStatus(),
                 fetchSchedulerLogs(50)
             ]);
-            
+
             setStatus(statusData);
             setLogs(logsData);
         } catch (err) {
@@ -61,8 +61,8 @@ export function SchedulerManagement() {
                     </p>
                 </div>
                 <div className="page-actions">
-                    <button 
-                        className={`btn btn-secondary ${isLoading ? 'loading' : ''}`} 
+                    <button
+                        className={`btn btn-secondary ${isLoading ? 'loading' : ''}`}
                         onClick={fetchSchedulerData}
                         disabled={isLoading}
                     >
@@ -90,8 +90,8 @@ export function SchedulerManagement() {
                             <div className="status-card-info">
                                 <span className="status-card-label">排程器狀態</span>
                                 <span className="status-card-value">
-                                    {status?.status === 'running' ? '運行中' : '已停止'}
-                                    <span className="status-indicator online"></span>
+                                    <span className="status-text">{status?.status === 'running' ? '運行中' : '已停止'}</span>
+                                    <span className="scheduler-status-indicator online"></span>
                                 </span>
                             </div>
                         </div>
