@@ -12,7 +12,8 @@ import type {
     ChannelUser,
     WebhookLog,
     SchedulerStatus,
-    SchedulerLog
+    SchedulerLog,
+    SchedulerSettings
 } from '../types';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
