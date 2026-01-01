@@ -43,22 +43,36 @@ class SystemController extends BaseController
     /**
      * POST /api/system/scheduler/start
      * 
-     * 嘗試啟動排程器
+     * 嘗試啟動排程器守護進程
      */
     public function startScheduler()
     {
         $logFile = WRITEPATH . 'logs/scheduler_startup.log';
-        // 使用 ROOTPATH 確保路徑正確，並透過 nohup 在背景執行
-        $cmd = 'nohup php ' . ROOTPATH . 'spark task:scheduler > ' . $logFile . ' 2>&1 &';
+        $pidFile = WRITEPATH . 'pids/scheduler.pid';
+
+        // 檢查是否已在運行
+        if (file_exists($pidFile)) {
+            $pid = (int) trim(file_get_contents($pidFile));
+            if (file_exists("/proc/{$pid}")) {
+                return $this->successResponse([
+                    'message' => '排程器已在運行中',
+                    'pid' => $pid,
+                    'status' => 'already_running'
+                ]);
+            }
+        }
+
+        // 使用新的 scheduler:daemon 命令
+        $cmd = 'nohup php ' . ROOTPATH . 'spark scheduler:daemon > ' . $logFile . ' 2>&1 &';
 
         exec($cmd, $output, $returnVar);
 
-        // 由於是用 nohup & 執行，returnVar 0 表示指令成功送出，不代表排程一定成功跑起來
-        // 但通常這樣就夠了，詳細錯誤要看 log
+        // 由於是用 nohup & 執行，returnVar 0 表示指令成功送出
         if ($returnVar === 0) {
             return $this->successResponse([
                 'message' => '排程器啟動指令已發送',
-                'command' => $cmd
+                'command' => 'scheduler:daemon',
+                'log_file' => $logFile
             ]);
         } else {
             log_message('error', 'Scheduler start failed: ' . implode("\n", $output));
