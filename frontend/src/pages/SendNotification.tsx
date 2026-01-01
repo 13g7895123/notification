@@ -12,7 +12,6 @@ import {
     Activity
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
-import { useAuth } from '../contexts/AuthContext';
 import type { ChannelUser } from '../types';
 import './SendNotification.css';
 
@@ -23,7 +22,6 @@ interface ChannelOption {
 
 export function SendNotification() {
     const { channels, templates, sendMessage, isLoading, getChannelUsers } = useNotification();
-    const { isAdmin } = useAuth();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [selectedChannels, setSelectedChannels] = useState<string[]>([]);

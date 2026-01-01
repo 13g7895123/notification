@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Activity,
     Clock,
@@ -7,7 +7,6 @@ import {
     Terminal,
     RefreshCw,
     Server,
-    Database,
     Cpu
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
@@ -42,7 +41,7 @@ export function SchedulerManagement() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchSchedulerData = async () => {
+    const fetchSchedulerData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
@@ -59,13 +58,13 @@ export function SchedulerManagement() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [fetchSchedulerStatus, fetchSchedulerLogs]);
 
     useEffect(() => {
         fetchSchedulerData();
         const interval = setInterval(fetchSchedulerData, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchSchedulerData]);
 
     return (
         <div className="scheduler-page">
@@ -123,7 +122,7 @@ export function SchedulerManagement() {
                             <div className="status-card-info">
                                 <span className="status-card-label">上次執行</span>
                                 <span className="status-card-value">
-                                    {status ? safeFormatDate(status.lastRun, DateFormats.TIME_ONLY) : '--:--'}
+                                    {status ? safeFormatDate(status.lastRun, DateFormats.TIME) : '--:--'}
                                 </span>
                             </div>
                         </div>
@@ -134,7 +133,7 @@ export function SchedulerManagement() {
                             <div className="status-card-info">
                                 <span className="status-card-label">下次執行</span>
                                 <span className="status-card-value">
-                                    {status ? safeFormatDate(status.nextRun, DateFormats.TIME_ONLY) : '--:--'}
+                                    {status ? safeFormatDate(status.nextRun, DateFormats.TIME) : '--:--'}
                                 </span>
                             </div>
                         </div>
