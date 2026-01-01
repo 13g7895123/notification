@@ -88,12 +88,6 @@ export function Dashboard() {
                             <LayoutDashboard size={22} />
                         </div>
                         儀表板
-                        {systemStatus?.scheduler_running && (
-                            <div className="status-badge-mini running">
-                                <Activity size={12} />
-                                <span>系統排程運作中</span>
-                            </div>
-                        )}
                     </h1>
                     <p className="page-description">
                         通知系統運作概況與統計數據
