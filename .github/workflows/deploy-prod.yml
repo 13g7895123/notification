@@ -128,32 +128,47 @@ jobs:
 
       - name: 部署成功通知
         if: success()
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           echo "✅ 生產環境部署成功"
+          # 使用 jq 正確轉義特殊字符，並截取前 200 字符避免過長
+          SAFE_MESSAGE=$(echo "$COMMIT_MESSAGE" | head -c 200 | jq -Rs '.')
+          # 移除 jq 輸出的首尾引號
+          SAFE_MESSAGE=${SAFE_MESSAGE:1:-1}
+          
           curl -X POST https://notify.try-8verything.com/api/notifications/windows \
             -H "Content-Type: application/json" \
             -H "X-API-Key: ${{ secrets.WINDOWS_NOTIFY_API_KEY }}" \
-            -d '{
-              "title": "✅ Prod Deploy Success",
-              "message": "生產環境部署成功！\n${{ github.event.head_commit.message }}",
-              "repo": "${{ github.repository }}",
-              "branch": "${{ github.ref_name }}",
-              "commit_sha": "${{ github.sha }}",
-              "action_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }'
+            -d "{
+              \"title\": \"✅ Prod Deploy Success\",
+              \"message\": \"生產環境部署成功！\\n${SAFE_MESSAGE}\",
+              \"repo\": \"${{ github.repository }}\",
+              \"branch\": \"${{ github.ref_name }}\",
+              \"commit_sha\": \"${{ github.sha }}\",
+              \"action_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            }"
 
       - name: 部署失敗通知
         if: failure()
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           echo "❌ 生產環境部署失敗"
+          # 使用 jq 正確轉義特殊字符，並截取前 200 字符避免過長
+          SAFE_MESSAGE=$(echo "$COMMIT_MESSAGE" | head -c 200 | jq -Rs '.')
+          # 移除 jq 輸出的首尾引號
+          SAFE_MESSAGE=${SAFE_MESSAGE:1:-1}
+          
           curl -X POST https://notify.try-8verything.com/api/notifications/windows \
             -H "Content-Type: application/json" \
             -H "X-API-Key: ${{ secrets.WINDOWS_NOTIFY_API_KEY }}" \
-            -d '{
-              "title": "❌ Prod Deploy Failed",
-              "message": "生產環境部署失敗！\n${{ github.event.head_commit.message }}",
-              "repo": "${{ github.repository }}",
-              "branch": "${{ github.ref_name }}",
-              "commit_sha": "${{ github.sha }}",
-              "action_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }'
+            -d "{
+              \"title\": \"❌ Prod Deploy Failed\",
+              \"message\": \"生產環境部署失敗！\\n${SAFE_MESSAGE}\",
+              \"repo\": \"${{ github.repository }}\",
+              \"branch\": \"${{ github.ref_name }}\",
+              \"commit_sha\": \"${{ github.sha }}\",
+              \"action_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            }"
+
