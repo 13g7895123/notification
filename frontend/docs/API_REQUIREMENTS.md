@@ -1233,7 +1233,10 @@ interface ApiUsageLog {
 | `deleteApiKey()` | DELETE /api/api-keys/:id |
 | `toggleApiKey()` | PUT /api/api-keys/:id/toggle |
 | `regenerateApiKey()` | POST /api/api-keys/:id/regenerate |
+| `startScheduler()` | POST /api/scheduler/start |
+| `stopScheduler()` | POST /api/scheduler/stop |
+| `restartScheduler()` | POST /api/scheduler/restart |
 
 ---
 
-*最後更新：2024-12-25*
+*最後更新：2026-01-01*

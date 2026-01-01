@@ -279,3 +279,17 @@ export interface SchedulerLog {
     message: string;
     context?: Record<string, unknown>;
 }
+
+export interface SchedulerControlResponse {
+    success: boolean;
+    data?: {
+        message: string;
+        pid?: number;
+        oldPid?: number;
+        newPid?: number;
+        startedAt?: string;
+        stoppedAt?: string;
+        restartedAt?: string;
+    };
+    error?: string;
+}

@@ -67,6 +67,9 @@ interface NotificationContextType {
     // 排程器管理
     fetchSchedulerStatus: () => Promise<SchedulerStatus>;
     fetchSchedulerLogs: (limit?: number) => Promise<SchedulerLog[]>;
+    startScheduler: () => Promise<boolean>;
+    stopScheduler: () => Promise<boolean>;
+    restartScheduler: () => Promise<boolean>;
 
     // UI 狀態
     isLoading: boolean;
@@ -405,6 +408,36 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    const startScheduler = useCallback(async () => {
+        try {
+            await api.post('/scheduler/start');
+            return true;
+        } catch (error) {
+            console.error('Start scheduler failed', error);
+            return false;
+        }
+    }, []);
+
+    const stopScheduler = useCallback(async () => {
+        try {
+            await api.post('/scheduler/stop');
+            return true;
+        } catch (error) {
+            console.error('Stop scheduler failed', error);
+            return false;
+        }
+    }, []);
+
+    const restartScheduler = useCallback(async () => {
+        try {
+            await api.post('/scheduler/restart');
+            return true;
+        } catch (error) {
+            console.error('Restart scheduler failed', error);
+            return false;
+        }
+    }, []);
+
     // 登入後自動加載基本數據
     // 這裡需要在認證狀態改變時獲取數據，這是合理的 useEffect 使用場景
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -466,6 +499,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 fetchApiUsage,
                 fetchSchedulerStatus,
                 fetchSchedulerLogs,
+                startScheduler,
+                stopScheduler,
+                restartScheduler,
                 isLoading,
                 sidebarCollapsed,
                 toggleSidebar
