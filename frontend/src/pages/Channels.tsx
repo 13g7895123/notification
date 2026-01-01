@@ -677,7 +677,7 @@ function ChannelLogsModal({ channelId, onClose }: { channelId: string; onClose: 
             }
         };
         loadLogs();
-    }, [channelId]);
+    }, [channelId, getChannelWebhookLogs]);
 
     const stats = {
         total: logs.length,

@@ -10,7 +10,9 @@ import type {
     ApiUsageLog,
     ApiStats,
     ChannelUser,
-    WebhookLog
+    WebhookLog,
+    SchedulerStatus,
+    SchedulerLog
 } from '../types';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
@@ -63,8 +65,8 @@ interface NotificationContextType {
     fetchApiUsage: (params?: Record<string, string | number | boolean>) => Promise<void>;
 
     // 排程器管理
-    fetchSchedulerStatus: () => Promise<any>;
-    fetchSchedulerLogs: (limit?: number) => Promise<any[]>;
+    fetchSchedulerStatus: () => Promise<SchedulerStatus>;
+    fetchSchedulerLogs: (limit?: number) => Promise<SchedulerLog[]>;
 
     // UI 狀態
     isLoading: boolean;
@@ -385,7 +387,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // 排程器管理
     const fetchSchedulerStatus = useCallback(async () => {
         try {
-            const response = await api.get<any>('/scheduler/status');
+            const response = await api.get<SchedulerStatus>('/scheduler/status');
             return response;
         } catch (error) {
             console.error('Fetch scheduler status failed', error);
@@ -395,7 +397,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const fetchSchedulerLogs = useCallback(async (limit: number = 50) => {
         try {
-            const response = await api.get<any[]>(`/scheduler/logs?limit=${limit}`);
+            const response = await api.get<SchedulerLog[]>(`/scheduler/logs?limit=${limit}`);
             return response || [];
         } catch (error) {
             console.error('Fetch scheduler logs failed', error);
@@ -424,7 +426,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             setApiUsageLogs([]);
             setApiStats(null);
         }
-    }, [isAuthenticated, fetchChannels, fetchTemplates, fetchStats]);
+    }, [isAuthenticated, fetchChannels, fetchMessages, fetchTemplates, fetchStats, fetchApiKeys, fetchApiUsage]);
     /* eslint-enable react-hooks/set-state-in-effect */
 
     return (

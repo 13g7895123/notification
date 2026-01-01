@@ -11,28 +11,8 @@ import {
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
 import { safeFormatDate, DateFormats } from '../utils/dateUtils';
+import type { SchedulerStatus, SchedulerLog } from '../types';
 import './SchedulerManagement.css';
-
-interface SchedulerCheck {
-    name: string;
-    status: 'ok' | 'warning' | 'error';
-    message: string;
-}
-
-interface SchedulerLog {
-    timestamp: string;
-    level: 'info' | 'warning' | 'error';
-    message: string;
-    context?: any;
-}
-
-interface SchedulerStatus {
-    status: 'running' | 'stopped' | 'error';
-    lastRun: string;
-    nextRun: string;
-    daemonStatus: string;
-    checks: SchedulerCheck[];
-}
 
 export function SchedulerManagement() {
     const { fetchSchedulerStatus, fetchSchedulerLogs } = useNotification();

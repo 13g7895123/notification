@@ -257,3 +257,25 @@ export interface ApiSendNotificationResponse {
     }[];
     error?: string;
 }
+
+// 排程器管理
+export interface SchedulerStatus {
+    status: 'running' | 'stopped' | 'error';
+    lastRun: string;
+    nextRun: string;
+    daemonStatus: string;
+    checks: SchedulerCheck[];
+}
+
+export interface SchedulerCheck {
+    name: string;
+    status: 'ok' | 'warning' | 'error';
+    message: string;
+}
+
+export interface SchedulerLog {
+    timestamp: string;
+    level: 'info' | 'warning' | 'error';
+    message: string;
+    context?: Record<string, unknown>;
+}
