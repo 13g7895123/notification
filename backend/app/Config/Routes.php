@@ -135,6 +135,10 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
             $routes->delete('users/(:segment)', 'UserController::delete/$1');
             $routes->put('users/(:segment)/status', 'UserController::updateStatus/$1');
             $routes->put('users/(:segment)/password', 'UserController::resetPassword/$1');
+
+            // 排程器管理
+            $routes->get('scheduler/status', 'SchedulerController::status');
+            $routes->get('scheduler/logs', 'SchedulerController::logs');
         });
 
         // =========================================

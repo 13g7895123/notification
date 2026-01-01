@@ -10,6 +10,7 @@ import {
     Database,
     Cpu
 } from 'lucide-react';
+import { useNotification } from '../contexts/NotificationContext';
 import { safeFormatDate, DateFormats } from '../utils/dateUtils';
 import './SchedulerManagement.css';
 
@@ -35,43 +36,27 @@ interface SchedulerStatus {
 }
 
 export function SchedulerManagement() {
+    const { fetchSchedulerStatus, fetchSchedulerLogs } = useNotification();
     const [status, setStatus] = useState<SchedulerStatus | null>(null);
     const [logs, setLogs] = useState<SchedulerLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const fetchSchedulerData = async () => {
         setIsLoading(true);
+        setError(null);
         try {
-            // Mocking API call
-            // In real implementation, this would be:
-            // const statusRes = await fetch('/api/scheduler/status');
-            // const logsRes = await fetch('/api/scheduler/logs');
+            const [statusData, logsData] = await Promise.all([
+                fetchSchedulerStatus(),
+                fetchSchedulerLogs(50)
+            ]);
             
-            setTimeout(() => {
-                setStatus({
-                    status: 'running',
-                    lastRun: new Date().toISOString(),
-                    nextRun: new Date(Date.now() + 60000).toISOString(),
-                    daemonStatus: 'active',
-                    checks: [
-                        { name: '資料庫連線', status: 'ok', message: '已連線' },
-                        { name: '隊列工作者 (Queue Worker)', status: 'ok', message: '3 個工作者運行中' },
-                        { name: '排程任務 (Cron Job)', status: 'ok', message: '上次執行於 1 分鐘前' },
-                        { name: 'Redis 快取', status: 'ok', message: '已連線' }
-                    ]
-                });
-
-                setLogs([
-                    { timestamp: new Date().toISOString(), level: 'info', message: '開始執行排程任務: ProcessScheduledMessages' },
-                    { timestamp: new Date(Date.now() - 5000).toISOString(), level: 'info', message: '成功處理 3 則排程訊息' },
-                    { timestamp: new Date(Date.now() - 60000).toISOString(), level: 'info', message: '開始執行排程任務: CheckSchedulerStatus' },
-                    { timestamp: new Date(Date.now() - 65000).toISOString(), level: 'info', message: '排程器健康檢查完成' },
-                    { timestamp: new Date(Date.now() - 120000).toISOString(), level: 'warning', message: '隊列工作者回應較慢 (250ms)' }
-                ]);
-                setIsLoading(false);
-            }, 800);
-        } catch (error) {
-            console.error('Failed to fetch scheduler data', error);
+            setStatus(statusData);
+            setLogs(logsData);
+        } catch (err) {
+            console.error('Failed to fetch scheduler data', err);
+            setError('無法載入排程器數據');
+        } finally {
             setIsLoading(false);
         }
     };
@@ -111,6 +96,13 @@ export function SchedulerManagement() {
             <div className="scheduler-grid">
                 {/* 狀態概覽 */}
                 <div className="scheduler-main">
+                    {error && (
+                        <div className="error-message card">
+                            <AlertCircle size={18} />
+                            {error}
+                        </div>
+                    )}
+
                     <div className="status-cards">
                         <div className="status-card card">
                             <div className="status-card-icon running">

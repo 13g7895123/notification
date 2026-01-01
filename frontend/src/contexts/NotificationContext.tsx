@@ -62,6 +62,10 @@ interface NotificationContextType {
     apiStats: ApiStats | null;
     fetchApiUsage: (params?: Record<string, string | number | boolean>) => Promise<void>;
 
+    // 排程器管理
+    fetchSchedulerStatus: () => Promise<any>;
+    fetchSchedulerLogs: (limit?: number) => Promise<any[]>;
+
     // UI 狀態
     isLoading: boolean;
     sidebarCollapsed: boolean;
@@ -378,6 +382,27 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setSidebarCollapsed(prev => !prev);
     }, []);
 
+    // 排程器管理
+    const fetchSchedulerStatus = useCallback(async () => {
+        try {
+            const response = await api.get<any>('/scheduler/status');
+            return response;
+        } catch (error) {
+            console.error('Fetch scheduler status failed', error);
+            throw error;
+        }
+    }, []);
+
+    const fetchSchedulerLogs = useCallback(async (limit: number = 50) => {
+        try {
+            const response = await api.get<any[]>(`/scheduler/logs?limit=${limit}`);
+            return response || [];
+        } catch (error) {
+            console.error('Fetch scheduler logs failed', error);
+            return [];
+        }
+    }, []);
+
     // 登入後自動加載基本數據
     // 這裡需要在認證狀態改變時獲取數據，這是合理的 useEffect 使用場景
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -437,6 +462,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 apiUsageLogs,
                 apiStats,
                 fetchApiUsage,
+                fetchSchedulerStatus,
+                fetchSchedulerLogs,
                 isLoading,
                 sidebarCollapsed,
                 toggleSidebar
