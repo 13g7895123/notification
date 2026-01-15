@@ -22,6 +22,7 @@ apk add --no-cache \
     g++ \
     make \
     tzdata \
+    dcron \
     > /dev/null 2>&1
 
 # ===========================================
@@ -65,24 +66,11 @@ fi
 echo "[5/5] Setting folder permissions..."
 
 # 建立必要目錄
-mkdir -p writable/cache writable/logs writable/session writable/uploads writable/debugbar
+mkdir -p writable/cache writable/logs writable/session writable/uploads writable/debugbar writable/pids
 
 # 設定權限
 chmod -R 777 writable
 chown -R www-data:www-data writable 2>/dev/null || true
-
-echo "  - writable/cache    [OK]"
-echo "  - writable/logs     [OK]"
-echo "  - writable/session  [OK]"
-echo "  - writable/uploads  [OK]"
-echo "  - writable/debugbar [OK]"
-
-# ===========================================
-# 驗證權限
-# ===========================================
-echo ""
-echo "Verifying permissions..."
-ls -la writable/ | head -10
 
 # ===========================================
 # 等待資料庫就緒
@@ -92,40 +80,27 @@ echo "Waiting for database..."
 sleep 5
 
 # ===========================================
-# 啟動 Task Scheduler Daemon (背景執行)
+# 設定 Cron Job
 # ===========================================
 echo ""
-echo "Starting Task Scheduler Daemon..."
+echo "Setting up Cron Job for CI4 Tasks..."
 
-# 建立 PID 檔案目錄
-mkdir -p writable/pids
+# 建立 crontab 檔案
+cat > /etc/crontabs/root << 'EOF'
+# CI4 Tasks Scheduler - 每分鐘執行
+* * * * * cd /var/www/html && php spark tasks:run >> /var/www/html/writable/logs/cron.log 2>&1
+EOF
 
-# 啟動 scheduler 迴圈在背景
-# 每分鐘執行一次 tasks:run，並更新 heartbeat 檔案供 API 檢查
-(
-    while true; do
-        # 紀錄心跳時間戳記
-        date +%s > writable/pids/scheduler_heartbeat
-        
-        # 執行排程
-        php spark tasks:run >> writable/logs/scheduler.log 2>&1
-        
-        # 等待一分鐘
-        sleep 60
-    done
-) &
-SCHEDULER_PID=$!
-echo $SCHEDULER_PID > writable/pids/scheduler.pid
-echo "  Scheduler loop started with PID: $SCHEDULER_PID"
+# 啟動 crond
+crond -f -l 2 &
+CRON_PID=$!
+echo "  Cron daemon started with PID: $CRON_PID"
 
-# 設定清理函數，當主程序結束時停止 scheduler
+# 設定清理函數
 cleanup() {
     echo ""
-    echo "Stopping Task Scheduler..."
-    if [ -f writable/pids/scheduler.pid ]; then
-        kill $(cat writable/pids/scheduler.pid) 2>/dev/null || true
-        rm -f writable/pids/scheduler.pid
-    fi
+    echo "Stopping Cron daemon..."
+    kill $CRON_PID 2>/dev/null || true
     echo "Cleanup complete."
     exit 0
 }
@@ -140,7 +115,7 @@ echo ""
 echo "=========================================="
 echo " Starting CodeIgniter 4 CLI Server..."
 echo " Listening on http://0.0.0.0:8080"
-echo " Task Scheduler: Running (PID: $SCHEDULER_PID)"
+echo " Cron Job: Running (PID: $CRON_PID)"
 echo "=========================================="
 echo ""
 

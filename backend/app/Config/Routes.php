@@ -139,14 +139,14 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
             // 排程器管理
             $routes->get('scheduler/status', 'SchedulerController::status');
             $routes->get('scheduler/logs', 'SchedulerController::logs');
-            $routes->post('scheduler/stop', 'SchedulerController::stop');
-            $routes->post('scheduler/start', 'SchedulerController::start');
-            $routes->post('scheduler/restart', 'SchedulerController::restart');
+            $routes->get('scheduler/settings', 'SchedulerController::getSettings');
+            $routes->post('scheduler/settings', 'SchedulerController::updateSettings');
+            $routes->post('scheduler/enable', 'SchedulerController::enable');
+            $routes->post('scheduler/disable', 'SchedulerController::disable');
+            $routes->post('scheduler/run-now', 'SchedulerController::runNow');
 
             // 系統設定
             $routes->get('settings', 'SystemSettingsController::index');
-            $routes->get('settings/scheduler', 'SystemSettingsController::scheduler');
-            $routes->put('settings/scheduler', 'SystemSettingsController::updateScheduler');
         });
 
         // =========================================

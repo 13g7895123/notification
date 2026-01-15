@@ -10,33 +10,13 @@ use App\Repositories\ChannelUserRepository;
 use App\Entities\MessageEntity;
 use App\Models\SystemSettingModel;
 
-/**
- * 排程器守護進程
- * 
- * 用法：
- *   php spark scheduler:daemon         - 前台運行
- *   php spark scheduler:daemon --once  - 只執行一次（用於 cron job）
- * 
- * 功能：
- *   - 根據系統設定的間隔檢查並處理已到期的排程訊息
- *   - 持續更新心跳檔案以表示排程器正在運行
- */
-class SchedulerDaemon extends BaseCommand
+class ProcessScheduledMessagesTask extends BaseCommand
 {
     protected $group       = 'Tasks';
-    protected $name        = 'scheduler:daemon';
-    protected $description = '排程器守護進程 - 處理排程訊息並維護心跳';
-    protected $usage       = 'scheduler:daemon [--once]';
-    protected $arguments   = [];
-    protected $options     = [
-        '--once' => '只執行一次後退出（適用於 Cron Job）',
-    ];
+    protected $name        = 'tasks:process-messages';
+    protected $description = '處理已到期的排程訊息';
 
-    private string $heartbeatFile;
-    private string $pidFile;
     private string $logFile;
-    private bool $running = true;
-
     private MessageRepository $messageRepository;
     private ChannelRepository $channelRepository;
     private ChannelUserRepository $channelUserRepository;
@@ -44,116 +24,18 @@ class SchedulerDaemon extends BaseCommand
 
     public function run(array $params)
     {
-        $this->heartbeatFile = WRITEPATH . 'pids/scheduler_heartbeat';
-        $this->pidFile = WRITEPATH . 'pids/scheduler.pid';
         $this->logFile = WRITEPATH . 'logs/scheduler.log';
-
-        $onceMode = CLI::getOption('once') !== null;
-
-        // 初始化 Repositories
         $this->messageRepository = new MessageRepository();
         $this->channelRepository = new ChannelRepository();
         $this->channelUserRepository = new ChannelUserRepository();
         $this->settingModel = new SystemSettingModel();
 
-        // 確保 pids 目錄存在
-        if (!is_dir(WRITEPATH . 'pids')) {
-            mkdir(WRITEPATH . 'pids', 0755, true);
-        }
-
-        if ($onceMode) {
-            // 單次執行模式（適用於 Cron Job）
-            $this->log('單次執行模式開始');
-            $this->updateHeartbeat();
-            $this->processScheduledMessages();
-            $this->log('單次執行完成');
+        // 檢查排程器是否啟用
+        if (!$this->settingModel->get('scheduler.enabled', true)) {
+            $this->log('排程器已停用，跳過執行');
             return;
         }
 
-        // 守護進程模式
-        $this->startDaemon();
-    }
-
-    /**
-     * 啟動守護進程
-     */
-    private function startDaemon(): void
-    {
-        // 檢查是否已有實例在運行
-        if ($this->isAlreadyRunning()) {
-            CLI::write('排程器已在運行中，PID: ' . file_get_contents($this->pidFile), 'yellow');
-            return;
-        }
-
-        // 寫入 PID 檔案
-        file_put_contents($this->pidFile, getmypid());
-
-        // 設置信號處理（優雅關閉）
-        if (function_exists('pcntl_signal')) {
-            pcntl_signal(SIGTERM, [$this, 'handleSignal']);
-            pcntl_signal(SIGINT, [$this, 'handleSignal']);
-        }
-
-        CLI::write('排程器守護進程已啟動', 'green');
-        CLI::write('PID: ' . getmypid(), 'cyan');
-        CLI::write('心跳檔案: ' . $this->heartbeatFile, 'cyan');
-        
-        // 讀取並顯示系統設定
-        $heartbeatInterval = $this->settingModel->get('scheduler.heartbeat_interval', 10);
-        $taskCheckInterval = $this->settingModel->get('scheduler.task_check_interval', 60);
-        CLI::write('心跳更新間隔: ' . $heartbeatInterval . ' 秒', 'cyan');
-        CLI::write('任務檢查間隔: ' . $taskCheckInterval . ' 秒', 'cyan');
-        CLI::write('按 Ctrl+C 停止...', 'yellow');
-        CLI::newLine();
-
-        $this->log('守護進程啟動，PID: ' . getmypid());
-        $this->log("設定 - 心跳間隔: {$heartbeatInterval}s, 任務檢查: {$taskCheckInterval}s");
-
-        $lastProcess = 0;
-
-        while ($this->running) {
-            // 重新讀取設定（允許動態更新，需重啟生效）
-            $heartbeatInterval = $this->settingModel->get('scheduler.heartbeat_interval', 10);
-            $taskCheckInterval = $this->settingModel->get('scheduler.task_check_interval', 60);
-
-            // 更新心跳
-            $this->updateHeartbeat();
-
-            // 根據設定的間隔處理排程訊息
-            $now = time();
-            if ($now - $lastProcess >= $taskCheckInterval) {
-                $this->processScheduledMessages();
-                $lastProcess = $now;
-            }
-
-            // 處理信號
-            if (function_exists('pcntl_signal_dispatch')) {
-                pcntl_signal_dispatch();
-            }
-
-            // 根據設定的心跳間隔休眠
-            sleep($heartbeatInterval);
-        }
-
-        // 清理
-        $this->cleanup();
-        CLI::write('排程器已停止', 'yellow');
-        $this->log('守護進程停止');
-    }
-
-    /**
-     * 更新心跳時間戳
-     */
-    private function updateHeartbeat(): void
-    {
-        file_put_contents($this->heartbeatFile, time());
-    }
-
-    /**
-     * 處理已到期的排程訊息
-     */
-    private function processScheduledMessages(): void
-    {
         try {
             $scheduledMessages = $this->messageRepository->getScheduledMessagesReady();
 
@@ -164,7 +46,6 @@ class SchedulerDaemon extends BaseCommand
 
             $count = count($scheduledMessages);
             $this->log("找到 {$count} 筆待處理的排程訊息");
-            CLI::write("處理 {$count} 筆排程訊息...", 'cyan');
 
             foreach ($scheduledMessages as $message) {
                 $this->processMessage($message);
@@ -173,23 +54,15 @@ class SchedulerDaemon extends BaseCommand
             $this->log('排程訊息處理完成');
         } catch (\Exception $e) {
             $this->log('處理排程訊息時發生錯誤: ' . $e->getMessage(), 'error');
-            CLI::write('錯誤: ' . $e->getMessage(), 'red');
         }
     }
 
-    /**
-     * 處理單一訊息
-     */
     private function processMessage(MessageEntity $message): void
     {
         $this->log("處理訊息 ID: {$message->id} - {$message->title}");
 
-        // 更新狀態為發送中
         $this->messageRepository->updateStatus($message->id, MessageEntity::STATUS_SENDING);
-
-        // 取得 channel options
         $channelOptions = $this->messageRepository->getChannelOptions($message->id);
-
         $results = [];
 
         foreach ($message->channelIds as $channelId) {
@@ -201,7 +74,6 @@ class SchedulerDaemon extends BaseCommand
                 continue;
             }
 
-            // 決定發送對象
             $targetUsers = [];
             $options = $channelOptions[$channelId] ?? ['type' => 'all'];
 
@@ -215,7 +87,6 @@ class SchedulerDaemon extends BaseCommand
                 );
             }
 
-            // 向後兼容
             if (empty($targetUsers) && $channel->getConfigValue('targetId')) {
                 $targetUsers = [$channel->getConfigValue('targetId')];
             }
@@ -226,7 +97,6 @@ class SchedulerDaemon extends BaseCommand
                 continue;
             }
 
-            // 執行發送
             $sendResult = $this->sendToChannel($channel, $message->title, $message->content, $targetUsers);
 
             $this->messageRepository->addResult(
@@ -245,7 +115,6 @@ class SchedulerDaemon extends BaseCommand
             }
         }
 
-        // 判斷最終狀態
         $successCount = count(array_filter($results, fn($r) => $r['success']));
         $totalCount = count($results);
 
@@ -262,9 +131,6 @@ class SchedulerDaemon extends BaseCommand
         $this->messageRepository->updateStatus($message->id, $finalStatus, date('Y-m-d H:i:s'));
     }
 
-    /**
-     * 發送到指定渠道
-     */
     private function sendToChannel($channel, string $title, string $content, array $targetUsers): array
     {
         try {
@@ -359,48 +225,6 @@ class SchedulerDaemon extends BaseCommand
         }
     }
 
-    /**
-     * 檢查是否已有排程器在運行
-     */
-    private function isAlreadyRunning(): bool
-    {
-        if (!file_exists($this->pidFile)) {
-            return false;
-        }
-
-        $pid = (int) trim(file_get_contents($this->pidFile));
-
-        // 檢查進程是否存在
-        if (function_exists('posix_kill')) {
-            return posix_kill($pid, 0);
-        }
-
-        // Windows 或無 posix 擴展時的備用方案
-        return file_exists("/proc/{$pid}");
-    }
-
-    /**
-     * 處理系統信號
-     */
-    public function handleSignal(int $signal): void
-    {
-        $this->log("收到信號: {$signal}，準備停止...");
-        $this->running = false;
-    }
-
-    /**
-     * 清理資源
-     */
-    private function cleanup(): void
-    {
-        if (file_exists($this->pidFile)) {
-            unlink($this->pidFile);
-        }
-    }
-
-    /**
-     * 寫入日誌
-     */
     private function log(string $message, string $level = 'info'): void
     {
         $timestamp = date('Y-m-d H:i:s');

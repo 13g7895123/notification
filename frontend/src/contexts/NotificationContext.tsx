@@ -68,9 +68,9 @@ interface NotificationContextType {
     // 排程器管理
     fetchSchedulerStatus: () => Promise<SchedulerStatus>;
     fetchSchedulerLogs: (limit?: number) => Promise<SchedulerLog[]>;
-    startScheduler: () => Promise<boolean>;
-    stopScheduler: () => Promise<boolean>;
-    restartScheduler: () => Promise<boolean>;
+    enableScheduler: () => Promise<boolean>;
+    disableScheduler: () => Promise<boolean>;
+    runSchedulerNow: () => Promise<boolean>;
     fetchSchedulerSettings: () => Promise<SchedulerSettings>;
     updateSchedulerSettings: (settings: Partial<SchedulerSettings>) => Promise<boolean>;
 
@@ -411,39 +411,39 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const startScheduler = useCallback(async () => {
+    const enableScheduler = useCallback(async () => {
         try {
-            await api.post('/scheduler/start');
+            await api.post('/scheduler/enable');
             return true;
         } catch (error) {
-            console.error('Start scheduler failed', error);
+            console.error('Enable scheduler failed', error);
             return false;
         }
     }, []);
 
-    const stopScheduler = useCallback(async () => {
+    const disableScheduler = useCallback(async () => {
         try {
-            await api.post('/scheduler/stop');
+            await api.post('/scheduler/disable');
             return true;
         } catch (error) {
-            console.error('Stop scheduler failed', error);
+            console.error('Disable scheduler failed', error);
             return false;
         }
     }, []);
 
-    const restartScheduler = useCallback(async () => {
+    const runSchedulerNow = useCallback(async () => {
         try {
-            await api.post('/scheduler/restart');
+            await api.post('/scheduler/run-now');
             return true;
         } catch (error) {
-            console.error('Restart scheduler failed', error);
+            console.error('Run scheduler now failed', error);
             return false;
         }
     }, []);
 
     const fetchSchedulerSettings = useCallback(async (): Promise<SchedulerSettings> => {
         try {
-            const data = await api.get<SchedulerSettings>('/settings/scheduler');
+            const data = await api.get<SchedulerSettings>('/scheduler/settings');
             return data;
         } catch (error) {
             console.error('Fetch scheduler settings failed', error);
@@ -453,7 +453,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const updateSchedulerSettings = useCallback(async (settings: Partial<SchedulerSettings>) => {
         try {
-            await api.put('/settings/scheduler', settings);
+            await api.post('/scheduler/settings', settings);
             return true;
         } catch (error) {
             console.error('Update scheduler settings failed', error);
@@ -522,9 +522,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 fetchApiUsage,
                 fetchSchedulerStatus,
                 fetchSchedulerLogs,
-                startScheduler,
-                stopScheduler,
-                restartScheduler,
+                enableScheduler,
+                disableScheduler,
+                runSchedulerNow,
                 fetchSchedulerSettings,
                 updateSchedulerSettings,
                 isLoading,

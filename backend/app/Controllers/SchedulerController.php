@@ -8,7 +8,7 @@ use App\Models\SystemSettingModel;
 /**
  * SchedulerController - 排程器管理 API
  * 
- * 提供排程器狀態監控、日誌查詢等功能
+ * 提供排程器狀態監控、日誌查詢、設定管理等功能
  */
 class SchedulerController extends BaseController
 {
@@ -23,39 +23,46 @@ class SchedulerController extends BaseController
      * GET /api/scheduler/status
      * 
      * 取得排程器當前狀態與健康檢查結果
-     * 僅限管理員存取
      */
     public function status(): ResponseInterface
     {
         $heartbeatFile = WRITEPATH . 'pids/scheduler_heartbeat';
-        $pidFile = WRITEPATH . 'pids/scheduler.pid';
         $logFile = WRITEPATH . 'logs/scheduler.log';
 
-        // 從系統設定讀取超時時間
+        // 從系統設定讀取超時時間 (預設 150 秒)
         $heartbeatTimeout = $this->settingModel->get('scheduler.heartbeat_timeout', 150);
+        $enabled = $this->settingModel->get('scheduler.enabled', true);
 
         $checks = [];
-        $status = 'stopped';
+        $status = $enabled ? 'active' : 'disabled';
         $lastRun = null;
         $nextRun = null;
-        $daemonStatus = 'inactive';
 
-        // 1. 檢查心跳檔案
+        // 1. 檢查排程器啟用狀態
+        $checks[] = [
+            'name' => 'Scheduler Configuration',
+            'status' => $enabled ? 'ok' : 'warning',
+            'message' => $enabled ? 'Enabled' : 'Disabled (Task execution skip)'
+        ];
+
+        // 2. 檢查心跳檔案
         if (file_exists($heartbeatFile)) {
             $lastRunTimestamp = (int) trim(file_get_contents($heartbeatFile));
             $now = time();
             $diff = $now - $lastRunTimestamp;
 
             $lastRun = date('c', $lastRunTimestamp);
-            
-            // 從系統設定讀取任務檢查間隔
+
+            // 下次預計運行時間 (CI4 Tasks 預設每分鐘)
             $taskCheckInterval = $this->settingModel->get('scheduler.task_check_interval', 60);
             $nextRunTimestamp = $lastRunTimestamp + $taskCheckInterval;
             $nextRun = date('c', $nextRunTimestamp);
 
             if ($diff < $heartbeatTimeout) {
-                $status = 'running';
-                $daemonStatus = 'active';
+                // 如果已啟用且有心跳，狀態為 running
+                if ($enabled) {
+                    $status = 'running';
+                }
                 $checks[] = [
                     'name' => 'Scheduler Heartbeat',
                     'status' => 'ok',
@@ -64,19 +71,19 @@ class SchedulerController extends BaseController
             } else {
                 $checks[] = [
                     'name' => 'Scheduler Heartbeat',
-                    'status' => 'error',
+                    'status' => $enabled ? 'error' : 'warning',
                     'message' => "No heartbeat for {$diff}s (expected < {$heartbeatTimeout}s)"
                 ];
             }
         } else {
             $checks[] = [
                 'name' => 'Scheduler Heartbeat',
-                'status' => 'error',
+                'status' => $enabled ? 'error' : 'warning',
                 'message' => 'Heartbeat file not found'
             ];
         }
 
-        // 2. 檢查資料庫連線
+        // 3. 檢查資料庫連線
         try {
             $db = \Config\Database::connect();
             $db->query('SELECT 1');
@@ -93,35 +100,15 @@ class SchedulerController extends BaseController
             ];
         }
 
-        // 3. 檢查 PID 檔案與進程狀態
-        if (file_exists($pidFile)) {
-            $pid = (int) trim(file_get_contents($pidFile));
-            
-            // 在 Docker 環境中檢查進程
-            $processExists = $this->checkProcessExists($pid);
-            
-            if ($processExists) {
-                $checks[] = [
-                    'name' => 'Daemon Process',
-                    'status' => 'ok',
-                    'message' => "Running (PID: {$pid})"
-                ];
-            } else {
-                $checks[] = [
-                    'name' => 'Daemon Process',
-                    'status' => 'warning',
-                    'message' => "PID file exists but process not found (PID: {$pid})"
-                ];
-            }
-        } else {
-            $checks[] = [
-                'name' => 'Daemon Process',
-                'status' => 'warning',
-                'message' => 'PID file not found'
-            ];
-        }
+        // 4. 檢查 Cron Daemon (透過 ps)
+        $cronRunning = $this->checkProcessExistsByName('crond');
+        $checks[] = [
+            'name' => 'Cron Daemon',
+            'status' => $cronRunning ? 'ok' : 'error',
+            'message' => $cronRunning ? 'Running' : 'Not found in process list'
+        ];
 
-        // 4. 檢查待處理的排程訊息
+        // 5. 檢查待處理的排程訊息
         try {
             $db = \Config\Database::connect();
             $scheduledCount = $db->table('messages')
@@ -136,7 +123,7 @@ class SchedulerController extends BaseController
             if ($readyCount > 0) {
                 $checks[] = [
                     'name' => 'Scheduled Messages',
-                    'status' => 'warning',
+                    'status' => $enabled ? 'warning' : 'ok',
                     'message' => "{$readyCount} messages ready to send (total: {$scheduledCount})"
                 ];
             } else {
@@ -154,11 +141,11 @@ class SchedulerController extends BaseController
             ];
         }
 
-        // 5. 檢查日誌檔案
+        // 6. 檢查日誌檔案
         if (file_exists($logFile)) {
             $fileSize = filesize($logFile);
             $fileSizeMB = round($fileSize / 1024 / 1024, 2);
-            
+
             $checks[] = [
                 'name' => 'Log File',
                 'status' => $fileSizeMB > 50 ? 'warning' : 'ok',
@@ -174,23 +161,119 @@ class SchedulerController extends BaseController
 
         return $this->successResponse([
             'status' => $status,
-            'lastRun' => $lastRun ?? date('c', time() - 3600), // 如果沒有，顯示 1 小時前
-            'nextRun' => $nextRun ?? date('c', time() + 60),    // 預估 1 分鐘後
-            'daemonStatus' => $daemonStatus,
+            'lastRun' => $lastRun,
+            'nextRun' => $nextRun,
+            'enabled' => $enabled,
             'checks' => $checks
         ]);
     }
 
     /**
+     * GET /api/scheduler/settings
+     */
+    public function getSettings(): ResponseInterface
+    {
+        $settings = [
+            'enabled' => (bool)$this->settingModel->get('scheduler.enabled', true),
+            'heartbeatInterval' => (int)$this->settingModel->get('scheduler.heartbeat_interval', 60),
+            'taskCheckInterval' => (int)$this->settingModel->get('scheduler.task_check_interval', 60),
+            'heartbeatTimeout' => (int)$this->settingModel->get('scheduler.heartbeat_timeout', 150),
+            'logRetentionDays' => (int)$this->settingModel->get('scheduler.log_retention_days', 7),
+        ];
+
+        return $this->successResponse($settings);
+    }
+
+    /**
+     * POST /api/scheduler/settings
+     */
+    public function updateSettings(): ResponseInterface
+    {
+        $data = $this->request->getJSON(true);
+
+        $allowedKeys = [
+            'enabled',
+            'heartbeatInterval',
+            'taskCheckInterval',
+            'heartbeatTimeout',
+            'logRetentionDays',
+        ];
+
+        foreach ($allowedKeys as $key) {
+            if (isset($data[$key])) {
+                $settingKey = 'scheduler.' . $this->camelToSnake($key);
+                $this->settingModel->setSetting($settingKey, $data[$key]);
+            }
+        }
+
+        log_message('info', 'Scheduler settings updated by user');
+
+        return $this->successResponse([
+            'message' => '設定已更新',
+            'updatedAt' => date('c')
+        ]);
+    }
+
+    /**
+     * POST /api/scheduler/enable
+     */
+    public function enable(): ResponseInterface
+    {
+        $this->settingModel->setSetting('scheduler.enabled', true);
+        log_message('info', 'Scheduler enabled by user');
+
+        return $this->successResponse([
+            'message' => '排程器已啟用',
+            'enabledAt' => date('c')
+        ]);
+    }
+
+    /**
+     * POST /api/scheduler/disable
+     */
+    public function disable(): ResponseInterface
+    {
+        $this->settingModel->setSetting('scheduler.enabled', false);
+        log_message('info', 'Scheduler disabled by user');
+
+        return $this->successResponse([
+            'message' => '排程器已停用',
+            'disabledAt' => date('c')
+        ]);
+    }
+
+    /**
+     * POST /api/scheduler/run-now
+     */
+    public function runNow(): ResponseInterface
+    {
+        // 檢查是否啟用
+        if (!$this->settingModel->get('scheduler.enabled', true)) {
+            return $this->errorResponse('SCHEDULER_DISABLED', '排程器目前為停用狀態，請先啟用');
+        }
+
+        $cmd = 'php ' . ROOTPATH . 'spark tasks:process-messages > /dev/null 2>&1 &';
+        exec($cmd, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            return $this->errorResponse('EXECUTION_FAILED', '執行失敗', 500);
+        }
+
+        log_message('info', 'Scheduler task manually triggered by user');
+
+        return $this->successResponse([
+            'message' => '排程任務已觸發',
+            'triggeredAt' => date('c')
+        ]);
+    }
+
+    /**
      * GET /api/scheduler/logs
-     * 
-     * 取得排程器執行日誌
-     * 僅限管理員存取
      */
     public function logs(): ResponseInterface
     {
         $limit = (int) ($this->request->getGet('limit') ?? 50);
-        $limit = min(max($limit, 1), 500); // 限制在 1-500 之間
+        $limit = min(max($limit, 1), 500);
 
         $logFile = WRITEPATH . 'logs/scheduler.log';
 
@@ -198,292 +281,55 @@ class SchedulerController extends BaseController
             return $this->successResponse([]);
         }
 
-        // 讀取日誌檔案的最後 N 行
         $logs = $this->readLastLines($logFile, $limit);
 
-        // 解析日誌格式: [2024-12-25 12:00:00] [info] message
         $parsedLogs = [];
         foreach ($logs as $line) {
             $line = trim($line);
-            if (empty($line)) {
-                continue;
-            }
+            if (empty($line)) continue;
 
-            // 嘗試解析標準格式: [2024-12-25 12:00:00] [info] message
             if (preg_match('/^\[([^\]]+)\] \[([^\]]+)\] (.+)$/', $line, $matches)) {
                 $timestamp = $matches[1];
-                // 驗證並轉換時間戳
                 $parsedTime = strtotime($timestamp);
-                if ($parsedTime === false) {
-                    $parsedTime = time();
-                }
-                
+                if ($parsedTime === false) $parsedTime = time();
+
                 $parsedLogs[] = [
                     'timestamp' => date('c', $parsedTime),
                     'level' => $matches[2],
-                    'message' => $matches[3],
-                    'context' => null
+                    'message' => $matches[3]
                 ];
             } else {
-                // 無法解析的行，使用當前時間並顯示原始內容
                 $parsedLogs[] = [
                     'timestamp' => date('c'),
                     'level' => 'info',
-                    'message' => $line,
-                    'context' => null
+                    'message' => $line
                 ];
             }
         }
 
-        // 反轉陣列，使最新的日誌在前面
-        $parsedLogs = array_reverse($parsedLogs);
-
-        return $this->successResponse($parsedLogs);
+        return $this->successResponse(array_reverse($parsedLogs));
     }
 
     /**
-     * POST /api/scheduler/stop
-     * 
-     * 停止排程器守護進程
-     * 僅限管理員存取
+     * 檢查進程是否存在
      */
-    public function stop(): ResponseInterface
+    private function checkProcessExistsByName(string $name): bool
     {
-        $pidFile = WRITEPATH . 'pids/scheduler.pid';
-
-        // 檢查 PID 檔案是否存在
-        if (!file_exists($pidFile)) {
-            return $this->failResponse('排程器未運行', 400);
-        }
-
-        $pid = (int) trim(file_get_contents($pidFile));
-
-        // 檢查進程是否存在
-        if (!$this->checkProcessExists($pid)) {
-            // PID 檔案存在但進程不存在，清理 PID 檔案
-            @unlink($pidFile);
-            return $this->failResponse('排程器進程不存在', 400);
-        }
-
-        // 發送 SIGTERM 信號
-        $stopped = false;
-        if (function_exists('posix_kill')) {
-            // SIGTERM = 15
-            $stopped = @posix_kill($pid, defined('SIGTERM') ? SIGTERM : 15);
-        } else {
-            // 使用 kill 命令（適用於 Docker）
-            exec("kill -TERM {$pid} 2>&1", $output, $returnVar);
-            $stopped = ($returnVar === 0);
-        }
-
-        if (!$stopped) {
-            return $this->failResponse('無法停止排程器', 500);
-        }
-
-        // 等待進程結束（最多 10 秒）
-        $maxWait = 10;
-        $waited = 0;
-        while ($waited < $maxWait) {
-            if (!$this->checkProcessExists($pid)) {
-                break;
-            }
-            sleep(1);
-            $waited++;
-        }
-
-        // 如果還沒結束，強制終止
-        if ($this->checkProcessExists($pid)) {
-            if (function_exists('posix_kill')) {
-                // SIGKILL = 9
-                @posix_kill($pid, defined('SIGKILL') ? SIGKILL : 9);
-            } else {
-                exec("kill -KILL {$pid} 2>&1");
-            }
-            sleep(1);
-        }
-
-        // 清理 PID 檔案
-        @unlink($pidFile);
-
-        // 記錄操作日誌
-        log_message('info', "Scheduler stopped by user, PID: {$pid}");
-
-        return $this->successResponse([
-            'message' => '排程器已停止',
-            'pid' => $pid,
-            'stoppedAt' => date('c')
-        ]);
+        $output = shell_exec("ps aux | grep " . escapeshellarg($name) . " | grep -v grep");
+        return !empty(trim($output));
     }
 
-    /**
-     * POST /api/scheduler/start
-     * 
-     * 啟動排程器守護進程
-     * 僅限管理員存取
-     */
-    public function start(): ResponseInterface
-    {
-        $pidFile = WRITEPATH . 'pids/scheduler.pid';
-        $logFile = WRITEPATH . 'logs/scheduler_startup.log';
-
-        // 檢查是否已在運行
-        if (file_exists($pidFile)) {
-            $pid = (int) trim(file_get_contents($pidFile));
-            if ($this->checkProcessExists($pid)) {
-                return $this->successResponse([
-                    'message' => '排程器已在運行中',
-                    'pid' => $pid,
-                    'status' => 'already_running'
-                ]);
-            } else {
-                // PID 檔案存在但進程不存在，清理舊檔案
-                @unlink($pidFile);
-            }
-        }
-
-        // 啟動排程器
-        $cmd = 'nohup php ' . ROOTPATH . 'spark scheduler:daemon > ' . $logFile . ' 2>&1 &';
-        exec($cmd, $output, $returnVar);
-
-        if ($returnVar !== 0) {
-            log_message('error', 'Scheduler start failed: ' . implode("\n", $output));
-            return $this->failResponse('啟動失敗，請檢查日誌', 500);
-        }
-
-        // 等待 PID 檔案生成（最多 5 秒）
-        $maxWait = 5;
-        $waited = 0;
-        $newPid = null;
-
-        while ($waited < $maxWait) {
-            if (file_exists($pidFile)) {
-                $newPid = (int) trim(file_get_contents($pidFile));
-                if ($this->checkProcessExists($newPid)) {
-                    break;
-                }
-            }
-            sleep(1);
-            $waited++;
-        }
-
-        if (!$newPid || !$this->checkProcessExists($newPid)) {
-            return $this->failResponse('排程器啟動失敗，請檢查日誌', 500);
-        }
-
-        // 記錄操作日誌
-        log_message('info', "Scheduler started by user, PID: {$newPid}");
-
-        return $this->successResponse([
-            'message' => '排程器已啟動',
-            'pid' => $newPid,
-            'startedAt' => date('c')
-        ]);
-    }
-
-    /**
-     * POST /api/scheduler/restart
-     * 
-     * 重啟排程器守護進程
-     * 僅限管理員存取
-     */
-    public function restart(): ResponseInterface
-    {
-        $pidFile = WRITEPATH . 'pids/scheduler.pid';
-        $oldPid = null;
-
-        // 如果正在運行，先停止
-        if (file_exists($pidFile)) {
-            $oldPid = (int) trim(file_get_contents($pidFile));
-            
-            if ($this->checkProcessExists($oldPid)) {
-                // 停止排程器
-                $stopResult = $this->stop();
-                $stopData = json_decode($stopResult->getBody(), true);
-                
-                if (!$stopData['success']) {
-                    return $this->failResponse('停止排程器失敗', 500);
-                }
-                
-                // 等待 2 秒確保完全停止
-                sleep(2);
-            } else {
-                // PID 檔案存在但進程不存在，清理
-                @unlink($pidFile);
-            }
-        }
-
-        // 啟動排程器
-        $startResult = $this->start();
-        $startData = json_decode($startResult->getBody(), true);
-
-        if (!$startData['success']) {
-            return $this->failResponse('啟動排程器失敗', 500);
-        }
-
-        // 記錄操作日誌
-        log_message('info', "Scheduler restarted by user, old PID: {$oldPid}, new PID: {$startData['data']['pid']}");
-
-        return $this->successResponse([
-            'message' => '排程器已重啟',
-            'oldPid' => $oldPid,
-            'newPid' => $startData['data']['pid'],
-            'restartedAt' => date('c')
-        ]);
-    }
-
-    /**
-     * 檢查進程是否存在（適用於 Docker 環境）
-     */
-    private function checkProcessExists(int $pid): bool
-    {
-        // 方法 1: 使用 /proc 檔案系統（Linux）
-        if (file_exists("/proc/{$pid}")) {
-            return true;
-        }
-
-        // 方法 2: 使用 ps 命令（適用於 Docker）
-        $output = shell_exec("ps -p {$pid} -o pid= 2>/dev/null");
-        if (!empty(trim($output))) {
-            return true;
-        }
-
-        // 方法 3: 使用 posix_kill（如果可用）
-        if (function_exists('posix_kill')) {
-            return @posix_kill($pid, 0);
-        }
-
-        return false;
-    }
-
-    /**
-     * 讀取檔案的最後 N 行
-     */
     private function readLastLines(string $filePath, int $lines): array
     {
-        // 使用 tail 命令（在 Docker 環境中通常可用）
         $output = shell_exec("tail -n {$lines} " . escapeshellarg($filePath));
-        
         if ($output !== null) {
             return explode("\n", trim($output));
         }
+        return [];
+    }
 
-        // 備用方案：使用 PHP 讀取
-        $file = new \SplFileObject($filePath, 'r');
-        $file->seek(PHP_INT_MAX);
-        $lastLine = $file->key();
-        
-        $startLine = max(0, $lastLine - $lines);
-        $result = [];
-        
-        $file->seek($startLine);
-        while (!$file->eof()) {
-            $line = $file->current();
-            if ($line !== false) {
-                $result[] = $line;
-            }
-            $file->next();
-        }
-        
-        return $result;
+    private function camelToSnake(string $input): string
+    {
+        return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $input));
     }
 }

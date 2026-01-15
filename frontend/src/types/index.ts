@@ -260,10 +260,10 @@ export interface ApiSendNotificationResponse {
 
 // 排程器管理
 export interface SchedulerStatus {
-    status: 'running' | 'stopped' | 'error';
-    lastRun: string;
-    nextRun: string;
-    daemonStatus: string;
+    status: 'running' | 'active' | 'disabled' | 'error';
+    lastRun: string | null;
+    nextRun: string | null;
+    enabled: boolean;
     checks: SchedulerCheck[];
 }
 
@@ -277,13 +277,14 @@ export interface SchedulerLog {
     timestamp: string;
     level: 'info' | 'warning' | 'error';
     message: string;
-    context?: Record<string, unknown>;
 }
 
 export interface SchedulerSettings {
+    enabled: boolean;
     heartbeatInterval: number;  // 心跳更新間隔（秒）
     taskCheckInterval: number;  // 任務檢查間隔（秒）
     heartbeatTimeout: number;   // 心跳超時時間（秒）
+    logRetentionDays: number;   // 日誌保留天數
 }
 
 export interface SchedulerControlResponse {

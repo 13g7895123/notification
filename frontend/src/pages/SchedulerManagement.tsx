@@ -23,9 +23,9 @@ export function SchedulerManagement() {
     const {
         fetchSchedulerStatus,
         fetchSchedulerLogs,
-        startScheduler,
-        stopScheduler,
-        restartScheduler,
+        enableScheduler,
+        disableScheduler,
+        runSchedulerNow,
         fetchSchedulerSettings,
         updateSchedulerSettings
     } = useNotification();
@@ -65,76 +65,62 @@ export function SchedulerManagement() {
         return () => clearInterval(interval);
     }, [fetchSchedulerData, refreshInterval]);
 
-    const handleStart = async () => {
+    const handleEnable = async () => {
         setIsProcessing(true);
         try {
-            const success = await startScheduler();
+            const success = await enableScheduler();
             if (success) {
-                toast.success('排程器已啟動');
-                // 延遲 2 秒讓排程器完全啟動
-                setTimeout(async () => {
-                    await fetchSchedulerData();
-                }, 2000);
-            } else {
-                toast.error('排程器啟動失敗');
-            }
-        } catch (err) {
-            console.error('Start scheduler error', err);
-            toast.error('啟動過程中發生錯誤');
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    const handleStop = async () => {
-        const confirmed = await confirm.danger(
-            '停止後，所有排程訊息將暫停發送，直到重新啟動排程器。確定要停止嗎？',
-            '確定要停止排程器嗎？'
-        );
-
-        if (!confirmed) return;
-
-        setIsProcessing(true);
-        try {
-            const success = await stopScheduler();
-            if (success) {
-                toast.success('排程器已停止');
-                // 立即刷新，然後再等 2 秒刷新一次確保狀態更新
+                toast.success('排程器已啟用');
                 await fetchSchedulerData();
-                setTimeout(fetchSchedulerData, 2000);
             } else {
-                toast.error('排程器停止失敗');
+                toast.error('排程器啟用失敗');
             }
         } catch (err) {
-            console.error('Stop scheduler error', err);
-            toast.error('停止過程中發生錯誤');
+            console.error('Enable scheduler error', err);
+            toast.error('啟用過程中發生錯誤');
         } finally {
             setIsProcessing(false);
         }
     };
 
-    const handleRestart = async () => {
-        const confirmed = await confirm.action(
-            '重啟排程器會短暫中斷服務。確定要繼續嗎？',
-            '重啟排程器',
-            '確定重啟'
+    const handleDisable = async () => {
+        const confirmed = await confirm.danger(
+            '停用後，所有排程訊息將暫停發送。確定要停用嗎？',
+            '確定要停用排程器嗎？'
         );
 
         if (!confirmed) return;
 
         setIsProcessing(true);
         try {
-            const success = await restartScheduler();
+            const success = await disableScheduler();
             if (success) {
-                toast.success('排程器已重啟');
-                // 延遲一點點再抓資料，讓後端有時間啟動
-                setTimeout(fetchSchedulerData, 2000);
+                toast.success('排程器已停用');
+                await fetchSchedulerData();
             } else {
-                toast.error('排程器重啟失敗');
+                toast.error('排程器停用失敗');
             }
         } catch (err) {
-            console.error('Restart scheduler error', err);
-            toast.error('重啟過程中發生錯誤');
+            console.error('Disable scheduler error', err);
+            toast.error('停用過程中發生錯誤');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleRunNow = async () => {
+        setIsProcessing(true);
+        try {
+            const success = await runSchedulerNow();
+            if (success) {
+                toast.success('排程任務已觸發，請稍後查看日誌');
+                setTimeout(fetchSchedulerData, 3000);
+            } else {
+                toast.error('任務觸發失敗');
+            }
+        } catch (err) {
+            console.error('Run now error', err);
+            toast.error('觸發過程中發生錯誤');
         } finally {
             setIsProcessing(false);
         }
@@ -148,26 +134,8 @@ export function SchedulerManagement() {
             const success = await updateSchedulerSettings(settings);
             if (success) {
                 setIsEditingSettings(false);
-                
-                // 詢問是否立即重啟排程器
-                const shouldRestart = await confirm.action(
-                    '設定已保存成功！需要重啟排程器才會生效。\n\n是否立即重啟排程器？',
-                    '重啟排程器',
-                    '立即重啟'
-                );
-
-                if (shouldRestart) {
-                    const restartSuccess = await restartScheduler();
-                    if (restartSuccess) {
-                        toast.success('排程器已重啟，新設定已生效');
-                        // 延遲 3 秒後刷新狀態
-                        setTimeout(fetchSchedulerData, 3000);
-                    } else {
-                        toast.error('排程器重啟失敗，請手動重啟');
-                    }
-                } else {
-                    toast.success('設定已保存，請記得重啟排程器以套用新設定');
-                }
+                toast.success('設定已保存成功！修改將在下次任務執行時生效。');
+                await fetchSchedulerData();
             } else {
                 toast.error('設定保存失敗');
             }
@@ -241,8 +209,10 @@ export function SchedulerManagement() {
                             <div className="status-card-info">
                                 <span className="status-card-label">排程器狀態</span>
                                 <span className="status-card-value">
-                                    <span className="status-text">{status?.status === 'running' ? '運行中' : '已停止'}</span>
-                                    <span className="scheduler-status-indicator online"></span>
+                                    <span className="status-text">
+                                        {status?.enabled ? (status?.status === 'running' ? '運行中' : '已啟用') : '已停用'}
+                                    </span>
+                                    <span className={`scheduler-status-indicator ${status?.enabled ? 'online' : 'offline'}`}></span>
                                 </span>
                             </div>
                         </div>
@@ -281,27 +251,27 @@ export function SchedulerManagement() {
                         <div className="control-buttons">
                             <button
                                 className="control-btn start"
-                                onClick={handleStart}
-                                disabled={status?.status === 'running' || isProcessing}
+                                onClick={handleEnable}
+                                disabled={status?.enabled || isProcessing}
                             >
                                 <Play size={18} />
-                                啟動排程
+                                啟用排程
                             </button>
                             <button
                                 className="control-btn stop"
-                                onClick={handleStop}
-                                disabled={status?.status !== 'running' || isProcessing}
+                                onClick={handleDisable}
+                                disabled={!status?.enabled || isProcessing}
                             >
                                 <Square size={18} />
-                                停止排程
+                                停用排程
                             </button>
                             <button
-                                className="control-btn restart"
-                                onClick={handleRestart}
-                                disabled={isProcessing}
+                                className="control-btn trigger"
+                                onClick={handleRunNow}
+                                disabled={!status?.enabled || isProcessing}
                             >
-                                <RotateCw size={18} className={isProcessing ? 'animate-spin' : ''} />
-                                重啟排程
+                                <RefreshCw size={18} className={isProcessing ? 'animate-spin' : ''} />
+                                立即執行
                             </button>
                         </div>
                         <div className="control-warning">
@@ -356,7 +326,7 @@ export function SchedulerManagement() {
                                         type="number"
                                         className="setting-input"
                                         value={settings?.heartbeatInterval ?? 10}
-                                        onChange={(e) => setSettings(prev => prev ? {...prev, heartbeatInterval: Number(e.target.value)} : null)}
+                                        onChange={(e) => setSettings(prev => prev ? { ...prev, heartbeatInterval: Number(e.target.value) } : null)}
                                         disabled={!isEditingSettings}
                                         min={5}
                                         max={60}
@@ -378,7 +348,7 @@ export function SchedulerManagement() {
                                         type="number"
                                         className="setting-input"
                                         value={settings?.taskCheckInterval ?? 60}
-                                        onChange={(e) => setSettings(prev => prev ? {...prev, taskCheckInterval: Number(e.target.value)} : null)}
+                                        onChange={(e) => setSettings(prev => prev ? { ...prev, taskCheckInterval: Number(e.target.value) } : null)}
                                         disabled={!isEditingSettings}
                                         min={10}
                                         max={600}
@@ -400,7 +370,7 @@ export function SchedulerManagement() {
                                         type="number"
                                         className="setting-input"
                                         value={settings?.heartbeatTimeout ?? 150}
-                                        onChange={(e) => setSettings(prev => prev ? {...prev, heartbeatTimeout: Number(e.target.value)} : null)}
+                                        onChange={(e) => setSettings(prev => prev ? { ...prev, heartbeatTimeout: Number(e.target.value) } : null)}
                                         disabled={!isEditingSettings}
                                         min={30}
                                         max={300}

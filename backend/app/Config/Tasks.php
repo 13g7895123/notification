@@ -22,9 +22,19 @@ class Tasks extends BaseTasks
      */
     public function init(Scheduler $schedule)
     {
-        // 每分鐘處理已到期的排程訊息
-        $schedule->command('schedule:process')
+        // 1. 每分鐘處理已到期的排程訊息
+        $schedule->command('tasks:process-messages')
             ->everyMinute()
             ->named('process-scheduled-messages');
+
+        // 2. 每分鐘更新心跳
+        $schedule->command('tasks:heartbeat')
+            ->everyMinute()
+            ->named('update-heartbeat');
+
+        // 3. 每天凌晨 2 點清理日誌
+        $schedule->command('tasks:cleanup-logs')
+            ->daily('02:00')
+            ->named('cleanup-old-logs');
     }
 }
