@@ -44,15 +44,16 @@ services:
       - notifyhub_network
 
   # ===========================================
-  # 後端 API (CodeIgniter 4 - CLI Mode)
+  # 後端 API (CodeIgniter 4 - PHP-FPM)
   # ===========================================
   backend:
-    image: php:8.3-cli-alpine
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: ${APP_NAME:-notifyhub}_backend
     restart: unless-stopped
     working_dir: /var/www/html
-    ports:
-      - "${BACKEND_PORT:-8080}:8080"
+    # No public ports, only accessible via nginx
     environment:
       CI_ENVIRONMENT: ${CI_ENVIRONMENT:-development}
       DATABASE_HOSTNAME: mariadb
@@ -72,18 +73,21 @@ services:
       - notifyhub_network
 
   # ===========================================
-  # 前端 Nginx 反向代理（藍綠切換）
+  # 統一 Nginx 入口 (前後端混合代理)
   # ===========================================
-  frontend-proxy:
+  nginx:
     image: nginx:alpine
-    container_name: ${APP_NAME:-notifyhub}_frontend_proxy
+    container_name: ${APP_NAME:-notifyhub}_nginx
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     volumes:
       - ./docker/frontend-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/frontend-proxy/conf.d:/etc/nginx/conf.d:ro
+      # 重要：Nginx 需要知道後端的程式路徑以進行 FastCGI 請求處理
+      - ./backend:/var/www/html:ro
     depends_on:
+      - backend
       - frontend-blue
     networks:
       - notifyhub_network
@@ -96,7 +100,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-http://localhost:${BACKEND_PORT:-8080}/api}
+        # 指向 Nginx 入口提供的 API 路徑
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:${FRONTEND_PORT:-3000}/api}
     container_name: ${APP_NAME:-notifyhub}_frontend_blue
     restart: unless-stopped
     expose:
@@ -114,7 +119,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-http://localhost:${BACKEND_PORT:-8080}/api}
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:${FRONTEND_PORT:-3000}/api}
     container_name: ${APP_NAME:-notifyhub}_frontend_green
     restart: unless-stopped
     expose:
