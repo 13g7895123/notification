@@ -1,0 +1,337 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is part of CodeIgniter Queue.
+ *
+ * (c) CodeIgniter Foundation <admin@codeigniter.com>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
+namespace Tests\Commands;
+
+use CodeIgniter\Cache\CacheInterface;
+use CodeIgniter\Config\Services;
+use CodeIgniter\I18n\Time;
+use CodeIgniter\Queue\Models\QueueJobModel;
+use CodeIgniter\Test\Filters\CITestStreamFilter;
+use Tests\Support\CLITestCase;
+
+/**
+ * @internal
+ */
+final class QueueWorkTest extends CLITestCase
+{
+    public function testRunWithNoQueueName(): void
+    {
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addErrorFilter();
+
+        $this->assertNotFalse(command('queue:work'));
+        $output = $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeErrorFilter();
+
+        $this->assertSame('The queueName is not specified.', $output);
+    }
+
+    public function testRunWithEmptyQueue(): void
+    {
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test --stop-when-empty'));
+        $output = $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $expect = <<<'EOT'
+            Listening for the jobs with the queue: test
+
+
+            No job available. Stopping.
+            EOT;
+
+        $this->assertSame($expect, $output);
+    }
+
+    public function testRunWithQueueFailed(): void
+    {
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        fake(QueueJobModel::class, [
+            'connection'   => 'database',
+            'queue'        => 'test',
+            'payload'      => ['job' => 'failure', 'data' => ['key' => 'value']],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
+        $this->assertSame('Starting a new job: failure, with ID: 1', $this->getLine(3));
+        $this->assertSame('The processing of this job failed', $this->getLine(4));
+        $this->assertSame('No job available. Stopping.', $this->getLine(7));
+    }
+
+    public function testRunWithQueueSucceed(): void
+    {
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        fake(QueueJobModel::class, [
+            'connection'   => 'database',
+            'queue'        => 'test',
+            'payload'      => ['job' => 'success', 'data' => ['key' => 'value']],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
+        $this->assertSame('Starting a new job: success, with ID: 1', $this->getLine(3));
+        $this->assertSame('The processing of this job was successful', $this->getLine(4));
+        $this->assertSame('No job available. Stopping.', $this->getLine(7));
+    }
+
+    public function testRunWithChainedQueueSucceed(): void
+    {
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        fake(QueueJobModel::class, [
+            'connection' => 'database',
+            'queue'      => 'test',
+            'payload'    => [
+                'job'      => 'success',
+                'data'     => ['key' => 'value'],
+                'metadata' => [
+                    'queue'       => 'test',
+                    'chainedJobs' => [
+                        [
+                            'job'  => 'success',
+                            'data' => [
+                                'key3' => 'value3',
+                            ],
+                            'metadata' => [
+                                'queue'    => 'queue',
+                                'priority' => 'high',
+                                'delay'    => 30,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
+        $this->assertSame('Starting a new job: success, with ID: 1', $this->getLine(3));
+        $this->assertSame('The processing of this job was successful', $this->getLine(4));
+        $this->assertSame('Chained job: success has been placed in the queue: queue', $this->getLine(5));
+        $this->assertSame('No job available. Stopping.', $this->getLine(8));
+
+        $this->seeInDatabase('queue_jobs', [
+            'queue'   => 'queue',
+            'payload' => json_encode([
+                'job'      => 'success',
+                'data'     => ['key3' => 'value3'],
+                'metadata' => [
+                    'queue'    => 'queue',
+                    'priority' => 'high',
+                    'delay'    => 30,
+                ],
+            ]),
+        ]);
+    }
+
+    public function testRunWithTaskLock(): void
+    {
+        $lockKey = 'test_lock_key';
+        $lockTTL = 300; // 5 minutes
+
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        $cache = $this->createMock(CacheInterface::class);
+
+        // Set up expectations
+        $cache->expects($this->once())
+            ->method('save')
+            ->with($lockKey, $this->anything(), $lockTTL)
+            ->willReturn(true);
+
+        $cache->expects($this->once())
+            ->method('delete')
+            ->with($lockKey)
+            ->willReturn(true);
+
+        // Replace the cache service
+        Services::injectMock('cache', $cache);
+
+        fake(QueueJobModel::class, [
+            'connection' => 'database',
+            'queue'      => 'test',
+            'payload'    => [
+                'job'      => 'success',
+                'data'     => ['key' => 'value'],
+                'metadata' => [
+                    'taskLockKey' => $lockKey,
+                    'taskLockTTL' => $lockTTL,
+                    'queue'       => 'test',
+                ],
+            ],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
+        $this->assertSame('Starting a new job: success, with ID: 1', $this->getLine(3));
+        $this->assertSame('The processing of this job was successful', $this->getLine(4));
+    }
+
+    public function testRunWithPermanentTaskLock(): void
+    {
+        $lockKey = 'permanent_lock_key';
+        $lockTTL = 0; // Permanent lock
+
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        $cache = $this->createMock(CacheInterface::class);
+
+        // For permanent lock (TTL=0), save should NOT be called
+        $cache->expects($this->never())
+            ->method('save');
+
+        $cache->expects($this->once())
+            ->method('delete')
+            ->with($lockKey)
+            ->willReturn(true);
+
+        // Replace the cache service
+        Services::injectMock('cache', $cache);
+
+        fake(QueueJobModel::class, [
+            'connection' => 'database',
+            'queue'      => 'test',
+            'payload'    => [
+                'job'      => 'success',
+                'data'     => ['key4' => 'value4'],
+                'metadata' => [
+                    'taskLockKey' => $lockKey,
+                    'taskLockTTL' => $lockTTL,
+                    'queue'       => 'test',
+                ],
+            ],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
+        $this->assertSame('Starting a new job: success, with ID: 1', $this->getLine(3));
+        $this->assertSame('The processing of this job was successful', $this->getLine(4));
+    }
+
+    public function testLockClearedOnFailure(): void
+    {
+        $lockKey = 'failure_lock_key';
+        $lockTTL = 300;
+
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        $cache = $this->createMock(CacheInterface::class);
+
+        // Set up expectations
+        $cache->expects($this->once())
+            ->method('save')
+            ->with($lockKey, $this->anything(), $lockTTL)
+            ->willReturn(true);
+
+        $cache->expects($this->once())
+            ->method('delete')
+            ->with($lockKey)
+            ->willReturn(true);
+
+        // Replace the cache service
+        Services::injectMock('cache', $cache);
+
+        fake(QueueJobModel::class, [
+            'connection' => 'database',
+            'queue'      => 'test',
+            'payload'    => [
+                'job'      => 'failure',
+                'data'     => ['key' => 'value'],
+                'metadata' => [
+                    'taskLockKey' => $lockKey,
+                    'taskLockTTL' => $lockTTL,
+                    'queue'       => 'test',
+                ],
+            ],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
+        $this->assertSame('Starting a new job: failure, with ID: 1', $this->getLine(3));
+        $this->assertSame('The processing of this job failed', $this->getLine(4));
+    }
+}
