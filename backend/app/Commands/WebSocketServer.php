@@ -58,8 +58,10 @@ class WebSocketServer extends BaseCommand
      */
     public function run(array $params)
     {
+        $port = getenv('WEBSOCKET_PORT') ?: '8080';
+
         // 1. 建立 WebSocket 服務 (對外)
-        $wsWorker = new Worker("websocket://0.0.0.0:8080");
+        $wsWorker = new Worker("websocket://0.0.0.0:$port");
         $wsWorker->count = 1;
 
         // 用來儲存所有連線的客戶端
@@ -106,7 +108,7 @@ class WebSocketServer extends BaseCommand
             $connection->send('ok');
         };
 
-        echo "WebSocket Server starting on port 8080..." . PHP_EOL;
+        echo "WebSocket Server starting on port $port..." . PHP_EOL;
         echo "Internal Push Interface on port 8081..." . PHP_EOL;
 
         Worker::runAll();

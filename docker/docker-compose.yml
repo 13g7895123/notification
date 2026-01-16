@@ -80,6 +80,7 @@ services:
       DATABASE_USERNAME: ${MARIADB_USER}
       DATABASE_PASSWORD: ${MARIADB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8080}
       TZ: Asia/Taipei
     volumes:
       - ../backend:/var/www/html
@@ -90,7 +91,7 @@ services:
     networks:
       - notifyhub_network
     expose:
-      - "8080"
+      - "${WEBSOCKET_PORT:-8080}"
       - "8081"
 
   # ===========================================
