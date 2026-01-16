@@ -467,5 +467,3 @@ export function SchedulerManagement() {
         </div>
     );
 }
-    );
-}

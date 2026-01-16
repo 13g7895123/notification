@@ -58,6 +58,7 @@ jobs:
             echo ""
             echo "[2/7] 拉取最新代碼..."
             git fetch origin
+            git checkout .
             git pull origin main || git pull origin master
             
             AFTER_COMMIT=$(git rev-parse --short HEAD)
