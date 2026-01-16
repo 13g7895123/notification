@@ -455,5 +455,23 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'workerman/coroutine' => array(
+            'pretty_version' => 'v1.1.4',
+            'version' => '1.1.4.0',
+            'reference' => 'b0bebfa9d41b992ad0a835ddf2ee8fa5d58eca44',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../workerman/coroutine',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'workerman/workerman' => array(
+            'pretty_version' => 'v5.1.8',
+            'version' => '5.1.8.0',
+            'reference' => 'a314755259375fbeb6051e27171fcdb46e7ba2ca',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../workerman/workerman',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
     ),
 );

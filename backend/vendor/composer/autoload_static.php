@@ -15,6 +15,11 @@ class ComposerStaticInit47b702fa8af86beb6f95e27614005326
     );
 
     public static $prefixLengthsPsr4 = array (
+        'W' =>
+        array (
+            'Workerman\\Coroutine\\' => 20,
+            'Workerman\\' => 10,
+        ),
         'T' =>
         array (
             'Tests\\' => 6,
@@ -71,6 +76,15 @@ class ComposerStaticInit47b702fa8af86beb6f95e27614005326
     );
 
     public static $prefixDirsPsr4 = array (
+        'Workerman\\Coroutine\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/workerman/coroutine/src',
+        ),
+        'Workerman\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/workerman/workerman/src',
+            1 => __DIR__ . '/..' . '/workerman/coroutine/src',
+        ),
         'Tests\\' =>
         array (
             0 => __DIR__ . '/../..' . '/tests',
@@ -205,6 +219,7 @@ class ComposerStaticInit47b702fa8af86beb6f95e27614005326
         'App\\Commands\\ProcessScheduledMessages' => __DIR__ . '/../..' . '/app/Commands/ProcessScheduledMessages.php',
         'App\\Commands\\ProcessScheduledMessagesTask' => __DIR__ . '/../..' . '/app/Commands/ProcessScheduledMessagesTask.php',
         'App\\Commands\\UpdateHeartbeatTask' => __DIR__ . '/../..' . '/app/Commands/UpdateHeartbeatTask.php',
+        'App\\Commands\\WebSocketServer' => __DIR__ . '/../..' . '/app/Commands/WebSocketServer.php',
         'App\\Controllers\\ApiKeyController' => __DIR__ . '/../..' . '/app/Controllers/ApiKeyController.php',
         'App\\Controllers\\ApiUsageController' => __DIR__ . '/../..' . '/app/Controllers/ApiUsageController.php',
         'App\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Controllers/AuthController.php',
@@ -3518,6 +3533,67 @@ class ComposerStaticInit47b702fa8af86beb6f95e27614005326
         'TheSeer\\Tokenizer\\TokenCollectionException' => __DIR__ . '/..' . '/theseer/tokenizer/src/TokenCollectionException.php',
         'TheSeer\\Tokenizer\\Tokenizer' => __DIR__ . '/..' . '/theseer/tokenizer/src/Tokenizer.php',
         'TheSeer\\Tokenizer\\XMLSerializer' => __DIR__ . '/..' . '/theseer/tokenizer/src/XMLSerializer.php',
+        'Workerman\\Connection\\AsyncTcpConnection' => __DIR__ . '/..' . '/workerman/workerman/src/Connection/AsyncTcpConnection.php',
+        'Workerman\\Connection\\AsyncUdpConnection' => __DIR__ . '/..' . '/workerman/workerman/src/Connection/AsyncUdpConnection.php',
+        'Workerman\\Connection\\ConnectionInterface' => __DIR__ . '/..' . '/workerman/workerman/src/Connection/ConnectionInterface.php',
+        'Workerman\\Connection\\TcpConnection' => __DIR__ . '/..' . '/workerman/workerman/src/Connection/TcpConnection.php',
+        'Workerman\\Connection\\UdpConnection' => __DIR__ . '/..' . '/workerman/workerman/src/Connection/UdpConnection.php',
+        'Workerman\\Coroutine' => __DIR__ . '/..' . '/workerman/coroutine/src/Coroutine.php',
+        'Workerman\\Coroutine\\Barrier' => __DIR__ . '/..' . '/workerman/coroutine/src/Barrier.php',
+        'Workerman\\Coroutine\\Barrier\\BarrierInterface' => __DIR__ . '/..' . '/workerman/coroutine/src/Barrier/BarrierInterface.php',
+        'Workerman\\Coroutine\\Barrier\\Fiber' => __DIR__ . '/..' . '/workerman/coroutine/src/Barrier/Fiber.php',
+        'Workerman\\Coroutine\\Barrier\\Swoole' => __DIR__ . '/..' . '/workerman/coroutine/src/Barrier/Swoole.php',
+        'Workerman\\Coroutine\\Barrier\\Swow' => __DIR__ . '/..' . '/workerman/coroutine/src/Barrier/Swow.php',
+        'Workerman\\Coroutine\\Channel' => __DIR__ . '/..' . '/workerman/coroutine/src/Channel.php',
+        'Workerman\\Coroutine\\Channel\\ChannelInterface' => __DIR__ . '/..' . '/workerman/coroutine/src/Channel/ChannelInterface.php',
+        'Workerman\\Coroutine\\Channel\\Fiber' => __DIR__ . '/..' . '/workerman/coroutine/src/Channel/Fiber.php',
+        'Workerman\\Coroutine\\Channel\\Memory' => __DIR__ . '/..' . '/workerman/coroutine/src/Channel/Memory.php',
+        'Workerman\\Coroutine\\Channel\\Swoole' => __DIR__ . '/..' . '/workerman/coroutine/src/Channel/Swoole.php',
+        'Workerman\\Coroutine\\Channel\\Swow' => __DIR__ . '/..' . '/workerman/coroutine/src/Channel/Swow.php',
+        'Workerman\\Coroutine\\Context' => __DIR__ . '/..' . '/workerman/coroutine/src/Context.php',
+        'Workerman\\Coroutine\\Context\\ContextInterface' => __DIR__ . '/..' . '/workerman/coroutine/src/Context/ContextInterface.php',
+        'Workerman\\Coroutine\\Context\\Fiber' => __DIR__ . '/..' . '/workerman/coroutine/src/Context/Fiber.php',
+        'Workerman\\Coroutine\\Context\\Swoole' => __DIR__ . '/..' . '/workerman/coroutine/src/Context/Swoole.php',
+        'Workerman\\Coroutine\\Context\\Swow' => __DIR__ . '/..' . '/workerman/coroutine/src/Context/Swow.php',
+        'Workerman\\Coroutine\\Coroutine\\CoroutineInterface' => __DIR__ . '/..' . '/workerman/coroutine/src/Coroutine/CoroutineInterface.php',
+        'Workerman\\Coroutine\\Coroutine\\Fiber' => __DIR__ . '/..' . '/workerman/coroutine/src/Coroutine/Fiber.php',
+        'Workerman\\Coroutine\\Coroutine\\Swoole' => __DIR__ . '/..' . '/workerman/coroutine/src/Coroutine/Swoole.php',
+        'Workerman\\Coroutine\\Coroutine\\Swow' => __DIR__ . '/..' . '/workerman/coroutine/src/Coroutine/Swow.php',
+        'Workerman\\Coroutine\\Exception\\PoolException' => __DIR__ . '/..' . '/workerman/coroutine/src/Exception/PoolException.php',
+        'Workerman\\Coroutine\\Locker' => __DIR__ . '/..' . '/workerman/coroutine/src/Locker.php',
+        'Workerman\\Coroutine\\Parallel' => __DIR__ . '/..' . '/workerman/coroutine/src/Parallel.php',
+        'Workerman\\Coroutine\\Pool' => __DIR__ . '/..' . '/workerman/coroutine/src/Pool.php',
+        'Workerman\\Coroutine\\PoolInterface' => __DIR__ . '/..' . '/workerman/coroutine/src/PoolInterface.php',
+        'Workerman\\Coroutine\\Utils\\DestructionWatcher' => __DIR__ . '/..' . '/workerman/coroutine/src/Utils/DestructionWatcher.php',
+        'Workerman\\Coroutine\\WaitGroup' => __DIR__ . '/..' . '/workerman/coroutine/src/WaitGroup.php',
+        'Workerman\\Coroutine\\WaitGroup\\Fiber' => __DIR__ . '/..' . '/workerman/coroutine/src/WaitGroup/Fiber.php',
+        'Workerman\\Coroutine\\WaitGroup\\Swoole' => __DIR__ . '/..' . '/workerman/coroutine/src/WaitGroup/Swoole.php',
+        'Workerman\\Coroutine\\WaitGroup\\Swow' => __DIR__ . '/..' . '/workerman/coroutine/src/WaitGroup/Swow.php',
+        'Workerman\\Coroutine\\WaitGroup\\WaitGroupInterface' => __DIR__ . '/..' . '/workerman/coroutine/src/WaitGroup/WaitGroupInterface.php',
+        'Workerman\\Events\\Ev' => __DIR__ . '/..' . '/workerman/workerman/src/Events/Ev.php',
+        'Workerman\\Events\\Event' => __DIR__ . '/..' . '/workerman/workerman/src/Events/Event.php',
+        'Workerman\\Events\\EventInterface' => __DIR__ . '/..' . '/workerman/workerman/src/Events/EventInterface.php',
+        'Workerman\\Events\\Fiber' => __DIR__ . '/..' . '/workerman/workerman/src/Events/Fiber.php',
+        'Workerman\\Events\\Select' => __DIR__ . '/..' . '/workerman/workerman/src/Events/Select.php',
+        'Workerman\\Events\\Swoole' => __DIR__ . '/..' . '/workerman/workerman/src/Events/Swoole.php',
+        'Workerman\\Events\\Swow' => __DIR__ . '/..' . '/workerman/workerman/src/Events/Swow.php',
+        'Workerman\\Protocols\\Frame' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Frame.php',
+        'Workerman\\Protocols\\Http' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http.php',
+        'Workerman\\Protocols\\Http\\Chunk' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http/Chunk.php',
+        'Workerman\\Protocols\\Http\\Request' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http/Request.php',
+        'Workerman\\Protocols\\Http\\Response' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http/Response.php',
+        'Workerman\\Protocols\\Http\\ServerSentEvents' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http/ServerSentEvents.php',
+        'Workerman\\Protocols\\Http\\Session' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http/Session.php',
+        'Workerman\\Protocols\\Http\\Session\\FileSessionHandler' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http/Session/FileSessionHandler.php',
+        'Workerman\\Protocols\\Http\\Session\\RedisClusterSessionHandler' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http/Session/RedisClusterSessionHandler.php',
+        'Workerman\\Protocols\\Http\\Session\\RedisSessionHandler' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http/Session/RedisSessionHandler.php',
+        'Workerman\\Protocols\\Http\\Session\\SessionHandlerInterface' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Http/Session/SessionHandlerInterface.php',
+        'Workerman\\Protocols\\ProtocolInterface' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/ProtocolInterface.php',
+        'Workerman\\Protocols\\Text' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Text.php',
+        'Workerman\\Protocols\\Websocket' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Websocket.php',
+        'Workerman\\Protocols\\Ws' => __DIR__ . '/..' . '/workerman/workerman/src/Protocols/Ws.php',
+        'Workerman\\Timer' => __DIR__ . '/..' . '/workerman/workerman/src/Timer.php',
+        'Workerman\\Worker' => __DIR__ . '/..' . '/workerman/workerman/src/Worker.php',
         'org\\bovigo\\vfs\\DotDirectory' => __DIR__ . '/..' . '/mikey179/vfsstream/src/main/php/org/bovigo/vfs/DotDirectory.php',
         'org\\bovigo\\vfs\\Quota' => __DIR__ . '/..' . '/mikey179/vfsstream/src/main/php/org/bovigo/vfs/Quota.php',
         'org\\bovigo\\vfs\\content\\FileContent' => __DIR__ . '/..' . '/mikey179/vfsstream/src/main/php/org/bovigo/vfs/content/FileContent.php',

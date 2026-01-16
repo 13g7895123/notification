@@ -6,6 +6,8 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Workerman\\Coroutine\\' => array($vendorDir . '/workerman/coroutine/src'),
+    'Workerman\\' => array($vendorDir . '/workerman/workerman/src', $vendorDir . '/workerman/coroutine/src'),
     'Tests\\' => array($baseDir . '/tests'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
     'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-factory/src', $vendorDir . '/psr/http-message/src'),

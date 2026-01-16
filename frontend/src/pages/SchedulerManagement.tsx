@@ -62,7 +62,23 @@ export function SchedulerManagement() {
     useEffect(() => {
         fetchSchedulerData();
         const interval = setInterval(fetchSchedulerData, refreshInterval * 1000);
-        return () => clearInterval(interval);
+
+        // 伺服器時間自增計時器（每秒更新 UI）
+        const clockInterval = setInterval(() => {
+            setStatus(prev => {
+                if (!prev || !prev.serverTime) return prev;
+                const nextTime = new Date(new Date(prev.serverTime).getTime() + 1000);
+                return {
+                    ...prev,
+                    serverTime: nextTime.toISOString()
+                };
+            });
+        }, 1000);
+
+        return () => {
+            clearInterval(interval);
+            clearInterval(clockInterval);
+        };
     }, [fetchSchedulerData, refreshInterval]);
 
     const handleEnable = async () => {

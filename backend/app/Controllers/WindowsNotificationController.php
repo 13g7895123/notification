@@ -122,6 +122,15 @@ class WindowsNotificationController extends BaseController
         $id = $this->notificationRepo->create($data);
         $notification = $this->notificationRepo->findById($id);
 
+        if ($notification) {
+            // 透過 WebSocket 即時推送
+            helper('websocket');
+            ws_push_notification([
+                'type' => 'new_notification',
+                'data' => $notification
+            ]);
+        }
+
         return $this->successResponse($notification, '通知已建立', 201);
     }
 

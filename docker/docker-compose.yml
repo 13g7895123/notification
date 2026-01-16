@@ -67,6 +67,32 @@ services:
     networks:
       - notifyhub_network
 
+  websocket:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      CI_ENVIRONMENT: ${CI_ENVIRONMENT}
+      DATABASE_HOSTNAME: mariadb
+      DATABASE_DATABASE: ${MARIADB_DATABASE}
+      DATABASE_USERNAME: ${MARIADB_USER}
+      DATABASE_PASSWORD: ${MARIADB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Taipei
+    volumes:
+      - ../backend:/var/www/html
+    command: php spark ws:start
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - notifyhub_network
+    expose:
+      - "8080"
+      - "8081"
+
   # ===========================================
   # Unified Nginx Gateway
   # ===========================================
