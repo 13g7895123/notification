@@ -10,11 +10,13 @@ echo "=========================================="
 # ===========================================
 cd /var/www/html
 
+# 安裝/更新專案依賴
 # ===========================================
-# 安裝專案依賴 (僅在開發環境或 vendor 不存在時)
-# ===========================================
-if [ -f composer.json ] && [ ! -d vendor ]; then
-    echo "Installing project dependencies..."
+if [ "$CI_ENVIRONMENT" = "production" ]; then
+    echo "Installing/Updating project dependencies (production)..."
+    composer install --no-interaction --no-progress --no-dev --optimize-autoloader
+elif [ -f composer.json ] && [ ! -d vendor ]; then
+    echo "Installing project dependencies (development)..."
     composer install --no-interaction --no-progress
 fi
 
