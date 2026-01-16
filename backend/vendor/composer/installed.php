@@ -19,6 +19,37 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'codeigniter4/queue' => array(
+            'pretty_version' => 'dev-develop',
+            'version' => 'dev-develop',
+            'reference' => '3acaa081701b44aaab3ffe8ad6740d138c949e4b',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../codeigniter4/queue',
+            'aliases' => array(
+                0 => '9999999-dev',
+            ),
+            'dev_requirement' => false,
+        ),
+        'codeigniter4/settings' => array(
+            'pretty_version' => 'v2.2.0',
+            'version' => '2.2.0.0',
+            'reference' => '2748f2b4572d44a940f98c31847d65272cac5666',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../codeigniter4/settings',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'codeigniter4/tasks' => array(
+            'pretty_version' => 'dev-develop',
+            'version' => 'dev-develop',
+            'reference' => '9804e5f42a881fee90db4aee114d6d0bfd8a3d4b',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../codeigniter4/tasks',
+            'aliases' => array(
+                0 => '9999999-dev',
+            ),
+            'dev_requirement' => false,
+        ),
         'fakerphp/faker' => array(
             'pretty_version' => 'v1.24.1',
             'version' => '1.24.1.0',

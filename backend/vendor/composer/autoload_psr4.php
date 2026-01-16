@@ -30,6 +30,9 @@ return array(
     'Faker\\' => array($vendorDir . '/fakerphp/faker/src/Faker'),
     'DeepCopy\\' => array($vendorDir . '/myclabs/deep-copy/src/DeepCopy'),
     'Config\\' => array($baseDir . '/app/Config'),
+    'CodeIgniter\\Tasks\\' => array($vendorDir . '/codeigniter4/tasks/src'),
+    'CodeIgniter\\Settings\\' => array($vendorDir . '/codeigniter4/settings/src'),
+    'CodeIgniter\\Queue\\' => array($vendorDir . '/codeigniter4/queue/src'),
     'CodeIgniter\\' => array($vendorDir . '/codeigniter4/framework/system'),
     'App\\' => array($baseDir . '/app'),
 );
