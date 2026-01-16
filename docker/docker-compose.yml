@@ -1,10 +1,11 @@
+version: '3.8'
+
 services:
   # ===========================================
-  # MariaDB 資料庫
+  # MariaDB Database
   # ===========================================
   mariadb:
     image: mariadb:10.11
-    container_name: ${APP_NAME:-notifyhub}_mariadb
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
@@ -13,7 +14,7 @@ services:
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       TZ: Asia/Taipei
     volumes:
-      - ./mariadb_data:/var/lib/mysql
+      - ../mariadb_data:/var/lib/mysql
     networks:
       - notifyhub_network
     healthcheck:
@@ -28,15 +29,13 @@ services:
   # ===========================================
   phpmyadmin:
     image: phpmyadmin:5
-    container_name: ${APP_NAME:-notifyhub}_phpmyadmin
     restart: unless-stopped
     ports:
       - "${PHPMYADMIN_PORT:-8081}:80"
     environment:
       PMA_HOST: mariadb
       PMA_PORT: 3306
-      PMA_ABSOLUTE_URI: ${PMA_ABSOLUTE_URI:-http://localhost:${PHPMYADMIN_PORT:-8081}/}
-      UPLOAD_LIMIT: 50M
+      PMA_ABSOLUTE_URI: ${PMA_ABSOLUTE_URI:-http://localhost:${PHPMYADMIN_PORT}/}
     depends_on:
       mariadb:
         condition: service_healthy
@@ -44,18 +43,16 @@ services:
       - notifyhub_network
 
   # ===========================================
-  # 後端 API (CodeIgniter 4 - PHP-FPM)
+  # Backend API (PHP-FPM)
   # ===========================================
   backend:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
-    container_name: ${APP_NAME:-notifyhub}_backend
     restart: unless-stopped
     working_dir: /var/www/html
-    # No public ports, only accessible via nginx
     environment:
-      CI_ENVIRONMENT: ${CI_ENVIRONMENT:-development}
+      CI_ENVIRONMENT: ${CI_ENVIRONMENT}
       DATABASE_HOSTNAME: mariadb
       DATABASE_DATABASE: ${MARIADB_DATABASE}
       DATABASE_USERNAME: ${MARIADB_USER}
@@ -63,8 +60,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       TZ: Asia/Taipei
     volumes:
-      - ./backend:/var/www/html
-      - ./docker/backend/entrypoint.sh:/entrypoint.sh:ro
+      - ../backend:/var/www/html
+      - ./backend/entrypoint.sh:/entrypoint.sh:ro
     entrypoint: [ "/bin/sh", "/entrypoint.sh" ]
     depends_on:
       mariadb:
@@ -73,19 +70,17 @@ services:
       - notifyhub_network
 
   # ===========================================
-  # 統一 Nginx 入口 (前後端混合代理)
+  # Unified Nginx Gateway
   # ===========================================
   nginx:
     image: nginx:alpine
-    container_name: ${APP_NAME:-notifyhub}_nginx
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     volumes:
-      - ./docker/frontend-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./docker/frontend-proxy/conf.d:/etc/nginx/conf.d:ro
-      # 重要：Nginx 需要知道後端的程式路徑以進行 FastCGI 請求處理
-      - ./backend:/var/www/html:ro
+      - ./frontend-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend-proxy/conf.d:/etc/nginx/conf.d:ro
+      - ../backend:/var/www/html:ro
     depends_on:
       - backend
       - frontend-blue
@@ -93,16 +88,14 @@ services:
       - notifyhub_network
 
   # ===========================================
-  # 前端 - Blue 版本
+  # Frontend - Blue
   # ===========================================
   frontend-blue:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
       args:
-        # 指向 Nginx 入口提供的 API 路徑
-        - VITE_API_URL=${VITE_API_URL:-http://localhost:${FRONTEND_PORT:-3000}/api}
-    container_name: ${APP_NAME:-notifyhub}_frontend_blue
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:${FRONTEND_PORT}/api}
     restart: unless-stopped
     expose:
       - "80"
@@ -112,15 +105,14 @@ services:
       - "deployment.version=blue"
 
   # ===========================================
-  # 前端 - Green 版本
+  # Frontend - Green (Optional Profile)
   # ===========================================
   frontend-green:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-http://localhost:${FRONTEND_PORT:-3000}/api}
-    container_name: ${APP_NAME:-notifyhub}_frontend_green
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:${FRONTEND_PORT}/api}
     restart: unless-stopped
     expose:
       - "80"
@@ -132,16 +124,16 @@ services:
       - green
 
 # ===========================================
-# 網路
+# Network Definition
 # ===========================================
 networks:
   notifyhub_network:
     driver: bridge
-    name: ${APP_NAME:-notifyhub}_network
+    name: ${APP_NAME}_network
 
 # ===========================================
-# 資料卷
+# Volume Definition
 # ===========================================
 volumes:
   mariadb_data:
-    name: ${APP_NAME:-notifyhub}_mariadb_data
+    name: ${APP_NAME}_mariadb_data

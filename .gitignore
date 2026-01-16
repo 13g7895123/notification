@@ -38,6 +38,9 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+docker/envs/.env.*
+!docker/envs/.env.example
+backend/.env
 
 # OS
 Thumbs.db

@@ -58,43 +58,34 @@ jobs:
             echo "[3/6] 更新後 Git 狀態:"
             echo "  Commit: $(git rev-parse --short HEAD)"
             
-            # 建立/更新 .env 檔案
+            # [4/6] 設定環境變數
             echo ""
             echo "[4/6] 設定環境變數..."
             
-            # 複製 .env.example 作為 .env（如果 .env 不存在）
-            if [ ! -f .env ]; then
-              cp .env.example .env
-              echo "  已從 .env.example 建立 .env"
+            if [ ! -f docker/envs/.env.development ]; then
+              cp docker/envs/.env.example docker/envs/.env.development
+              echo "  已從範例建立 .env.development"
               
-              # 自動生成 JWT_SECRET
               NEW_JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 48)
-              sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${NEW_JWT_SECRET}|" .env
-              echo "  JWT_SECRET 已自動生成"
+              sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${NEW_JWT_SECRET}|" docker/envs/.env.development
             fi
             
-            echo "  .env 設定完成"
-            
-            # 生成版本資訊
+            # 使用部署腳本同步並啟動
             echo ""
-            echo "[5/7] 生成版本資訊..."
-            chmod +x ./scripts/generate-version.sh
-            ./scripts/generate-version.sh
+            echo "[5/6] 執行部署程序..."
+            chmod +x ./scripts/*.sh
             
-            # 執行部署腳本
-            echo ""
-            echo "[6/7] 執行部署..."
-            ./scripts/deploy.sh build blue
-            ./scripts/deploy.sh switch blue
+            # 開發環境通常直接部署到 blue 即可，或按照需求
+            ./scripts/deploy.sh development
             
-            # 顯示服務狀態
+            # [6/6] 服務狀態
             echo ""
-            echo "[7/7] 服務狀態:"
-            docker compose ps
+            echo "[6/6] 服務狀態:"
+            docker-compose -f docker/docker-compose.yml ps
             
             echo ""
             echo "=========================================="
-            echo "  ✅ 部署完成！"
+            echo "  ✅ 開發環境部署完成！"
             echo "=========================================="
 
       - name: 部署成功通知

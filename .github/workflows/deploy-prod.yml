@@ -65,65 +65,51 @@ jobs:
             echo "[3/7] 更新後 Git 狀態:"
             echo "  Commit: $AFTER_COMMIT"
             
-            # 建立/更新 .env 檔案
+            # [4/6] 設定環境變數
             echo ""
-            echo "[4/7] 設定環境變數..."
+            echo "[4/6] 設定環境變數..."
             
-            # 複製 .env.example 作為 .env（如果 .env 不存在）
-            if [ ! -f .env ]; then
-              cp .env.example .env
-              echo "  已從 .env.example 建立 .env"
+            # 如果 .env.production 不存在，從範例建立
+            if [ ! -f docker/envs/.env.production ]; then
+              cp docker/envs/.env.example docker/envs/.env.production
+              echo "  已從範例建立 .env.production"
               
-              # 自動生成 JWT_SECRET
+              # 自動生成 JWT_SECRET (如果尚未設定)
               NEW_JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 48)
-              sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${NEW_JWT_SECRET}|" .env
-              echo "  JWT_SECRET 已自動生成"
+              sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${NEW_JWT_SECRET}|" docker/envs/.env.production
             fi
             
-            echo "  .env 設定完成"
-            
-            # 顯示變更
+            # 使用部署腳本同步並啟動
             echo ""
-            echo "[5/7] 變更摘要:"
-            git log --oneline $BEFORE_COMMIT..$AFTER_COMMIT | head -10
+            echo "[5/6] 執行部署程序..."
+            chmod +x ./scripts/*.sh
             
-            # 生成版本資訊
-            echo ""
-            echo "[6/8] 生成版本資訊..."
-            chmod +x ./scripts/generate-version.sh
-            ./scripts/generate-version.sh
-            
-            # 執行部署腳本（藍綠部署）
-            echo ""
-            echo "[7/8] 執行藍綠部署..."
-            
-            # 取得當前活躍版本
+            # 取得當前閒置版本 (藍綠部署支援)
             PROXY_CONF="./docker/frontend-proxy/conf.d/default.conf"
-            if grep -q "server frontend-green:80;" "$PROXY_CONF" 2>/dev/null; then
-              IDLE_VERSION="blue"
+            if grep -q "frontend-green" "$PROXY_CONF" && grep -q "active_host \"frontend-blue\"" "$PROXY_CONF"; then
+                IDLE_VERSION="green"
             else
-              IDLE_VERSION="green"
+                IDLE_VERSION="blue"
             fi
             
-            echo "正在部署到 $IDLE_VERSION 版本..."
+            echo "正在同步環境設定至 $IDLE_VERSION..."
+            ./scripts/deploy.sh production # 同步環境變數
+            
+            echo "開始建構 $IDLE_VERSION 版本..."
             ./scripts/deploy.sh build "$IDLE_VERSION"
             
-            # 健康檢查
-            echo "執行健康檢查..."
-            sleep 15
-            
-            # 切換流量
+            echo "執行健康檢查與切換流量..."
+            sleep 10
             ./scripts/deploy.sh switch "$IDLE_VERSION"
             
-            # 顯示服務狀態
+            # [6/6] 服務狀態
             echo ""
-            echo "[8/8] 服務狀態:"
-            docker compose ps
+            echo "[6/6] 服務狀態:"
+            docker-compose -f docker/docker-compose.yml ps
             
             echo ""
             echo "=========================================="
             echo "  ✅ 生產環境部署完成！"
-            echo "  版本: $BEFORE_COMMIT -> $AFTER_COMMIT"
             echo "=========================================="
 
       - name: 部署成功通知
