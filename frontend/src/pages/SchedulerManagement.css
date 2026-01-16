@@ -20,8 +20,13 @@
 /* Status Cards */
 .status-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
+}
+
+.server-time-card {
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 .status-card {
@@ -91,6 +96,18 @@
     gap: 10px;
 }
 
+.next-run-badge {
+    display: flex;
+    flex-direction: column;
+}
+
+.countdown-text {
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-top: 2px;
+}
+
 .scheduler-status-indicator {
     width: 12px;
     height: 12px;
@@ -109,9 +126,79 @@
 }
 
 @keyframes status-pulse {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-    70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+/* Page Actions Updates */
+.last-fetch-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Control Panel Updates */
+.control-footer {
+    margin: 0 0 16px 0;
+}
+
+.btn-logs-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-logs-trigger:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.control-btn.trigger {
+    color: #ffffff;
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.control-btn.trigger:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.control-btn.trigger svg {
+    color: #ffffff;
 }
 
 /* Management Grid */
@@ -127,7 +214,8 @@
     }
 }
 
-.management-left, .management-right {
+.management-left,
+.management-right {
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -184,17 +272,6 @@
 .control-btn.stop:hover:not(:disabled) {
     background: rgba(239, 68, 68, 0.1);
     border-color: #ef4444;
-    transform: translateY(-2px);
-}
-
-.control-btn.trigger {
-    color: var(--primary);
-    border-color: rgba(59, 130, 246, 0.2);
-}
-
-.control-btn.trigger:hover:not(:disabled) {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: var(--primary);
     transform: translateY(-2px);
 }
 
@@ -287,9 +364,17 @@
     border-color: var(--border-color);
 }
 
-.check-status-icon.ok { color: #10b981; }
-.check-status-icon.warning { color: #f59e0b; }
-.check-status-icon.error { color: #ef4444; }
+.check-status-icon.ok {
+    color: #10b981;
+}
+
+.check-status-icon.warning {
+    color: #f59e0b;
+}
+
+.check-status-icon.error {
+    color: #ef4444;
+}
 
 .check-info {
     flex: 1;
@@ -316,9 +401,20 @@
     text-transform: uppercase;
 }
 
-.check-badge.ok { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-.check-badge.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-.check-badge.error { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.check-badge.ok {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.check-badge.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.check-badge.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
 
 /* Modal Styles */
 .modal-overlay {
@@ -377,7 +473,8 @@
 .modal-body {
     padding: 24px;
     overflow-y: auto;
-    background: #0f172a; /* 更深的控制台背景 */
+    background: #0f172a;
+    /* 更深的控制台背景 */
 }
 
 .modal-footer {
@@ -401,11 +498,29 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.log-time { color: #64748b; margin-right: 12px; }
-.log-level { font-weight: 700; margin-right: 12px; width: 60px; display: inline-block; }
-.log-line.info .log-level { color: #38bdf8; }
-.log-line.error .log-level { color: #fb7185; }
-.log-line.warning .log-level { color: #fbbf24; }
+.log-time {
+    color: #64748b;
+    margin-right: 12px;
+}
+
+.log-level {
+    font-weight: 700;
+    margin-right: 12px;
+    width: 60px;
+    display: inline-block;
+}
+
+.log-line.info .log-level {
+    color: #38bdf8;
+}
+
+.log-line.error .log-level {
+    color: #fb7185;
+}
+
+.log-line.warning .log-level {
+    color: #fbbf24;
+}
 
 .logs-empty {
     text-align: center;
@@ -415,11 +530,23 @@
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }

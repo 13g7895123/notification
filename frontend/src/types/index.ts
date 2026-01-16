@@ -263,6 +263,7 @@ export interface SchedulerStatus {
     status: 'running' | 'active' | 'disabled' | 'error';
     lastRun: string | null;
     nextRun: string | null;
+    serverTime: string | null; // 加
     enabled: boolean;
     checks: SchedulerCheck[];
 }

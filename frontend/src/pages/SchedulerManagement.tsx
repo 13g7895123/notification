@@ -164,13 +164,10 @@ export function SchedulerManagement() {
                     </p>
                 </div>
                 <div className="page-actions">
-                    <button
-                        className="btn btn-secondary"
-                        onClick={() => setShowLogsModal(true)}
-                    >
-                        <Terminal size={18} />
-                        查看執行日誌
-                    </button>
+                    <div className="last-fetch-badge">
+                        <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+                        數據同步：{new Date().toLocaleTimeString()}
+                    </div>
                     <div className="refresh-control">
                         <label htmlFor="refresh-interval" className="refresh-label">
                             <Clock size={16} />
@@ -243,7 +240,27 @@ export function SchedulerManagement() {
                             <div className="status-card-info">
                                 <span className="status-card-label">下一次預計執行</span>
                                 <span className="status-card-value">
-                                    {status?.enabled ? (status?.nextRun ? safeFormatDate(status.nextRun, DateFormats.TIME) : '--:--') : 'N/A'}
+                                    {status?.enabled ? (
+                                        <div className="next-run-badge">
+                                            {status?.nextRun ? safeFormatDate(status.nextRun, DateFormats.TIME) : '--:--'}
+                                            {status?.serverTime && status?.nextRun && (
+                                                <span className="countdown-text">
+                                                    ({Math.max(0, Math.floor((new Date(status.nextRun).getTime() - new Date(status.serverTime).getTime()) / 1000))}秒後)
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : 'N/A'}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="status-card card server-time-card">
+                            <div className="status-card-icon">
+                                <RefreshCw size={24} />
+                            </div>
+                            <div className="status-card-info">
+                                <span className="status-card-label">伺服器當前時間</span>
+                                <span className="status-card-value">
+                                    {status?.serverTime ? safeFormatDate(status.serverTime, DateFormats.TIME) : '--:--'}
                                 </span>
                             </div>
                         </div>
@@ -283,6 +300,15 @@ export function SchedulerManagement() {
                                     >
                                         <RefreshCw size={18} className={isProcessing ? 'animate-spin' : ''} />
                                         立即執行
+                                    </button>
+                                </div>
+                                <div className="control-footer">
+                                    <button
+                                        className="btn-logs-trigger"
+                                        onClick={() => setShowLogsModal(true)}
+                                    >
+                                        <Terminal size={18} />
+                                        查看詳細執行日誌
                                     </button>
                                 </div>
                                 <div className="control-warning">
