@@ -6,7 +6,11 @@ import {
     ChevronDown,
     ChevronRight,
     Send as SendIcon,
-    List
+    List,
+    Rss,
+    Zap,
+    Clock,
+    RefreshCw
 } from 'lucide-react';
 import './ApiDocs.css';
 
@@ -341,6 +345,98 @@ export function ApiDocs() {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            {/* WebSocket API */}
+            <div className="card websocket-docs-card">
+                <h2 className="section-title">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Rss size={20} className="text-primary" />
+                        WebSocket 即時推送
+                    </div>
+                </h2>
+                <p className="docs-intro">
+                    NotifyHub 提供 WebSocket 服務，讓您的 Windows Client 可以即時接收通知，實現零延遲體驗。
+                </p>
+
+                <div className="ws-info-grid">
+                    <div className="ws-info-item">
+                        <div className="ws-info-icon"><Zap size={18} /></div>
+                        <div className="ws-info-content">
+                            <h4>連線位址</h4>
+                            <code>wss://notify.try-8verything.com/ws</code>
+                        </div>
+                    </div>
+                    <div className="ws-info-item">
+                        <div className="ws-info-icon"><Clock size={18} /></div>
+                        <div className="ws-info-content">
+                            <h4>心跳機制</h4>
+                            <p>建議每 30-60 秒發送一次 Ping 訊息</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="ws-section">
+                    <h3>🔔 訊息事件: <code>new_notification</code></h3>
+                    <p>當有新的 Windows 通知時，伺服器會立即推送此訊息。</p>
+
+                    <div className="example-block">
+                        <div className="example-header">
+                            <span>推送訊息範例 (Payload)</span>
+                            <button
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => handleCopy(`{
+  "type": "new_notification",
+  "data": {
+    "id": 123,
+    "title": "✅ 部署成功",
+    "message": "NotifyHub 已完成更新",
+    "repo": "notification",
+    "status": "pending",
+    "created_at": "2026-01-16T23:00:00Z"
+  }
+}`, 'ws-payload')}
+                            >
+                                {copiedSection === 'ws-payload' ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
+                        </div>
+                        <pre className="code-block">{`{
+  "type": "new_notification",
+  "data": {
+    "id": 123,
+    "title": "✅ 部署成功",
+    "message": "NotifyHub 已完成更新",
+    "repo": "notification",
+    "status": "pending",
+    "created_at": "2026-01-16T23:00:00Z"
+  }
+}`}</pre>
+                    </div>
+                </div>
+
+                <div className="ws-section">
+                    <h3>💓 心跳偵測</h3>
+                    <div className="ws-interaction">
+                        <div className="ws-interaction-step">
+                            <span className="label">Client 發送:</span>
+                            <code>{`{"type": "ping"}`}</code>
+                        </div>
+                        <div className="ws-interaction-step">
+                            <span className="label">伺服器回應:</span>
+                            <code>{`{"type": "pong", "time": 1737039600}`}</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="ws-footer">
+                    <div className="tips-box">
+                        <h5>💡 開發提示：</h5>
+                        <ul>
+                            <li><strong>自動重連</strong>：建議實作指數退避 (Exponential Backoff) 算法進行重連。</li>
+                            <li><strong>狀態更新</strong>：收到訊息並顯示後，請透過 <code>PATCH /api/v1/windows/:id/status</code> 更新為已送達。</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     );
