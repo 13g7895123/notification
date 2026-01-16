@@ -57,7 +57,7 @@ switch_traffic() {
     fi
     
     # 重啟 Nginx 以套用設定
-    docker-compose -f docker/docker-compose.yml up -d --force-recreate nginx
+    docker compose -f docker/docker-compose.yml up -d --force-recreate nginx
     echo "✅ Traffic switched to [$version]."
 }
 
@@ -68,8 +68,8 @@ case "$COMMAND" in
     "production" | "development")
         sync_env "$COMMAND"
         echo "🐳 Starting Docker containers ($COMMAND)..."
-        docker-compose -f docker/docker-compose.yml down
-        docker-compose -f docker/docker-compose.yml up -d --build
+        docker compose -f docker/docker-compose.yml down
+        docker compose -f docker/docker-compose.yml up -d --build
         echo "🚀 Deployment successful!"
         ;;
         
@@ -83,7 +83,7 @@ case "$COMMAND" in
         
         # 預設建構時同步最近一次的 .env (通常由 CI/CD 提前生成)
         echo "🏗️ Building frontend-$VERSION..."
-        docker-compose -f docker/docker-compose.yml up -d --build "frontend-$VERSION"
+        docker compose -f docker/docker-compose.yml up -d --build "frontend-$VERSION"
         ;;
         
     "switch")
