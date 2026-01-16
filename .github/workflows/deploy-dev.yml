@@ -81,7 +81,7 @@ jobs:
             # [6/6] 服務狀態
             echo ""
             echo "[6/6] 服務狀態:"
-            docker-compose -f docker/docker-compose.yml ps
+            docker compose -f docker/docker-compose.yml ps
             
             echo ""
             echo "=========================================="
