@@ -147,6 +147,8 @@ export function SchedulerManagement() {
         }
     };
 
+    const [showLogsModal, setShowLogsModal] = useState(false);
+
     return (
         <div className="scheduler-page">
             <div className="page-header">
@@ -162,6 +164,13 @@ export function SchedulerManagement() {
                     </p>
                 </div>
                 <div className="page-actions">
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => setShowLogsModal(true)}
+                    >
+                        <Terminal size={18} />
+                        查看執行日誌
+                    </button>
                     <div className="refresh-control">
                         <label htmlFor="refresh-interval" className="refresh-label">
                             <Clock size={16} />
@@ -191,7 +200,7 @@ export function SchedulerManagement() {
                 </div>
             </div>
 
-            <div className="scheduler-grid">
+            <div className="scheduler-layout">
                 {/* 狀態概覽 */}
                 <div className="scheduler-main">
                     {error && (
@@ -203,14 +212,14 @@ export function SchedulerManagement() {
 
                     <div className="status-cards">
                         <div className="status-card card">
-                            <div className="status-card-icon running">
+                            <div className={`status-card-icon ${status?.enabled ? 'running' : 'stopped'}`}>
                                 <Server size={24} />
                             </div>
                             <div className="status-card-info">
-                                <span className="status-card-label">排程器狀態</span>
+                                <span className="status-card-label">排程器運行狀態</span>
                                 <span className="status-card-value">
                                     <span className="status-text">
-                                        {status?.enabled ? (status?.status === 'running' ? '運行中' : '已啟用') : '已停用'}
+                                        {status?.enabled ? (status?.status === 'running' ? '運行中' : '待命模式') : '已停用'}
                                     </span>
                                     <span className={`scheduler-status-indicator ${status?.enabled ? 'online' : 'offline'}`}></span>
                                 </span>
@@ -221,224 +230,216 @@ export function SchedulerManagement() {
                                 <Clock size={24} />
                             </div>
                             <div className="status-card-info">
-                                <span className="status-card-label">上次執行</span>
+                                <span className="status-card-label">上次執行時間</span>
                                 <span className="status-card-value">
-                                    {status ? safeFormatDate(status.lastRun, DateFormats.TIME) : '--:--'}
+                                    {status?.lastRun ? safeFormatDate(status.lastRun, DateFormats.TIME) : '從未執行'}
                                 </span>
                             </div>
                         </div>
                         <div className="status-card card">
                             <div className="status-card-icon next-run">
-                                <RefreshCw size={24} />
+                                <RotateCw size={24} />
                             </div>
                             <div className="status-card-info">
-                                <span className="status-card-label">下次執行</span>
+                                <span className="status-card-label">下一次預計執行</span>
                                 <span className="status-card-value">
-                                    {status ? safeFormatDate(status.nextRun, DateFormats.TIME) : '--:--'}
+                                    {status?.enabled ? (status?.nextRun ? safeFormatDate(status.nextRun, DateFormats.TIME) : '--:--') : 'N/A'}
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    {/* 排程器控制面板 */}
-                    <div className="control-section card">
-                        <div className="section-header">
-                            <h3 className="section-title">
-                                <RotateCw size={18} />
-                                排程器控制
-                            </h3>
-                        </div>
-                        <div className="control-buttons">
-                            <button
-                                className="control-btn start"
-                                onClick={handleEnable}
-                                disabled={status?.enabled || isProcessing}
-                            >
-                                <Play size={18} />
-                                啟用排程
-                            </button>
-                            <button
-                                className="control-btn stop"
-                                onClick={handleDisable}
-                                disabled={!status?.enabled || isProcessing}
-                            >
-                                <Square size={18} />
-                                停用排程
-                            </button>
-                            <button
-                                className="control-btn trigger"
-                                onClick={handleRunNow}
-                                disabled={!status?.enabled || isProcessing}
-                            >
-                                <RefreshCw size={18} className={isProcessing ? 'animate-spin' : ''} />
-                                立即執行
-                            </button>
-                        </div>
-                        <div className="control-warning">
-                            <AlertCircle size={14} />
-                            <span>⚠️ 停止排程器將暫停所有自動派發的排程訊息通知。</span>
-                        </div>
-                    </div>
-
-                    {/* 排程器設定 */}
-                    <div className="settings-section card">
-                        <div className="section-header">
-                            <h3 className="section-title">
-                                <Settings size={18} />
-                                排程器設定
-                            </h3>
-                            {!isEditingSettings ? (
-                                <button
-                                    className="btn btn-secondary btn-sm"
-                                    onClick={() => setIsEditingSettings(true)}
-                                >
-                                    編輯設定
-                                </button>
-                            ) : (
-                                <div className="settings-actions">
+                    <div className="scheduler-management-grid">
+                        {/* 左側：控制與設定 */}
+                        <div className="management-left">
+                            <div className="control-section card">
+                                <div className="section-header">
+                                    <h3 className="section-title">
+                                        <RotateCw size={18} />
+                                        排程控制中心
+                                    </h3>
+                                </div>
+                                <div className="control-buttons">
                                     <button
-                                        className="btn btn-secondary btn-sm"
-                                        onClick={() => {
-                                            setIsEditingSettings(false);
-                                            fetchSchedulerData();
-                                        }}
+                                        className="control-btn start"
+                                        onClick={handleEnable}
+                                        disabled={status?.enabled || isProcessing}
                                     >
-                                        取消
+                                        <Play size={18} />
+                                        啟用排程
                                     </button>
                                     <button
-                                        className="btn btn-primary btn-sm"
-                                        onClick={handleSaveSettings}
-                                        disabled={isProcessing}
+                                        className="control-btn stop"
+                                        onClick={handleDisable}
+                                        disabled={!status?.enabled || isProcessing}
                                     >
-                                        保存設定
+                                        <Square size={18} />
+                                        停用排程
+                                    </button>
+                                    <button
+                                        className="control-btn trigger"
+                                        onClick={handleRunNow}
+                                        disabled={!status?.enabled || isProcessing}
+                                    >
+                                        <RefreshCw size={18} className={isProcessing ? 'animate-spin' : ''} />
+                                        立即執行
                                     </button>
                                 </div>
-                            )}
-                        </div>
-                        <div className="settings-form">
-                            <div className="setting-item">
-                                <label className="setting-label">
-                                    <Clock size={16} />
-                                    心跳更新間隔
-                                </label>
-                                <div className="setting-input-group">
-                                    <input
-                                        type="number"
-                                        className="setting-input"
-                                        value={settings?.heartbeatInterval ?? 10}
-                                        onChange={(e) => setSettings(prev => prev ? { ...prev, heartbeatInterval: Number(e.target.value) } : null)}
-                                        disabled={!isEditingSettings}
-                                        min={5}
-                                        max={60}
-                                    />
-                                    <span className="setting-unit">秒</span>
+                                <div className="control-warning">
+                                    <AlertCircle size={14} />
+                                    <span>💡 啟用後系統將每分鐘自動檢查並發送排程訊息。</span>
                                 </div>
-                                <p className="setting-description">
-                                    排程器更新心跳檔案的頻率（建議 5-15 秒）
-                                </p>
                             </div>
 
-                            <div className="setting-item">
-                                <label className="setting-label">
-                                    <RefreshCw size={16} />
-                                    任務檢查間隔
-                                </label>
-                                <div className="setting-input-group">
-                                    <input
-                                        type="number"
-                                        className="setting-input"
-                                        value={settings?.taskCheckInterval ?? 60}
-                                        onChange={(e) => setSettings(prev => prev ? { ...prev, taskCheckInterval: Number(e.target.value) } : null)}
-                                        disabled={!isEditingSettings}
-                                        min={10}
-                                        max={600}
-                                    />
-                                    <span className="setting-unit">秒</span>
+                            <div className="settings-section card">
+                                <div className="section-header">
+                                    <h3 className="section-title">
+                                        <Settings size={18} />
+                                        進階排程設定
+                                    </h3>
+                                    {!isEditingSettings ? (
+                                        <button
+                                            className="btn btn-link btn-sm"
+                                            onClick={() => setIsEditingSettings(true)}
+                                        >
+                                            編輯設定
+                                        </button>
+                                    ) : (
+                                        <div className="settings-actions">
+                                            <button
+                                                className="btn btn-secondary btn-sm"
+                                                onClick={() => {
+                                                    setIsEditingSettings(false);
+                                                    fetchSchedulerData();
+                                                }}
+                                            >
+                                                取消
+                                            </button>
+                                            <button
+                                                className="btn btn-primary btn-sm"
+                                                onClick={handleSaveSettings}
+                                                disabled={isProcessing}
+                                            >
+                                                保存
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                                <p className="setting-description">
-                                    檢查並執行排程訊息的頻率（建議 30-120 秒）
-                                </p>
-                            </div>
-
-                            <div className="setting-item">
-                                <label className="setting-label">
-                                    <AlertCircle size={16} />
-                                    心跳超時時間
-                                </label>
-                                <div className="setting-input-group">
-                                    <input
-                                        type="number"
-                                        className="setting-input"
-                                        value={settings?.heartbeatTimeout ?? 150}
-                                        onChange={(e) => setSettings(prev => prev ? { ...prev, heartbeatTimeout: Number(e.target.value) } : null)}
-                                        disabled={!isEditingSettings}
-                                        min={30}
-                                        max={300}
-                                    />
-                                    <span className="setting-unit">秒</span>
-                                </div>
-                                <p className="setting-description">
-                                    超過此時間未更新心跳視為已停止（建議 ≥ 心跳間隔 × 10）
-                                </p>
-                            </div>
-
-                            <div className="setting-note">
-                                <AlertCircle size={14} />
-                                <span>💡 修改設定後需要重啟排程器才會生效</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 詳細檢測 */}
-                    <div className="checks-section card">
-                        <div className="section-header">
-                            <h3 className="section-title">
-                                <Cpu size={18} />
-                                系統詳細檢測
-                            </h3>
-                        </div>
-                        <div className="checks-list">
-                            {status?.checks.map((check, index) => (
-                                <div key={index} className="check-item">
-                                    <div className={`check-status-icon ${check.status}`}>
-                                        {check.status === 'ok' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                <div className="settings-form">
+                                    <div className="setting-item">
+                                        <label className="setting-label">心跳更新間隔</label>
+                                        <div className="setting-input-group">
+                                            <input
+                                                type="number"
+                                                className="setting-input"
+                                                value={settings?.heartbeatInterval ?? 10}
+                                                onChange={(e) => setSettings(prev => prev ? { ...prev, heartbeatInterval: Number(e.target.value) } : null)}
+                                                disabled={!isEditingSettings}
+                                                min={5}
+                                                max={60}
+                                            />
+                                            <span className="setting-unit">秒</span>
+                                        </div>
                                     </div>
-                                    <div className="check-info">
-                                        <span className="check-name">{check.name}</span>
-                                        <span className="check-message">{check.message}</span>
-                                    </div>
-                                    <div className={`check-badge ${check.status}`}>
-                                        {check.status.toUpperCase()}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
 
-                {/* 執行日誌 */}
-                <div className="scheduler-logs card">
-                    <div className="section-header">
-                        <h3 className="section-title">
-                            <Terminal size={18} />
-                            執行日誌 (Recent Logs)
-                        </h3>
-                    </div>
-                    <div className="logs-console">
-                        {logs.length === 0 ? (
-                            <div className="logs-empty">尚無日誌紀錄</div>
-                        ) : (
-                            logs.map((log, index) => (
-                                <div key={index} className={`log-line ${log.level}`}>
-                                    <span className="log-time">[{safeFormatDate(log.timestamp, DateFormats.DATETIME)}]</span>
-                                    <span className="log-level">{log.level.toUpperCase()}</span>
-                                    <span className="log-message">{log.message}</span>
+                                    <div className="setting-item">
+                                        <label className="setting-label">任務檢查間隔</label>
+                                        <div className="setting-input-group">
+                                            <input
+                                                type="number"
+                                                className="setting-input"
+                                                value={settings?.taskCheckInterval ?? 60}
+                                                onChange={(e) => setSettings(prev => prev ? { ...prev, taskCheckInterval: Number(e.target.value) } : null)}
+                                                disabled={!isEditingSettings}
+                                                min={10}
+                                                max={600}
+                                            />
+                                            <span className="setting-unit">秒</span>
+                                        </div>
+                                    </div>
+
+                                    <p className="settings-hint">
+                                        建議保留預設值，過短的間隔可能會增加伺服器負載。
+                                    </p>
                                 </div>
-                            ))
-                        )}
+                            </div>
+                        </div>
+
+                        {/* 右側：健康檢查 */}
+                        <div className="management-right">
+                            <div className="checks-section card">
+                                <div className="section-header">
+                                    <h3 className="section-title">
+                                        <Cpu size={18} />
+                                        系統健康狀態
+                                    </h3>
+                                </div>
+                                <div className="checks-list">
+                                    {status?.checks.map((check, index) => (
+                                        <div key={index} className="check-item">
+                                            <div className={`check-status-icon ${check.status}`}>
+                                                {check.status === 'ok' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                            </div>
+                                            <div className="check-info">
+                                                <span className="check-name">{check.name}</span>
+                                                <span className="check-message">{check.message}</span>
+                                            </div>
+                                            <div className={`check-badge ${check.status}`}>
+                                                {check.status.toUpperCase()}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* 日誌彈窗 */}
+            {showLogsModal && (
+                <div className="modal-overlay" onClick={() => setShowLogsModal(false)}>
+                    <div className="modal-content logs-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">
+                                <Terminal size={18} />
+                                系統執行日誌 (最近 50 筆)
+                            </h3>
+                            <button className="close-btn" onClick={() => setShowLogsModal(false)}>×</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="logs-console">
+                                {logs.length === 0 ? (
+                                    <div className="logs-empty">尚無日誌紀錄</div>
+                                ) : (
+                                    logs.map((log, index) => (
+                                        <div key={index} className={`log-line ${log.level}`}>
+                                            <span className="log-time">[{safeFormatDate(log.timestamp, DateFormats.DATETIME)}]</span>
+                                            <span className="log-level">{log.level.toUpperCase()}</span>
+                                            <span className="log-message">{log.message}</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button
+                                className="btn btn-secondary"
+                                onClick={fetchSchedulerData}
+                                disabled={isLoading}
+                            >
+                                <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+                                立即刷新
+                            </button>
+                            <button className="btn btn-primary" onClick={() => setShowLogsModal(false)}>
+                                關閉
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
+    );
+}
     );
 }
