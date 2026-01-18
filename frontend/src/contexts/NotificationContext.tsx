@@ -13,7 +13,9 @@ import type {
     WebhookLog,
     SchedulerStatus,
     SchedulerLog,
-    SchedulerSettings
+    SchedulerSettings,
+    WebSocketConnection,
+    WebSocketStats
 } from '../types';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
@@ -65,6 +67,12 @@ interface NotificationContextType {
     apiStats: ApiStats | null;
     fetchApiUsage: (params?: Record<string, string | number | boolean>) => Promise<void>;
 
+    // WebSocket 連線追蹤
+    wsConnections: WebSocketConnection[];
+    wsStats: WebSocketStats | null;
+    fetchWebSocketConnections: (params?: Record<string, string | number | boolean>) => Promise<void>;
+    fetchWebSocketStats: () => Promise<void>;
+
     // 排程器管理
     fetchSchedulerStatus: () => Promise<SchedulerStatus>;
     fetchSchedulerLogs: (limit?: number) => Promise<SchedulerLog[]>;
@@ -92,6 +100,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
     const [apiUsageLogs, setApiUsageLogs] = useState<ApiUsageLog[]>([]);
     const [apiStats, setApiStats] = useState<ApiStats | null>(null);
+    const [wsConnections, setWsConnections] = useState<WebSocketConnection[]>([]);
+    const [wsStats, setWsStats] = useState<WebSocketStats | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -386,6 +396,25 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // WebSocket 連線追蹤操作
+    const fetchWebSocketConnections = useCallback(async (params?: Record<string, string | number | boolean>) => {
+        try {
+            const data = await api.get<{ connections: WebSocketConnection[]; total: number }>('/websocket/connections', params);
+            setWsConnections(data.connections || []);
+        } catch (error) {
+            console.error('Fetch WebSocket connections failed', error);
+        }
+    }, []);
+
+    const fetchWebSocketStats = useCallback(async () => {
+        try {
+            const data = await api.get<WebSocketStats>('/websocket/stats');
+            setWsStats(data);
+        } catch (error) {
+            console.error('Fetch WebSocket stats failed', error);
+        }
+    }, []);
+
     const toggleSidebar = useCallback(() => {
         setSidebarCollapsed(prev => !prev);
     }, []);
@@ -520,6 +549,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 apiUsageLogs,
                 apiStats,
                 fetchApiUsage,
+                wsConnections,
+                wsStats,
+                fetchWebSocketConnections,
+                fetchWebSocketStats,
                 fetchSchedulerStatus,
                 fetchSchedulerLogs,
                 enableScheduler,

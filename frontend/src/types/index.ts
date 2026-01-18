@@ -301,3 +301,48 @@ export interface SchedulerControlResponse {
     };
     error?: string;
 }
+
+// WebSocket 連線追蹤
+export interface WebSocketConnection {
+    id: string;
+    connectionId: string;
+    ipAddress: string;
+    userAgent: string;
+    status: 'connected' | 'disconnected' | 'error';
+    connectedAt: string;
+    disconnectedAt?: string;
+    lastPingAt?: string;
+    messagesReceived: number;
+    messagesSent: number;
+    errorCount: number;
+    lastError?: string;
+    metadata?: Record<string, unknown>;
+}
+
+export interface WebSocketStats {
+    activeConnections: number;
+    totalConnections: number;
+    errorConnections: number;
+    todayConnections: number;
+    avgConnectionDuration: number;
+    dailyTrends: {
+        date: string;
+        count: number;
+        active: number;
+        errors: number;
+    }[];
+    messageStats: {
+        totalSent: number;
+        totalReceived: number;
+        avgSentPerConnection: number;
+        avgReceivedPerConnection: number;
+    };
+    recentErrors: {
+        connectionId: string;
+        ipAddress: string;
+        error: string;
+        errorCount: number;
+        connectedAt: string;
+    }[];
+}
+

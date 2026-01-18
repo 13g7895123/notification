@@ -10,30 +10,55 @@ import {
     BarChart3,
     Eye,
     X,
-    RefreshCw
+    RefreshCw,
+    Wifi,
+    WifiOff,
+    AlertTriangle,
+    Users,
+    MessageSquare,
+    Zap
 } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
-import type { ApiUsageLog } from '../types';
+import type { ApiUsageLog, WebSocketConnection } from '../types';
 import { safeFormatDate, safeFormatDateSimple, DateFormats } from '../utils/dateUtils';
 import './ApiUsage.css';
 
 export function ApiUsage() {
-    const { apiUsageLogs, apiStats, apiKeys, fetchApiUsage, isLoading } = useNotification();
+    const {
+        apiUsageLogs,
+        apiStats,
+        apiKeys,
+        fetchApiUsage,
+        wsConnections,
+        wsStats,
+        fetchWebSocketConnections,
+        fetchWebSocketStats,
+        isLoading
+    } = useNotification();
+
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed'>('all');
     const [keyFilter, setKeyFilter] = useState<string>('all');
     const [selectedLog, setSelectedLog] = useState<ApiUsageLog | null>(null);
+    const [selectedWsConnection, setSelectedWsConnection] = useState<WebSocketConnection | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [wsStatusFilter, setWsStatusFilter] = useState<'all' | 'connected' | 'disconnected' | 'error'>('all');
 
     useEffect(() => {
         fetchApiUsage();
-    }, [fetchApiUsage]);
+        fetchWebSocketConnections();
+        fetchWebSocketStats();
+    }, [fetchApiUsage, fetchWebSocketConnections, fetchWebSocketStats]);
 
     const handleRefresh = useCallback(async () => {
         setIsRefreshing(true);
-        await fetchApiUsage();
+        await Promise.all([
+            fetchApiUsage(),
+            fetchWebSocketConnections(),
+            fetchWebSocketStats()
+        ]);
         setTimeout(() => setIsRefreshing(false), 500);
-    }, [fetchApiUsage]);
+    }, [fetchApiUsage, fetchWebSocketConnections, fetchWebSocketStats]);
 
     if (isLoading || !apiStats) {
         return (
@@ -67,6 +92,186 @@ export function ApiUsage() {
                         監控 API 請求與使用情況
                     </p>
                 </div>
+            </div>
+
+            {/* WebSocket 連線追蹤區塊 */}
+            <div className="websocket-section" style={{ marginBottom: '2rem' }}>
+                <div className="section-header" style={{ marginBottom: '1.5rem' }}>
+                    <h2 style={{
+                        fontSize: '1.25rem',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        color: 'var(--text-primary)'
+                    }}>
+                        <Wifi size={20} />
+                        WebSocket 連線追蹤
+                    </h2>
+                </div>
+
+                {/* WebSocket 統計卡片 */}
+                {wsStats && (
+                    <div className="api-usage-stats" style={{ marginBottom: '1.5rem' }}>
+                        <div className="usage-stat-card">
+                            <div className="usage-stat-icon" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+                                <Users size={20} />
+                            </div>
+                            <div className="usage-stat-content">
+                                <span className="usage-stat-value">{wsStats.activeConnections}</span>
+                                <span className="usage-stat-label">目前連線</span>
+                            </div>
+                        </div>
+                        <div className="usage-stat-card">
+                            <div className="usage-stat-icon" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}>
+                                <BarChart3 size={20} />
+                            </div>
+                            <div className="usage-stat-content">
+                                <span className="usage-stat-value">{wsStats.totalConnections}</span>
+                                <span className="usage-stat-label">總連線數</span>
+                            </div>
+                        </div>
+                        <div className="usage-stat-card">
+                            <div className="usage-stat-icon" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+                                <AlertTriangle size={20} />
+                            </div>
+                            <div className="usage-stat-content">
+                                <span className="usage-stat-value">{wsStats.errorConnections}</span>
+                                <span className="usage-stat-label">錯誤連線</span>
+                            </div>
+                        </div>
+                        <div className="usage-stat-card">
+                            <div className="usage-stat-icon" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
+                                <MessageSquare size={20} />
+                            </div>
+                            <div className="usage-stat-content">
+                                <span className="usage-stat-value">{wsStats.messageStats.totalSent.toLocaleString()}</span>
+                                <span className="usage-stat-label">已發送訊息</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* WebSocket 連線篩選器 */}
+                <div className="usage-filters card" style={{ marginBottom: '1rem' }}>
+                    <div className="filter-group">
+                        <Filter size={16} />
+                        <select
+                            className="input select"
+                            value={wsStatusFilter}
+                            onChange={e => setWsStatusFilter(e.target.value as 'all' | 'connected' | 'disconnected' | 'error')}
+                        >
+                            <option value="all">所有狀態</option>
+                            <option value="connected">已連線</option>
+                            <option value="disconnected">已斷線</option>
+                            <option value="error">錯誤</option>
+                        </select>
+                    </div>
+
+                    <div className="filter-stats">
+                        <span>顯示 {wsConnections.filter(conn => wsStatusFilter === 'all' || conn.status === wsStatusFilter).length} 筆</span>
+                    </div>
+                </div>
+
+                {/* WebSocket 連線列表 */}
+                <div className="table-container card">
+                    {wsConnections.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-state-icon">🔌</div>
+                            <h3 className="empty-state-title">沒有連線紀錄</h3>
+                            <p className="empty-state-description">尚無 WebSocket 連線</p>
+                        </div>
+                    ) : (
+                        <table className="table usage-table">
+                            <thead>
+                                <tr>
+                                    <th>連線 ID</th>
+                                    <th>IP 位址</th>
+                                    <th>狀態</th>
+                                    <th>連線時間</th>
+                                    <th>最後 Ping</th>
+                                    <th>訊息數</th>
+                                    <th>錯誤</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {wsConnections
+                                    .filter(conn => wsStatusFilter === 'all' || conn.status === wsStatusFilter)
+                                    .map((conn, index) => (
+                                        <tr key={conn.id} className="animate-slide-up" style={{ animationDelay: `${index * 20}ms` }}>
+                                            <td className="font-mono">
+                                                <code style={{ fontSize: '0.875rem' }}>{conn.connectionId.substring(0, 12)}...</code>
+                                            </td>
+                                            <td className="font-mono">{conn.ipAddress}</td>
+                                            <td>
+                                                <span className={`status-badge ${conn.status === 'connected' ? 'success' :
+                                                    conn.status === 'error' ? 'error' :
+                                                        'default'
+                                                    }`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                    {conn.status === 'connected' && <Wifi size={14} />}
+                                                    {conn.status === 'disconnected' && <WifiOff size={14} />}
+                                                    {conn.status === 'error' && <AlertTriangle size={14} />}
+                                                    {conn.status === 'connected' ? '已連線' : conn.status === 'error' ? '錯誤' : '已斷線'}
+                                                </span>
+                                            </td>
+                                            <td className="font-mono">
+                                                {safeFormatDate(conn.connectedAt, DateFormats.SHORT_DATE_FULL_TIME)}
+                                            </td>
+                                            <td className="font-mono">
+                                                {conn.lastPingAt ? safeFormatDate(conn.lastPingAt, DateFormats.SHORT_DATE_FULL_TIME) : '-'}
+                                            </td>
+                                            <td>
+                                                <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.875rem' }}>
+                                                    <span title="發送">
+                                                        <Zap size={14} style={{ display: 'inline', marginRight: '0.25rem', color: 'var(--color-success)' }} />
+                                                        {conn.messagesSent}
+                                                    </span>
+                                                    <span title="接收">
+                                                        <MessageSquare size={14} style={{ display: 'inline', marginRight: '0.25rem', color: 'var(--color-info)' }} />
+                                                        {conn.messagesReceived}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {conn.errorCount > 0 ? (
+                                                    <span className="status-badge error">
+                                                        {conn.errorCount} 次
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ color: 'var(--text-tertiary)' }}>-</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="btn btn-ghost btn-icon"
+                                                    onClick={() => setSelectedWsConnection(conn)}
+                                                    title="詳情"
+                                                >
+                                                    <Eye size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </div>
+
+            {/* API 使用紀錄標題 */}
+            <div className="section-header" style={{ marginBottom: '1.5rem', marginTop: '3rem' }}>
+                <h2 style={{
+                    fontSize: '1.25rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    color: 'var(--text-primary)'
+                }}>
+                    <Activity size={20} />
+                    API 使用紀錄
+                </h2>
             </div>
 
             {/* 統計卡片 */}
@@ -307,6 +512,11 @@ export function ApiUsage() {
             {selectedLog && (
                 <LogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />
             )}
+
+            {/* WebSocket 連線詳情 Modal */}
+            {selectedWsConnection && (
+                <WebSocketConnectionDetailModal connection={selectedWsConnection} onClose={() => setSelectedWsConnection(null)} />
+            )}
         </div>
     );
 }
@@ -400,3 +610,140 @@ function LogDetailModal({ log, onClose }: { log: ApiUsageLog; onClose: () => voi
         </div>
     );
 }
+
+function WebSocketConnectionDetailModal({ connection, onClose }: { connection: WebSocketConnection; onClose: () => void }) {
+    const duration = connection.disconnectedAt
+        ? Math.floor((new Date(connection.disconnectedAt).getTime() - new Date(connection.connectedAt).getTime()) / 1000)
+        : Math.floor((new Date().getTime() - new Date(connection.connectedAt).getTime()) / 1000);
+
+    const formatDuration = (seconds: number) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
+        if (minutes > 0) return `${minutes}m ${secs}s`;
+        return `${secs}s`;
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal log-detail-modal" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>WebSocket 連線詳情</h2>
+                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="modal-body">
+                    <div className="detail-row">
+                        <span className="detail-label">連線 ID</span>
+                        <span className="detail-value font-mono">{connection.connectionId}</span>
+                    </div>
+
+                    <div className="detail-row">
+                        <span className="detail-label">IP 位址</span>
+                        <span className="detail-value font-mono">{connection.ipAddress}</span>
+                    </div>
+
+                    <div className="detail-row">
+                        <span className="detail-label">狀態</span>
+                        <span className={`status-badge ${connection.status === 'connected' ? 'success' :
+                            connection.status === 'error' ? 'error' :
+                                'default'
+                            }`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                            {connection.status === 'connected' && <Wifi size={14} />}
+                            {connection.status === 'disconnected' && <WifiOff size={14} />}
+                            {connection.status === 'error' && <AlertTriangle size={14} />}
+                            {connection.status === 'connected' ? '已連線' : connection.status === 'error' ? '錯誤' : '已斷線'}
+                        </span>
+                    </div>
+
+                    <div className="detail-row">
+                        <span className="detail-label">連線時間</span>
+                        <span className="detail-value font-mono">
+                            {safeFormatDate(connection.connectedAt, DateFormats.FULL)}
+                        </span>
+                    </div>
+
+                    {connection.disconnectedAt && (
+                        <div className="detail-row">
+                            <span className="detail-label">斷線時間</span>
+                            <span className="detail-value font-mono">
+                                {safeFormatDate(connection.disconnectedAt, DateFormats.FULL)}
+                            </span>
+                        </div>
+                    )}
+
+                    <div className="detail-row">
+                        <span className="detail-label">連線時長</span>
+                        <span className="detail-value font-mono">{formatDuration(duration)}</span>
+                    </div>
+
+                    {connection.lastPingAt && (
+                        <div className="detail-row">
+                            <span className="detail-label">最後 Ping</span>
+                            <span className="detail-value font-mono">
+                                {safeFormatDate(connection.lastPingAt, DateFormats.FULL)}
+                            </span>
+                        </div>
+                    )}
+
+                    <div className="detail-row">
+                        <span className="detail-label">發送訊息數</span>
+                        <span className="detail-value">
+                            <Zap size={16} style={{ display: 'inline', marginRight: '0.5rem', color: 'var(--color-success)' }} />
+                            {connection.messagesSent} 則
+                        </span>
+                    </div>
+
+                    <div className="detail-row">
+                        <span className="detail-label">接收訊息數</span>
+                        <span className="detail-value">
+                            <MessageSquare size={16} style={{ display: 'inline', marginRight: '0.5rem', color: 'var(--color-info)' }} />
+                            {connection.messagesReceived} 則
+                        </span>
+                    </div>
+
+                    <div className="detail-row">
+                        <span className="detail-label">錯誤次數</span>
+                        <span className="detail-value">
+                            {connection.errorCount > 0 ? (
+                                <span className="status-badge error">{connection.errorCount} 次</span>
+                            ) : (
+                                <span style={{ color: 'var(--color-success)' }}>無錯誤</span>
+                            )}
+                        </span>
+                    </div>
+
+                    {connection.userAgent && (
+                        <div className="detail-row">
+                            <span className="detail-label">User Agent</span>
+                            <span className="detail-value font-mono text-sm">{connection.userAgent}</span>
+                        </div>
+                    )}
+
+                    {connection.lastError && (
+                        <div className="detail-section error-section">
+                            <span className="detail-label">最後錯誤訊息</span>
+                            <div className="error-message">
+                                {connection.lastError}
+                            </div>
+                        </div>
+                    )}
+
+                    {connection.metadata && Object.keys(connection.metadata).length > 0 && (
+                        <div className="detail-section">
+                            <span className="detail-label">額外資訊</span>
+                            <pre className="code-block">
+                                {JSON.stringify(connection.metadata, null, 2)}
+                            </pre>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
