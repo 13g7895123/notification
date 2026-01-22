@@ -17,6 +17,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import { safeFormatDate, DateFormats } from '../utils/dateUtils';
 import type { SchedulerStatus, SchedulerLog, SchedulerSettings } from '../types';
 import { toast, confirm } from '../utils/alert';
+import { WebSocketServiceMonitor } from '../components/WebSocketServiceMonitor';
 import './SchedulerManagement.css';
 
 export function SchedulerManagement() {
@@ -214,6 +215,9 @@ export function SchedulerManagement() {
             </div>
 
             <div className="scheduler-layout">
+                {/* WebSocket 服務監控 */}
+                <WebSocketServiceMonitor />
+
                 {/* 狀態概覽 */}
                 <div className="scheduler-main">
                     {error && (

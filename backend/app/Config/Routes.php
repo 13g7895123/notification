@@ -58,6 +58,7 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
     // 系統狀態 API（無需認證，用於監控）
     // =========================================
     $routes->get('system/status', 'SystemController::status');
+    $routes->get('system/websocket/status', 'SystemController::websocketStatus');
 
     // =========================================
     // Windows 通知 API（支援 API Key 認證）
@@ -84,6 +85,11 @@ $routes->group('api', ['namespace' => 'App\Controllers'], static function ($rout
 
         // 系統管理
         $routes->post('system/scheduler/start', 'SystemController::startScheduler');
+        
+        // WebSocket 控制（僅管理員）
+        $routes->post('system/websocket/start', 'SystemController::startWebSocket');
+        $routes->post('system/websocket/stop', 'SystemController::stopWebSocket');
+        $routes->post('system/websocket/restart', 'SystemController::restartWebSocket');
 
         // 統計數據
         $routes->get('stats/dashboard', 'StatsController::dashboard');
