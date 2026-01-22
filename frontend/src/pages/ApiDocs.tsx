@@ -9,8 +9,7 @@ import {
     List,
     Rss,
     Zap,
-    Clock,
-    RefreshCw
+    Clock
 } from 'lucide-react';
 import './ApiDocs.css';
 

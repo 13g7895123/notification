@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Activity, Wifi, WifiOff, AlertTriangle, Play, Square, RefreshCw, Info } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../utils/api';
 
 interface WebSocketServiceStatus {
     service_running: boolean;
@@ -40,10 +40,10 @@ export function WebSocketServiceMonitor() {
     const fetchStatus = async () => {
         try {
             setError(null);
-            const response = await axios.get('/api/system/websocket/status');
-            setStatus(response.data.data);
+            const data = await api.get<WebSocketServiceStatus>('/system/websocket/status');
+            setStatus(data);
         } catch (err: any) {
-            setError(err.response?.data?.message || '無法獲取 WebSocket 服務狀態');
+            setError(err.message || '無法獲取 WebSocket 服務狀態');
         } finally {
             setLoading(false);
         }
@@ -54,11 +54,11 @@ export function WebSocketServiceMonitor() {
         
         setActionLoading(true);
         try {
-            await axios.post('/api/system/websocket/start');
+            await api.post('/system/websocket/start');
             await fetchStatus();
             alert('WebSocket 服務已啟動');
         } catch (err: any) {
-            alert(err.response?.data?.message || '啟動失敗');
+            alert(err.message || '啟動失敗');
         } finally {
             setActionLoading(false);
         }
@@ -69,11 +69,11 @@ export function WebSocketServiceMonitor() {
         
         setActionLoading(true);
         try {
-            await axios.post('/api/system/websocket/stop');
+            await api.post('/system/websocket/stop');
             await fetchStatus();
             alert('WebSocket 服務已停止');
         } catch (err: any) {
-            alert(err.response?.data?.message || '停止失敗');
+            alert(err.message || '停止失敗');
         } finally {
             setActionLoading(false);
         }
@@ -84,11 +84,11 @@ export function WebSocketServiceMonitor() {
         
         setActionLoading(true);
         try {
-            await axios.post('/api/system/websocket/restart');
+            await api.post('/system/websocket/restart');
             await fetchStatus();
             alert('WebSocket 服務已重啟');
         } catch (err: any) {
-            alert(err.response?.data?.message || '重啟失敗');
+            alert(err.message || '重啟失敗');
         } finally {
             setActionLoading(false);
         }
